@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 
 const Home: React.FC = () => {
@@ -46,21 +46,14 @@ const Home: React.FC = () => {
     }
   ];
 
-  // Auto-slide every 4 seconds
-  useEffect(() => {
-    const interval = setInterval(() => {
-      nextSlide();
-    }, 6000);
-    return () => clearInterval(interval);
-  }, [currentSlide]);
-
-  const nextSlide = () => {
+  // Define nextSlide before using it in useEffect
+  const nextSlide = useCallback(() => {
     setIsAnimating(true);
     setTimeout(() => {
       setCurrentSlide((prev) => (prev + 1) % carouselItems.length);
       setIsAnimating(false);
     }, 300);
-  };
+  }, [carouselItems.length]);
 
   const prevSlide = () => {
     setIsAnimating(true);
@@ -77,6 +70,14 @@ const Home: React.FC = () => {
       setIsAnimating(false);
     }, 300);
   };
+
+  // Auto-slide every 6 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      nextSlide();
+    }, 6000);
+    return () => clearInterval(interval);
+  }, [nextSlide]);
 
   const handleImageError = (id: number) => {
     setImageErrors(prev => ({ ...prev, [id]: true }));
@@ -120,7 +121,7 @@ const Home: React.FC = () => {
       <div className="container mx-auto px-4 py-2">
         <div className="bg-gradient-to-br from-gray-50 to-white rounded-2xl shadow-xl overflow-hidden">
           <div className="grid md:grid-cols-2 gap-0 h-[500px] md:h-[550px]">
-            {/* Left Side - Description */}
+            {/* Left Side - Description - Hidden on mobile, visible on desktop */}
             <div className={`hidden md:block p-8 md:p-12 bg-gradient-to-br ${currentItem.bgGradient} text-white transition-all duration-500 overflow-y-auto`}>
               <div className="h-full flex flex-col justify-center">
                 <div className="text-6xl mb-6 animate-bounce-slow">{currentItem.icon}</div>
@@ -149,8 +150,8 @@ const Home: React.FC = () => {
               </div>
             </div>
             
-            {/* Right Side - Image Display with Fixed Height */}
-            <div className="relative bg-gradient-to-br from-gray-800 to-gray-900 h-[500px] md:h-[550px]">
+            {/* Right Side - Image Display with Fixed Height - Takes full width on mobile */}
+            <div className="relative bg-gradient-to-br from-gray-800 to-gray-900 h-[500px] md:h-[550px] md:col-span-1">
               {/* Actual Image */}
               {!imageErrors[currentItem.id] ? (
                 <img 
