@@ -1,0 +1,150 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-white text-charcoal;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+      'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+      sans-serif;
+  }
+}
+
+@layer components {
+  /* Button variants using your colors */
+  .btn-primary {
+    @apply bg-royal-blue text-white px-6 py-2.5 rounded-lg font-medium 
+           hover:bg-royal-blue-dark transition-all duration-200;
+  }
+  
+  .btn-secondary {
+    @apply bg-orange text-white px-6 py-2.5 rounded-lg font-medium 
+           hover:bg-orange-dark transition-all duration-200;
+  }
+  
+  .btn-accent {
+    @apply bg-green text-white px-6 py-2.5 rounded-lg font-medium 
+           hover:bg-green-dark transition-all duration-200;
+  }
+  
+  .btn-outline {
+    @apply border-2 border-royal-blue text-royal-blue px-6 py-2 rounded-lg font-medium 
+           hover:bg-royal-blue hover:text-white transition-all duration-200;
+  }
+  
+  /* Card styles */
+  .card {
+    @apply bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden;
+  }
+  
+  /* Form inputs */
+  .input {
+    @apply w-full px-4 py-2 border border-gray-300 rounded-lg 
+           focus:outline-none focus:ring-2 focus:ring-royal-blue focus:border-transparent;
+  }
+  
+  .label {
+    @apply block text-sm font-medium text-charcoal mb-1;
+  }
+  
+  /* Badge styles */
+  .badge {
+    @apply px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+  
+  .badge-success {
+    @apply bg-green text-white;
+  }
+  
+  .badge-warning {
+    @apply bg-orange text-white;
+  }
+  
+  .badge-info {
+    @apply bg-royal-blue text-white;
+  }
+  
+  .badge-danger {
+    @apply bg-magenta text-white;
+  }
+}
+
+@layer utilities {
+  /* Custom gradients using your brand colors */
+  .gradient-primary {
+    @apply bg-gradient-to-r from-royal-blue to-royal-blue-dark;
+  }
+  
+  .gradient-secondary {
+    @apply bg-gradient-to-r from-orange to-orange-dark;
+  }
+  
+  .gradient-hero {
+    @apply bg-gradient-to-r from-royal-blue via-magenta to-orange;
+  }
+  
+  .gradient-accent {
+    @apply bg-gradient-to-r from-green to-royal-blue;
+  }
+  
+  .gradient-charcoal {
+    @apply bg-gradient-to-r from-charcoal to-gray-700;
+  }
+  
+  /* Text gradients */
+  .text-gradient-primary {
+    @apply bg-gradient-to-r from-royal-blue to-green bg-clip-text text-transparent;
+  }
+  
+  /* Hover effects */
+  .hover-lift {
+    @apply transition-transform duration-300 hover:-translate-y-1;
+  }
+}
+
+/* Custom color classes (ADD THIS SECTION) */
+@layer utilities {
+  /* Text colors */
+  .text-royal-blue { color: #2FA598; }
+  .text-royal-blue-dark { color: #258A7D; }
+  .text-orange { color: #F15A24; }
+  .text-orange-dark { color: #D44A1A; }
+  .text-green { color: #08A045; }
+  .text-green-dark { color: #068A3A; }
+  .text-magenta { color: #E62B7A; }
+  .text-magenta-dark { color: #CC1D65; }
+  .text-charcoal { color: #2F2F34; }
+  
+  /* Background colors */
+  .bg-royal-blue { background-color: #2FA598; }
+  .bg-royal-blue-dark { background-color: #258A7D; }
+  .bg-orange { background-color: #F15A24; }
+  .bg-orange-dark { background-color: #D44A1A; }
+  .bg-green { background-color: #08A045; }
+  .bg-green-dark { background-color: #068A3A; }
+  .bg-magenta { background-color: #E62B7A; }
+  .bg-magenta-dark { background-color: #CC1D65; }
+  .bg-charcoal { background-color: #2F2F34; }
+  
+  /* Border colors */
+  .border-royal-blue { border-color: #2FA598; }
+  .border-orange { border-color: #F15A24; }
+  .border-green { border-color: #08A045; }
+  .border-magenta { border-color: #E62B7A; }
+  .border-charcoal { border-color: #2F2F34; }
+  
+  /* Ring colors (for focus states) */
+  .ring-royal-blue { --tw-ring-color: #2FA598; }
+  .ring-orange { --tw-ring-color: #F15A24; }
+  .ring-green { --tw-ring-color: #08A045; }
+  .ring-magenta { --tw-ring-color: #E62B7A; }
+  
+  /* Divide colors */
+  .divide-royal-blue > :not([hidden]) ~ :not([hidden]) { border-color: #2FA598; }
+  .divide-orange > :not([hidden]) ~ :not([hidden]) { border-color: #F15A24; }
+  
+  /* Placeholder colors */
+  .placeholder-royal-blue::placeholder { color: #2FA598; }
+  .placeholder-charcoal::placeholder { color: #2F2F34; }
+}
