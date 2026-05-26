@@ -25,9 +25,9 @@ const HeroSection: React.FC = () => {
       title: "Custom T-Shirt Printing",
       subtitle: "Express Yourself",
       description: "Create your unique style with our high-quality custom t-shirt printing.",
-      image: "/images/blue.png",
+      image: "/images/magenta-shirt.png",
       icon: "👕",
-      bgGradient: "from-royal-blue via-royal-blue-dark to-magenta",
+      bgGradient: "from-magenta via-magenta-dark to-orange",
       buttonText: "Explore T-Shirts",
       buttonLink: "/products?category=t-shirts"
     },
@@ -36,7 +36,7 @@ const HeroSection: React.FC = () => {
       title: "Personalized Caps",
       subtitle: "Top Off Your Style",
       description: "Stand out with custom embroidered caps. Perfect for events, promotions, or personal use.",
-      image: "/images/Orange.png",
+      image: "/images/cap-orange.png",
       icon: "🧢",
       bgGradient: "from-orange via-orange-dark to-royal-blue",
       buttonText: "Shop Caps",
@@ -47,7 +47,7 @@ const HeroSection: React.FC = () => {
       title: "Custom Bags & Totes",
       subtitle: "Carry Your Identity",
       description: "Eco-friendly custom printed bags. Great for shopping, work, or gifting.",
-      image: "/images/green.png",
+      image: "/images/green-bag.png",
       icon: "👜",
       bgGradient: "from-green via-green-dark to-royal-blue",
       buttonText: "View Bags",
@@ -58,11 +58,22 @@ const HeroSection: React.FC = () => {
       title: "Premium Hoodies",
       subtitle: "Stay Cozy & Stylish",
       description: "Stay cozy with custom printed hoodies. Perfect for all seasons.",
-      image: "/images/magenta.png",
+      image: "/images/hoddie.png",
       icon: "👔",
-      bgGradient: "from-magenta via-magenta-dark to-orange",
+      bgGradient: "from-orange via-orange-dark to-royal-blue",
       buttonText: "Shop Hoodies",
       buttonLink: "/products?category=hoodies"
+    },
+    {
+      id: 5,
+      title: "Custom Mugs",
+      subtitle: "Sip Your Style",
+      description: "Personalized mugs printed with your design. Perfect for coffee, tea, gifts, or brand promotion.",
+      image: "/images/blue.png",
+      icon: "☕",
+      bgGradient: "from-royal-blue via-royal-blue-dark to-magenta",
+      buttonText: "View Mugs",
+      buttonLink: "/products?category=mugs"
     }
   ];
 
