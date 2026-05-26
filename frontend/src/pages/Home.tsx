@@ -21,7 +21,7 @@ const Home: React.FC = () => {
       
       {/* Features Section */}
       <div className="container mx-auto px-4 py-16">
-        <h2 className="text-3xl font-bold text-center mb-12 text-charcoal">Why Choose Us</h2>
+        <h2 className="text-3xl font-bold text-center mb-12 text-charcoal"><span className='text-orange'>Why</span> Choose Us</h2>
         <div className="grid md:grid-cols-3 gap-8">
           {features.map((feature, index) => (
             <div key={index} className="text-center p-6 bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
