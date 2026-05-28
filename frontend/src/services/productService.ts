@@ -1,4 +1,4 @@
-const API_BASE_URL = 'https://infinity-fashion-e-commerce.onrender.com';//http://localhost:8000/api/v1
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000/api/v1';//http://localhost:8000/api/v1
 //https://infinity-fashion-e-commerce.onrender.com
 export interface Product {
   id: number;
