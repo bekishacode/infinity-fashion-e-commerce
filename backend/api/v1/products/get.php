@@ -12,14 +12,25 @@ if (!$productId) {
     exit;
 }
 
-// Load products
+// ============================================
+// FIXED PATH FOR RENDER
+// ============================================
 $dataFile = __DIR__ . '/../../data/products.json';
+
+// Alternative paths
+if (!file_exists($dataFile)) {
+    $dataFile = $_SERVER['DOCUMENT_ROOT'] . '/data/products.json';
+}
+if (!file_exists($dataFile)) {
+    $dataFile = dirname(__DIR__, 2) . '/data/products.json';
+}
 
 if (!file_exists($dataFile)) {
     http_response_code(500);
     echo json_encode([
         'success' => false,
-        'message' => 'Products data file not found'
+        'message' => 'Products data file not found',
+        'debug_path' => $dataFile
     ]);
     exit;
 }

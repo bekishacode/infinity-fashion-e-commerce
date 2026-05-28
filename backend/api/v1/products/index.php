@@ -1,16 +1,36 @@
 <?php
 // This file is included by the main index.php router
 
-// Get the data file path (absolute path)
+// ============================================
+// FIXED PATH FOR RENDER
+// ============================================
 $dataFile = __DIR__ . '/../../data/products.json';
 
-// Check if file exists
+// Alternative: Try multiple possible paths
+if (!file_exists($dataFile)) {
+    // Try absolute path from document root
+    $dataFile = $_SERVER['DOCUMENT_ROOT'] . '/data/products.json';
+}
+if (!file_exists($dataFile)) {
+    // Try relative to current file
+    $dataFile = dirname(__DIR__, 2) . '/data/products.json';
+}
+if (!file_exists($dataFile)) {
+    // Try one more level up
+    $dataFile = dirname(__DIR__, 3) . '/data/products.json';
+}
+
+// Debug: Log the path we're trying
+error_log("Looking for products.json at: " . $dataFile);
+
 if (!file_exists($dataFile)) {
     http_response_code(500);
     echo json_encode([
         'success' => false,
         'message' => 'Products data file not found',
-        'debug_path' => $dataFile
+        'debug_path' => $dataFile,
+        'document_root' => $_SERVER['DOCUMENT_ROOT'],
+        'current_dir' => __DIR__
     ]);
     exit;
 }
