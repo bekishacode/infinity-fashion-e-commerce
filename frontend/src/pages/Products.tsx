@@ -207,8 +207,8 @@ const Products: React.FC = () => {
                       : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}
                 >
-                  <span>{service.icon}</span>
-                  <span className="hidden sm:inline">{service.label}</span>
+                  <span className="hidden sm:inline">{service.icon}</span>
+                  <span >{service.label}</span>
                 </button>
               ))}
             </div>
