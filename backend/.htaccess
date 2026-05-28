@@ -1,0 +1,14 @@
+# Enable CORS for specific origin
+Header set Access-Control-Allow-Origin "https://infinity-fashion-e-commerce.vercel.app"
+Header set Access-Control-Allow-Credentials "true"
+Header set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+Header set Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With"
+
+# Handle preflight requests
+RewriteEngine On
+RewriteCond %{REQUEST_METHOD} OPTIONS
+RewriteRule ^(.*)$ $1 [R=200,L]
+
+# API routing
+RewriteRule ^api/v1/products/?$ api/v1/products/index.php [L]
+RewriteRule ^api/v1/products/([0-9]+)$ api/v1/products/get.php?id=$1 [L]
