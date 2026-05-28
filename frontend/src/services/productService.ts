@@ -1,5 +1,11 @@
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000/api/v1';//http://localhost:8000/api/v1
-//https://infinity-fashion-e-commerce.onrender.com/api/v1
+// Use environment variable for API URL
+// For Vercel: Set REACT_APP_API_URL in environment variables
+// For local: Defaults to localhost
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000/api/v1';
+
+console.log('REACT_APP_API_URL:', process.env.REACT_APP_API_URL);
+console.log('API_BASE_URL:', API_BASE_URL);
+
 export interface Product {
   id: number;
   name: string;
@@ -35,31 +41,43 @@ export const productService = {
       }
     });
     
-    const response = await fetch(`${API_BASE_URL}/products/index.php?${params}`);
-    const result = await response.json();
+    // This will use the environment variable value in production
+    const url = `${API_BASE_URL}/products/index.php?${params}`;
+    console.log('Fetching from URL:', url);
     
-    // Handle different response formats
-    if (result.success && result.data) {
-      return { data: result.data, total: result.total || result.data.length };
+    try {
+      const response = await fetch(url);
+      
+      if (!response.ok) {
+        console.error('Response status:', response.status);
+        return { data: [], total: 0 };
+      }
+      
+      const result = await response.json();
+      console.log('API Response:', result);
+      
+      if (result.success && result.data) {
+        return { data: result.data, total: result.total || result.data.length };
+      }
+      
+      return { data: [], total: 0 };
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      return { data: [], total: 0 };
     }
-    
-    // Fallback for direct data response
-    if (Array.isArray(result)) {
-      return { data: result, total: result.length };
-    }
-    
-    // If data is in result.data
-    if (result.data && Array.isArray(result.data)) {
-      return { data: result.data, total: result.data.length };
-    }
-    
-    // Empty fallback
-    return { data: [], total: 0 };
   },
 
   async getProduct(id: number): Promise<Product | null> {
-    const response = await fetch(`${API_BASE_URL}/products/get.php?id=${id}`);
-    const result = await response.json();
-    return result.success ? result.data : null;
+    const url = `${API_BASE_URL}/products/get.php?id=${id}`;
+    console.log('Fetching product from URL:', url);
+    
+    try {
+      const response = await fetch(url);
+      const result = await response.json();
+      return result.success ? result.data : null;
+    } catch (error) {
+      console.error('Error fetching product:', error);
+      return null;
+    }
   }
 };

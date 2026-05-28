@@ -1,9 +1,23 @@
 <?php
-// CORS headers - MUST be first thing before any output
-header('Access-Control-Allow-Origin: https://infinity-fashion-e-commerce.vercel.app');
-header('Access-Control-Allow-Credentials: true');
-header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
+// Get the requesting origin
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+
+// Define allowed origins (your Vercel frontend URLs)
+$allowed_origins = [
+    'https://infinity-fashion-e-commerce.vercel.app',
+    'https://infinity-fashion-e-commerce-git-main-bereket-fikres-projects.vercel.app',
+    'http://localhost:3000',  // For local development
+    'http://localhost:3001'   // Alternative local port
+];
+
+// Check if the origin is allowed
+if (in_array($origin, $allowed_origins)) {
+    header('Access-Control-Allow-Origin: ' . $origin);
+    header('Access-Control-Allow-Credentials: true');
+    header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+    header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, Accept');
+}
+
 header('Content-Type: application/json');
 
 // Handle preflight OPTIONS request
@@ -12,22 +26,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit();
 }
 
-
-// Define the data file path (absolute path for reliability)
+// Rest of your code...
 $dataFile = dirname(__DIR__, 3) . '/data/products.json';
 
-// Check if file exists
 if (!file_exists($dataFile)) {
     http_response_code(500);
     echo json_encode([
         'success' => false, 
-        'message' => 'Data file not found at: ' . $dataFile,
+        'message' => 'Data file not found',
         'data' => []
     ]);
     exit;
 }
 
-// Load product data from JSON file
 $jsonContent = file_get_contents($dataFile);
 $productsData = json_decode($jsonContent, true);
 
@@ -35,7 +46,7 @@ if (!$productsData || !isset($productsData['products'])) {
     http_response_code(500);
     echo json_encode([
         'success' => false, 
-        'message' => 'Invalid data format in products.json',
+        'message' => 'Invalid data format',
         'data' => []
     ]);
     exit;
@@ -68,7 +79,6 @@ $filteredProducts = array_filter($products, function($product) use ($serviceType
     return true;
 });
 
-// Convert to array and re-index
 $filteredProducts = array_values($filteredProducts);
 
 // Sort products
@@ -87,7 +97,6 @@ usort($filteredProducts, function($a, $b) use ($sort) {
     }
 });
 
-// Return response
 echo json_encode([
     'success' => true,
     'data' => $filteredProducts,
