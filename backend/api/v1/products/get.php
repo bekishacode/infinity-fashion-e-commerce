@@ -1,18 +1,34 @@
 <?php
-header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: *');
+// Get product by ID
 
 $productId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
 if (!$productId) {
     http_response_code(400);
-    echo json_encode(['success' => false, 'message' => 'Product ID is required']);
+    echo json_encode([
+        'success' => false,
+        'message' => 'Product ID is required'
+    ]);
     exit;
 }
 
-$productsData = json_decode(file_get_contents('../../data/products.json'), true);
+// Load products
+$dataFile = __DIR__ . '/../../data/products.json';
+
+if (!file_exists($dataFile)) {
+    http_response_code(500);
+    echo json_encode([
+        'success' => false,
+        'message' => 'Products data file not found'
+    ]);
+    exit;
+}
+
+$jsonContent = file_get_contents($dataFile);
+$productsData = json_decode($jsonContent, true);
 $products = $productsData['products'];
 
+// Find product
 $product = null;
 foreach ($products as $p) {
     if ($p['id'] === $productId) {
@@ -23,9 +39,15 @@ foreach ($products as $p) {
 
 if (!$product) {
     http_response_code(404);
-    echo json_encode(['success' => false, 'message' => 'Product not found']);
+    echo json_encode([
+        'success' => false,
+        'message' => 'Product not found'
+    ]);
     exit;
 }
 
-echo json_encode(['success' => true, 'data' => $product]);
+echo json_encode([
+    'success' => true,
+    'data' => $product
+]);
 ?>

@@ -1,11 +1,22 @@
 <?php
-header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: *');
+// Get categories
 
-$productsData = json_decode(file_get_contents('../../data/products.json'), true);
+$dataFile = __DIR__ . '/../../data/products.json';
+
+if (!file_exists($dataFile)) {
+    http_response_code(500);
+    echo json_encode([
+        'success' => false,
+        'message' => 'Products data file not found'
+    ]);
+    exit;
+}
+
+$jsonContent = file_get_contents($dataFile);
+$productsData = json_decode($jsonContent, true);
 $products = $productsData['products'];
 
-// Get unique categories by service type
+// Group categories by service type
 $categories = [
     'retail' => [],
     'wholesale' => [],
@@ -15,16 +26,14 @@ $categories = [
 foreach ($products as $product) {
     $serviceType = $product['serviceType'];
     $category = $product['category'];
-    $categoryName = ucfirst(str_replace('-', ' ', $category));
     
     if (!in_array($category, $categories[$serviceType])) {
-        $categories[$serviceType][] = [
-            'value' => $category,
-            'label' => $categoryName,
-            'icon' => $product['icon']
-        ];
+        $categories[$serviceType][] = $category;
     }
 }
 
-echo json_encode(['success' => true, 'data' => $categories]);
+echo json_encode([
+    'success' => true,
+    'data' => $categories
+]);
 ?>
