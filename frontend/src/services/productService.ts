@@ -1,5 +1,5 @@
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000/api/v1';//http://localhost:8000/api/v1
-//https://infinity-fashion-e-commerce.onrender.com
+//https://infinity-fashion-e-commerce.onrender.com/api/v1
 export interface Product {
   id: number;
   name: string;
