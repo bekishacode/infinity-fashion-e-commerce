@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { productService, Product } from '../services/productService';
 
@@ -13,12 +13,14 @@ const Products: React.FC = () => {
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 2000]);
   const [showFilters, setShowFilters] = useState(false);
   const [maxPrice, setMaxPrice] = useState(2000);
+  const [error, setError] = useState<string | null>(null);
 
   const serviceTypes = [
     { value: 'all', label: 'All Products', icon: '📦', color: 'bg-gray-100' },
+    { value: 'pod', label: 'Print on Demand', icon: '🎨', color: 'bg-magenta' },
     { value: 'retail', label: 'Retail', icon: '🛍️', color: 'bg-green' },
     { value: 'wholesale', label: 'Wholesale', icon: '🏭', color: 'bg-royal-blue' },
-    { value: 'pod', label: 'Print on Demand', icon: '🎨', color: 'bg-magenta' },
+    
   ];
 
   const getSubCategories = () => {
@@ -48,43 +50,106 @@ const Products: React.FC = () => {
       : allCategories[selectedService as keyof typeof allCategories] || allCategories.retail;
   };
 
-  const fetchProducts = async () => {
+  // Fetch products function - will be called whenever filters change
+  const fetchProducts = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
-      const response = await productService.getProducts({
-        service: selectedService === 'all' ? undefined : selectedService,
-        category: selectedCategory === 'all' ? undefined : selectedCategory,
-        search: searchTerm || undefined,
-        min_price: priceRange[0],
-        max_price: priceRange[1],
-        sort: sortBy
-      });
+      const filters: any = {};
+      
+      if (selectedService !== 'all') {
+        filters.service = selectedService;
+      }
+      if (selectedCategory !== 'all') {
+        filters.category = selectedCategory;
+      }
+      if (searchTerm) {
+        filters.search = searchTerm;
+      }
+      filters.min_price = priceRange[0];
+      filters.max_price = priceRange[1];
+      filters.sort = sortBy;
+      
+      console.log('Fetching products with filters:', filters);
+      
+      const response = await productService.getProducts(filters);
+      console.log('API Response:', response);
+      
       setProducts(response.data);
-      // Update max price for filter
       if (response.data.length > 0) {
         const max = Math.max(...response.data.map((p: Product) => p.price));
         setMaxPrice(max);
-        setPriceRange([priceRange[0], max]);
       }
     } catch (error) {
       console.error('Failed to fetch products:', error);
+      setError('Failed to load products. Please try again.');
+      setProducts([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedService, selectedCategory, searchTerm, sortBy, priceRange[0], priceRange[1]]);
 
+  // Fetch products whenever filters change
   useEffect(() => {
     fetchProducts();
-  }, [selectedService, selectedCategory, searchTerm, sortBy, priceRange[1]]);
+  }, [fetchProducts]);
+
+  // Handle service change - this will trigger the useEffect above
+  const handleServiceChange = (service: 'all' | 'wholesale' | 'retail' | 'pod') => {
+    setSelectedService(service);
+    setSelectedCategory('all'); // Reset category when service changes
+  };
+
+  // Handle category change
+  const handleCategoryChange = (category: string) => {
+    setSelectedCategory(category);
+  };
+
+  // Handle search with debounce
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+  };
+
+  // Handle sort change
+  const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSortBy(e.target.value);
+  };
+
+  // Clear all filters
+  const clearAllFilters = () => {
+    setSelectedService('all');
+    setSelectedCategory('all');
+    setSearchTerm('');
+    setSortBy('featured');
+    setPriceRange([0, maxPrice]);
+  };
 
   const subCategories = getSubCategories();
 
-  if (loading) {
+  if (loading && products.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-royal-blue"></div>
           <p className="mt-4 text-gray-600">Loading products...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error && products.length === 0) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto p-8 bg-white rounded-xl shadow-md">
+          <div className="text-6xl mb-4">⚠️</div>
+          <h2 className="text-2xl font-bold text-red-600 mb-4">Connection Error</h2>
+          <p className="text-gray-600 mb-6">{error}</p>
+          <button
+            onClick={() => fetchProducts()}
+            className="bg-royal-blue text-white px-6 py-2 rounded-lg hover:bg-royal-blue-dark transition"
+          >
+            Retry
+          </button>
         </div>
       </div>
     );
@@ -116,7 +181,6 @@ const Products: React.FC = () => {
         {/* Search and Filter Bar */}
         <div className="bg-white rounded-xl shadow-md p-4 mb-8 sticky top-20 z-30">
           <div className="flex flex-col lg:flex-row gap-4">
-            {/* Search Input */}
             <div className="flex-1">
               <div className="relative">
                 <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -127,20 +191,16 @@ const Products: React.FC = () => {
                   placeholder="Search products..."
                   className="input pl-10"
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={handleSearchChange}
                 />
               </div>
             </div>
             
-            {/* Service Type Tabs */}
             <div className="flex gap-2 flex-wrap">
               {serviceTypes.map(service => (
                 <button
                   key={service.value}
-                  onClick={() => {
-                    setSelectedService(service.value as any);
-                    setSelectedCategory('all');
-                  }}
+                  onClick={() => handleServiceChange(service.value as any)}
                   className={`px-4 py-2 rounded-full font-semibold transition-all duration-300 flex items-center gap-2 ${
                     selectedService === service.value
                       ? `${service.color} text-white shadow-md`
@@ -153,7 +213,6 @@ const Products: React.FC = () => {
               ))}
             </div>
             
-            {/* Mobile Filters Toggle */}
             <button
               onClick={() => setShowFilters(!showFilters)}
               className="lg:hidden flex items-center justify-center gap-2 bg-gray-100 px-4 py-2 rounded-lg"
@@ -161,15 +220,14 @@ const Products: React.FC = () => {
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
               </svg>
-              Filters & Sort
+              Filters
             </button>
             
-            {/* Sort Options */}
             <div className="flex gap-3">
               <select
                 className="input w-40"
                 value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
+                onChange={handleSortChange}
               >
                 <option value="featured">Featured</option>
                 <option value="price-low">Price: Low to High</option>
@@ -178,7 +236,6 @@ const Products: React.FC = () => {
                 <option value="popular">Most Popular</option>
               </select>
               
-              {/* View Toggle */}
               <div className="hidden md:flex gap-2 border rounded-lg p-1">
                 <button
                   onClick={() => setViewMode('grid')}
@@ -200,7 +257,6 @@ const Products: React.FC = () => {
             </div>
           </div>
           
-          {/* Mobile Filter Panel */}
           {showFilters && (
             <div className="mt-4 pt-4 border-t lg:hidden">
               <div className="mb-4">
@@ -209,7 +265,7 @@ const Products: React.FC = () => {
                   {subCategories.map(cat => (
                     <button
                       key={cat.value}
-                      onClick={() => setSelectedCategory(cat.value)}
+                      onClick={() => handleCategoryChange(cat.value)}
                       className={`px-3 py-1 rounded-full text-sm transition ${
                         selectedCategory === cat.value
                           ? 'bg-royal-blue text-white'
@@ -226,15 +282,24 @@ const Products: React.FC = () => {
         </div>
 
         <div className="flex gap-8">
-          {/* Desktop Filters Sidebar */}
           <div className="hidden lg:block w-64 flex-shrink-0">
             <div className="bg-white rounded-xl shadow-md p-6 sticky top-32">
-              <h3 className="font-bold text-lg mb-4 text-charcoal">Sub-Categories</h3>
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="font-bold text-lg text-charcoal">Sub-Categories</h3>
+                {selectedCategory !== 'all' && (
+                  <button
+                    onClick={() => handleCategoryChange('all')}
+                    className="text-xs text-royal-blue hover:underline"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
               <div className="space-y-2 mb-6">
                 {subCategories.map(cat => (
                   <button
                     key={cat.value}
-                    onClick={() => setSelectedCategory(cat.value)}
+                    onClick={() => handleCategoryChange(cat.value)}
                     className={`w-full text-left px-3 py-2 rounded-lg transition flex items-center gap-2 ${
                       selectedCategory === cat.value
                         ? 'bg-royal-blue/10 text-royal-blue font-semibold'
@@ -243,6 +308,11 @@ const Products: React.FC = () => {
                   >
                     <span>{cat.icon}</span>
                     <span>{cat.label}</span>
+                    {selectedCategory === cat.value && (
+                      <svg className="w-4 h-4 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
                   </button>
                 ))}
               </div>
@@ -262,26 +332,34 @@ const Products: React.FC = () => {
                   <span>ETB {priceRange[1]}</span>
                 </div>
               </div>
+              
+              {(selectedService !== 'all' || selectedCategory !== 'all' || searchTerm || sortBy !== 'featured') && (
+                <button
+                  onClick={clearAllFilters}
+                  className="mt-6 w-full text-center text-sm text-royal-blue hover:underline"
+                >
+                  Clear All Filters
+                </button>
+              )}
             </div>
           </div>
 
-          {/* Products Display */}
           <div className="flex-1">
-            <div className="mb-4 text-gray-600">
-              Found {products.length} products
+            <div className="mb-4 flex justify-between items-center">
+              <div className="text-gray-600">
+                Found {products.length} products
+              </div>
+              {loading && (
+                <div className="inline-block animate-spin rounded-full h-5 w-5 border-b-2 border-royal-blue"></div>
+              )}
             </div>
             
-            {products.length === 0 ? (
+            {products.length === 0 && !loading ? (
               <div className="text-center py-20 bg-white rounded-xl">
                 <div className="text-6xl mb-4">🔍</div>
                 <p className="text-charcoal text-lg">No products found.</p>
                 <button
-                  onClick={() => {
-                    setSearchTerm('');
-                    setSelectedService('all');
-                    setSelectedCategory('all');
-                    setPriceRange([0, maxPrice]);
-                  }}
+                  onClick={clearAllFilters}
                   className="mt-4 text-royal-blue hover:underline"
                 >
                   Clear all filters
