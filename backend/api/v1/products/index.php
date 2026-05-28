@@ -6,33 +6,34 @@ $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 $allowed_origins = [
     'https://infinity-fashion-e-commerce.vercel.app',
     'https://infinity-fashion-e-commerce-git-main-bereket-fikres-projects.vercel.app',
-    'http://localhost:3000',  // For local development
-    'http://localhost:3001'   // Alternative local port
+    'http://localhost:3000',
+    'http://localhost:3001'
 ];
 
-// CORS headers - MUST be first
-header('Access-Control-Allow-Origin: https://infinity-fashion-e-commerce.vercel.app');
-header('Access-Control-Allow-Credentials: true');
-header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization');
-header('Content-Type: application/json');
+// Check if the origin is allowed and set CORS headers
+if (in_array($origin, $allowed_origins)) {
+    header('Access-Control-Allow-Origin: ' . $origin);
+    header('Access-Control-Allow-Credentials: true');
+    header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+    header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, Accept');
 }
 
 header('Content-Type: application/json');
 
+// Handle preflight OPTIONS request
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit();
 }
 
-// Rest of your code...
+// Find the data file
 $dataFile = dirname(__DIR__, 3) . '/data/products.json';
 
 if (!file_exists($dataFile)) {
     http_response_code(500);
     echo json_encode([
         'success' => false, 
-        'message' => 'Data file not found',
+        'message' => 'Data file not found at: ' . $dataFile,
         'data' => []
     ]);
     exit;
@@ -45,7 +46,7 @@ if (!$productsData || !isset($productsData['products'])) {
     http_response_code(500);
     echo json_encode([
         'success' => false, 
-        'message' => 'Invalid data format',
+        'message' => 'Invalid data format in products.json',
         'data' => []
     ]);
     exit;
