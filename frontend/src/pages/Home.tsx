@@ -17,15 +17,15 @@ const Home: React.FC = () => {
   // Service Categories (Wholesale, Retail, Print on Demand)
   const serviceCategories = [
     {
-      id: 'wholesale',
-      title: 'Wholesale',
-      subtitle: 'Bulk Orders & Corporate',
-      icon: '🏭',
-      description: '50+ pieces minimum. Perfect for businesses, events, and organizations.',
-      features: ['Bulk pricing', 'Custom logo printing', 'Sample available', '15-20 days delivery'],
-      gradient: 'from-royal-blue to-magenta',
-      cta: 'Request Quote',
-      ctaLink: '/wholesale'
+      id: 'pod',
+      title: 'Print on Demand',
+      subtitle: 'Custom Designs',
+      icon: '🎨',
+      description: 'Upload your design. We print and ship. No inventory needed.',
+      features: ['No minimum', 'Design upload', 'Preview before print', 'Dropshipping available'],
+      gradient: 'from-green to-magenta',
+      cta: 'Start Designing',
+      ctaLink: '/print-on-demand'
     },
     {
       id: 'retail',
@@ -39,15 +39,15 @@ const Home: React.FC = () => {
       ctaLink: '/products?type=retail'
     },
     {
-      id: 'pod',
-      title: 'Print on Demand',
-      subtitle: 'Custom Designs',
-      icon: '🎨',
-      description: 'Upload your design. We print and ship. No inventory needed.',
-      features: ['No minimum', 'Design upload', 'Preview before print', 'Dropshipping available'],
-      gradient: 'from-green to-magenta',
-      cta: 'Start Designing',
-      ctaLink: '/print-on-demand'
+      id: 'wholesale',
+      title: 'Wholesale',
+      subtitle: 'Bulk Orders & Corporate',
+      icon: '🏭',
+      description: '50+ pieces minimum. Perfect for businesses, events, and organizations.',
+      features: ['Bulk pricing', 'Custom logo printing', 'Sample available', '15-20 days delivery'],
+      gradient: 'from-royal-blue to-magenta',
+      cta: 'Request Quote',
+      ctaLink: '/wholesale'
     }
   ];
 

@@ -1,10 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { productService, Product } from '../services/productService';
+
+interface Product {
+  id: number;
+  name: string;
+  price: number;
+  icon: string;
+  serviceType: 'wholesale' | 'retail' | 'pod';
+  category: string;
+  badge?: string;
+  badgeColor?: string;
+  rating?: number;
+  reviewCount?: number;
+  originalPrice?: number;
+  minQuantity?: number;
+}
 
 const Products: React.FC = () => {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedService, setSelectedService] = useState<'all' | 'wholesale' | 'retail' | 'pod'>('all');
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -12,15 +24,38 @@ const Products: React.FC = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 2000]);
   const [showFilters, setShowFilters] = useState(false);
-  const [maxPrice, setMaxPrice] = useState(2000);
+
+  const products: Product[] = [
+    // RETAIL Products
+    { id: 1, name: 'Custom T-Shirt', price: 350, icon: '👕', serviceType: 'retail', category: 't-shirts', badge: 'Best Seller', badgeColor: 'bg-orange', rating: 4.8, reviewCount: 124, originalPrice: 450 },
+    { id: 2, name: 'Personalized Cap', price: 250, icon: '🧢', serviceType: 'retail', category: 'caps', badge: 'Trending', badgeColor: 'bg-green', rating: 4.6, reviewCount: 89, originalPrice: 300 },
+    { id: 5, name: 'Polo T-Shirt', price: 400, icon: '👕', serviceType: 'retail', category: 't-shirts', rating: 4.5, reviewCount: 67 },
+    { id: 7, name: 'Tote Bag', price: 380, icon: '👜', serviceType: 'retail', category: 'bags', rating: 4.6, reviewCount: 78 },
+    { id: 10, name: 'Wool Cap', price: 320, icon: '🧢', serviceType: 'retail', category: 'caps', rating: 4.5, reviewCount: 34 },
+    
+    // WHOLESALE Products
+    { id: 3, name: 'Bulk Custom T-Shirts', price: 220, icon: '👕', serviceType: 'wholesale', category: 't-shirts', badge: 'Bulk Order', badgeColor: 'bg-royal-blue', minQuantity: 50, originalPrice: 350 },
+    { id: 6, name: 'Bulk Sports Cap', price: 180, icon: '🧢', serviceType: 'wholesale', category: 'caps', badge: 'Limited', badgeColor: 'bg-orange', minQuantity: 100 },
+    { id: 11, name: 'Corporate Uniform Set', price: 1200, icon: '👔', serviceType: 'wholesale', category: 'uniforms', badge: 'Corporate', badgeColor: 'bg-royal-blue', minQuantity: 20 },
+    { id: 15, name: 'Bulk Polo Shirts', price: 280, icon: '👕', serviceType: 'wholesale', category: 't-shirts', minQuantity: 50, originalPrice: 400 },
+    { id: 16, name: 'Work Wear Jacket', price: 850, icon: '🧥', serviceType: 'wholesale', category: 'uniforms', minQuantity: 30 },
+    
+    // PRINT ON DEMAND Products
+    { id: 4, name: 'Custom Hoodie (POD)', price: 650, icon: '👔', serviceType: 'pod', category: 'hoodies', badge: 'Design Now', badgeColor: 'bg-magenta', rating: 4.9, reviewCount: 203, originalPrice: 750 },
+    { id: 9, name: 'Custom T-Shirt (POD)', price: 420, icon: '👕', serviceType: 'pod', category: 't-shirts', badge: 'Print on Demand', badgeColor: 'bg-royal-blue', rating: 4.9, reviewCount: 45 },
+    { id: 12, name: 'Custom Mug (POD)', price: 250, icon: '☕', serviceType: 'pod', category: 'gifts', rating: 4.8, reviewCount: 92 },
+    { id: 13, name: 'Custom Phone Case (POD)', price: 350, icon: '📱', serviceType: 'pod', category: 'gifts', badge: 'New', badgeColor: 'bg-green', rating: 4.7, reviewCount: 56 },
+    { id: 14, name: 'Custom Poster (POD)', price: 180, icon: '🖼️', serviceType: 'pod', category: 'paper', rating: 4.6, reviewCount: 34 },
+  ];
 
   const serviceTypes = [
     { value: 'all', label: 'All Products', icon: '📦', color: 'bg-gray-100' },
-    { value: 'retail', label: 'Retail', icon: '🛍️', color: 'bg-green' },
-    { value: 'wholesale', label: 'Wholesale', icon: '🏭', color: 'bg-royal-blue' },
-    { value: 'pod', label: 'Print on Demand', icon: '🎨', color: 'bg-magenta' },
+    { value: 'retail', label: 'Retail', icon: '🛍️', color: 'bg-green', description: 'Single item purchases' },
+    { value: 'wholesale', label: 'Wholesale', icon: '🏭', color: 'bg-royal-blue', description: 'Bulk orders 50+' },
+    { value: 'pod', label: 'Print on Demand', icon: '🎨', color: 'bg-magenta', description: 'Custom designs' },
   ];
 
+  // Sub-categories based on selected service type
   const getSubCategories = () => {
     const allCategories = {
       retail: [
@@ -41,6 +76,7 @@ const Products: React.FC = () => {
         { value: 't-shirts', label: 'Custom T-Shirts', icon: '👕' },
         { value: 'hoodies', label: 'Custom Hoodies', icon: '👔' },
         { value: 'gifts', label: 'Gift Items', icon: '🎁' },
+        { value: 'paper', label: 'Paper Printing', icon: '📄' },
       ],
     };
     return selectedService === 'all' 
@@ -48,63 +84,54 @@ const Products: React.FC = () => {
       : allCategories[selectedService as keyof typeof allCategories] || allCategories.retail;
   };
 
-  const fetchProducts = async () => {
-    setLoading(true);
-    try {
-      const response = await productService.getProducts({
-        service: selectedService === 'all' ? undefined : selectedService,
-        category: selectedCategory === 'all' ? undefined : selectedCategory,
-        search: searchTerm || undefined,
-        min_price: priceRange[0],
-        max_price: priceRange[1],
-        sort: sortBy
-      });
-      setProducts(response.data);
-      // Update max price for filter
-      if (response.data.length > 0) {
-        const max = Math.max(...response.data.map((p: Product) => p.price));
-        setMaxPrice(max);
-        setPriceRange([priceRange[0], max]);
-      }
-    } catch (error) {
-      console.error('Failed to fetch products:', error);
-    } finally {
-      setLoading(false);
+  // Filter products
+  const filteredProducts = products.filter(product => {
+    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesService = selectedService === 'all' || product.serviceType === selectedService;
+    const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
+    const matchesPrice = product.price >= priceRange[0] && product.price <= priceRange[1];
+    return matchesSearch && matchesService && matchesCategory && matchesPrice;
+  });
+
+  // Sort products
+  const sortedProducts = [...filteredProducts].sort((a, b) => {
+    switch (sortBy) {
+      case 'price-low':
+        return a.price - b.price;
+      case 'price-high':
+        return b.price - a.price;
+      case 'rating':
+        return (b.rating || 0) - (a.rating || 0);
+      case 'popular':
+        return (b.reviewCount || 0) - (a.reviewCount || 0);
+      default:
+        return a.id - b.id;
     }
-  };
+  });
+
+  const maxPrice = Math.max(...products.map(p => p.price));
 
   useEffect(() => {
-    fetchProducts();
-  }, [selectedService, selectedCategory, searchTerm, sortBy, priceRange[1]]);
+    setPriceRange([0, maxPrice]);
+  }, [maxPrice]);
 
   const subCategories = getSubCategories();
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-royal-blue"></div>
-          <p className="mt-4 text-gray-600">Loading products...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Hero Banner */}
+      {/* Hero Banner - Dynamic based on service */}
       <div className={`bg-gradient-to-r ${
         selectedService === 'wholesale' ? 'from-royal-blue to-royal-blue-dark' :
         selectedService === 'pod' ? 'from-magenta to-magenta-dark' :
         'from-royal-blue to-magenta'
       } py-12 md:py-16 transition-all duration-500`}>
         <div className="container mx-auto px-4 text-center text-white">
-          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 animate-fade-in">
             {selectedService === 'wholesale' ? 'Wholesale Collection' :
              selectedService === 'pod' ? 'Print on Demand' :
              'Our Collection'}
           </h1>
-          <p className="text-white/90 text-lg md:text-xl max-w-2xl mx-auto">
+          <p className="text-white/90 text-lg md:text-xl max-w-2xl mx-auto animate-slide-up">
             {selectedService === 'wholesale' ? 'Bulk orders with special pricing. Minimum 50 pieces.' :
              selectedService === 'pod' ? 'Upload your design. We print and ship. No minimum order.' :
              'Discover high-quality custom printed products for every occasion.'}
@@ -132,8 +159,8 @@ const Products: React.FC = () => {
               </div>
             </div>
             
-            {/* Service Type Tabs */}
-            <div className="flex gap-2 flex-wrap">
+            {/* Service Type Tabs - Primary filter */}
+            <div className="flex gap-2">
               {serviceTypes.map(service => (
                 <button
                   key={service.value}
@@ -164,7 +191,7 @@ const Products: React.FC = () => {
               Filters & Sort
             </button>
             
-            {/* Sort Options */}
+            {/* Sort and View Options */}
             <div className="flex gap-3">
               <select
                 className="input w-40"
@@ -221,6 +248,21 @@ const Products: React.FC = () => {
                   ))}
                 </div>
               </div>
+              <div>
+                <label className="label mb-2">Price Range</label>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm">ETB {priceRange[0]}</span>
+                  <input
+                    type="range"
+                    min={0}
+                    max={maxPrice}
+                    value={priceRange[1]}
+                    onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value)])}
+                    className="flex-1"
+                  />
+                  <span className="text-sm">ETB {priceRange[1]}</span>
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -243,6 +285,11 @@ const Products: React.FC = () => {
                   >
                     <span>{cat.icon}</span>
                     <span>{cat.label}</span>
+                    {selectedCategory === cat.value && (
+                      <svg className="w-4 h-4 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
                   </button>
                 ))}
               </div>
@@ -267,11 +314,13 @@ const Products: React.FC = () => {
 
           {/* Products Display */}
           <div className="flex-1">
+            {/* Results Count */}
             <div className="mb-4 text-gray-600">
-              Found {products.length} products
+              Found {sortedProducts.length} products
             </div>
             
-            {products.length === 0 ? (
+            {/* Products Grid/List */}
+            {sortedProducts.length === 0 ? (
               <div className="text-center py-20 bg-white rounded-xl">
                 <div className="text-6xl mb-4">🔍</div>
                 <p className="text-charcoal text-lg">No products found.</p>
@@ -289,11 +338,11 @@ const Products: React.FC = () => {
               </div>
             ) : viewMode === 'grid' ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {products.map((product) => (
+                {sortedProducts.map((product) => (
                   <Link to={`/product/${product.id}`} key={product.id}>
                     <div className="group bg-white rounded-xl shadow-md hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 overflow-hidden cursor-pointer">
                       <div className="relative">
-                        <div className="text-7xl py-12 text-center bg-gradient-to-br from-gray-50 to-gray-100">
+                        <div className="text-7xl py-12 text-center bg-gradient-to-br from-gray-50 to-gray-100 group-hover:from-royal-blue/5 group-hover:to-magenta/5 transition">
                           {product.icon}
                         </div>
                         {product.badge && (
@@ -301,8 +350,25 @@ const Products: React.FC = () => {
                             {product.badge}
                           </span>
                         )}
+                        {product.minQuantity && (
+                          <span className="absolute top-3 left-3 bg-royal-blue text-white text-xs px-2 py-1 rounded-full">
+                            Min {product.minQuantity} pcs
+                          </span>
+                        )}
+                        {product.originalPrice && !product.minQuantity && (
+                          <span className="absolute top-3 left-3 bg-red-500 text-white text-xs px-2 py-1 rounded-full">
+                            -{Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}%
+                          </span>
+                        )}
                       </div>
                       <div className="p-4">
+                        <div className="flex items-center gap-1 mb-2">
+                          <div className="flex text-yellow-400">
+                            {'★'.repeat(Math.floor(product.rating || 0))}
+                            {'☆'.repeat(5 - Math.floor(product.rating || 0))}
+                          </div>
+                          <span className="text-xs text-gray-500">({product.reviewCount})</span>
+                        </div>
                         <h3 className="font-semibold text-lg mb-1 text-charcoal group-hover:text-royal-blue transition">
                           {product.name}
                         </h3>
@@ -312,7 +378,7 @@ const Products: React.FC = () => {
                             <p className="text-gray-400 line-through text-sm">ETB {product.originalPrice}</p>
                           )}
                         </div>
-                        <button className="w-full bg-gradient-to-r from-royal-blue to-magenta text-white py-2 rounded-lg hover:shadow-lg transition">
+                        <button className="w-full bg-gradient-to-r from-royal-blue to-magenta text-white py-2 rounded-lg hover:shadow-lg transition transform hover:scale-105">
                           {product.serviceType === 'wholesale' ? 'Request Quote' : 
                            product.serviceType === 'pod' ? 'Customize Now' : 'Add to Cart'}
                         </button>
@@ -323,7 +389,7 @@ const Products: React.FC = () => {
               </div>
             ) : (
               <div className="space-y-4">
-                {products.map((product) => (
+                {sortedProducts.map((product) => (
                   <Link to={`/product/${product.id}`} key={product.id}>
                     <div className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 p-4 flex gap-4 items-center">
                       <div className="text-5xl w-20 h-20 flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg">
@@ -331,6 +397,12 @@ const Products: React.FC = () => {
                       </div>
                       <div className="flex-1">
                         <h3 className="font-semibold text-lg text-charcoal">{product.name}</h3>
+                        <div className="flex items-center gap-2 mt-1">
+                          <div className="flex text-yellow-400 text-sm">
+                            {'★'.repeat(Math.floor(product.rating || 0))}
+                          </div>
+                          <span className="text-xs text-gray-500">({product.reviewCount})</span>
+                        </div>
                         {product.minQuantity && (
                           <p className="text-xs text-royal-blue mt-1">Min order: {product.minQuantity} pieces</p>
                         )}
