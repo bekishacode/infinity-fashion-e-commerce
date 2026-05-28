@@ -16,33 +16,33 @@ const Products: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   const serviceTypes = [
-    { value: 'all', label: 'All Products', icon: '📦', color: 'bg-gray-100' },
-    { value: 'pod', label: 'Print on Demand', icon: '🎨', color: 'bg-magenta' },
-    { value: 'retail', label: 'Retail', icon: '🛍️', color: 'bg-green' },
-    { value: 'wholesale', label: 'Wholesale', icon: '🏭', color: 'bg-royal-blue' },
+    { value: 'all', label: 'All Products', icon: '', color: 'bg-gray-100' },
+    { value: 'pod', label: 'Print on Demand', icon: '', color: 'bg-magenta' },
+    { value: 'retail', label: 'Retail', icon: '', color: 'bg-green' },
+    { value: 'wholesale', label: 'Wholesale', icon: '', color: 'bg-royal-blue' },
     
   ];
 
   const getSubCategories = () => {
     const allCategories = {
       retail: [
-        { value: 'all', label: 'All Retail', icon: '🛍️' },
-        { value: 't-shirts', label: 'T-Shirts', icon: '👕' },
-        { value: 'caps', label: 'Caps', icon: '🧢' },
-        { value: 'bags', label: 'Bags', icon: '👜' },
-        { value: 'hoodies', label: 'Hoodies', icon: '👔' },
+        { value: 'all', label: 'All Retail', icon: '' },
+        { value: 't-shirts', label: 'T-Shirts', icon: '' },
+        { value: 'caps', label: 'Caps', icon: '' },
+        { value: 'bags', label: 'Bags', icon: '' },
+        { value: 'hoodies', label: 'Hoodies', icon: '' },
       ],
       wholesale: [
-        { value: 'all', label: 'All Wholesale', icon: '🏭' },
-        { value: 't-shirts', label: 'Bulk T-Shirts', icon: '👕' },
-        { value: 'caps', label: 'Bulk Caps', icon: '🧢' },
-        { value: 'uniforms', label: 'Work Wear/Uniforms', icon: '👔' },
+        { value: 'all', label: 'All Wholesale', icon: '' },
+        { value: 't-shirts', label: 'Bulk T-Shirts', icon: '' },
+        { value: 'caps', label: 'Bulk Caps', icon: '' },
+        { value: 'uniforms', label: 'Work Wear/Uniforms', icon: '' },
       ],
       pod: [
-        { value: 'all', label: 'All POD', icon: '🎨' },
-        { value: 't-shirts', label: 'Custom T-Shirts', icon: '👕' },
-        { value: 'hoodies', label: 'Custom Hoodies', icon: '👔' },
-        { value: 'gifts', label: 'Gift Items', icon: '🎁' },
+        { value: 'all', label: 'All POD', icon: '' },
+        { value: 't-shirts', label: 'Custom T-Shirts', icon: '' },
+        { value: 'hoodies', label: 'Custom Hoodies', icon: '' },
+        { value: 'gifts', label: 'Gift Items', icon: '' },
       ],
     };
     return selectedService === 'all' 
