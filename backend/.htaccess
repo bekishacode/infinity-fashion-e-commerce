@@ -1,0 +1,10 @@
+RewriteEngine On
+
+# API routing - direct to PHP files
+RewriteRule ^api/v1/products/?$ api/v1/products/index.php [L]
+RewriteRule ^api/v1/products/([0-9]+)$ api/v1/products/get.php?id=$1 [L]
+
+# If the request is for a file that doesn't exist, return 404
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ - [R=404,L]
