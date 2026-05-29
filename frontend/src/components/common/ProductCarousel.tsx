@@ -111,7 +111,7 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
     if (!isDragging.current || !scrollContainerRef.current) return;
     e.preventDefault();
     const x = e.touches[0].pageX;
-    const walk = (x - startX.current) * 1.2; // Fast sliding
+    const walk = (x - startX.current) * 1.2;
     scrollContainerRef.current.scrollLeft = scrollLeft.current - walk;
   };
 
@@ -133,9 +133,9 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
     }, 5000);
   };
 
-  // Product Card with fixed width
+  // Product Card - Fixed sizing
   const ProductCard = ({ product }: { product: Product }) => (
-    <div className="px-2" style={{ width: `${100 / itemsPerView}%`, flexShrink: 0 }}>
+    <div className="flex-shrink-0 px-2" style={{ width: `${100 / itemsPerView}%` }}>
       <Link to={`/product/${product.id}`} className="block h-full">
         <div className="group bg-white rounded-xl shadow-md hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 overflow-hidden cursor-pointer h-full flex flex-col">
           <div className="relative">
@@ -149,7 +149,7 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
             )}
           </div>
           <div className="p-3 sm:p-4 flex flex-col flex-grow">
-            <h3 className="font-semibold text-sm sm:text-base md:text-lg mb-1 text-charcoal group-hover:text-royal-blue transition line-clamp-2">
+            <h3 className="font-semibold text-sm sm:text-base md:text-lg mb-1 text-charcoal group-hover:text-royal-blue transition line-clamp-2 min-h-[2.5rem]">
               {product.name}
             </h3>
             <div className="flex items-center gap-2 mb-3 flex-wrap">
@@ -158,7 +158,7 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
                 <p className="text-gray-400 line-through text-xs sm:text-sm">ETB {product.originalPrice}</p>
               )}
             </div>
-            <button className="w-full bg-gradient-to-r from-royal-blue to-magenta text-white py-1.5 sm:py-2 rounded-lg hover:shadow-lg transition text-xs sm:text-sm md:text-base mt-auto">
+            <button className="w-full bg-gradient-to-r from-royal-blue to-magenta text-white py-2 rounded-lg hover:shadow-lg transition text-sm sm:text-base md:text-base mt-auto">
               {product.serviceType === 'wholesale' ? 'Request Quote' : 
                product.serviceType === 'pod' ? 'Customize Now' : 'Add to Cart'}
             </button>
@@ -209,7 +209,7 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
         >
-          <div className="flex" style={{ width: `${products.length * (100 / itemsPerView)}%` }}>
+          <div className="flex">
             {products.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
