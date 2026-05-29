@@ -360,3 +360,24 @@ html {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+/* Force carousel to show all cards */
+.w-full {
+  width: 100%;
+  overflow: visible !important;
+}
+
+.overflow-visible {
+  overflow: visible !important;
+}
+
+.overflow-x-auto {
+  overflow-x: auto !important;
+  overflow-y: visible !important;
+}
+
+/* Remove any hidden overflow from parent containers that might clip the carousel */
+.product-carousel-parent,
+.flex-1,
+.relative {
+  overflow: visible !important;
+}

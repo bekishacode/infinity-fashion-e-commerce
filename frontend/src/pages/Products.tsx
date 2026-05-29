@@ -12,38 +12,37 @@ const Products: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [sortBy, setSortBy] = useState('featured');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 2000]);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
-  const [maxPrice, setMaxPrice] = useState(2000);
   const [error, setError] = useState<string | null>(null);
+  const [isFilterMinimized, setIsFilterMinimized] = useState(false);
 
   const serviceTypes = [
-    { value: 'all', label: 'All Products', icon: '📦', color: 'bg-gray-100', textColor: 'text-gray-700' },
-    { value: 'pod', label: 'Print on Demand', icon: '🎨', color: 'bg-magenta', textColor: 'text-white' },
-    { value: 'retail', label: 'Retail', icon: '🛍️', color: 'bg-green', textColor: 'text-white' },
-    { value: 'wholesale', label: 'Wholesale', icon: '🏭', color: 'bg-royal-blue', textColor: 'text-white' },
+    { value: 'all', label: 'All Products', icon: '', color: 'bg-gray-100', textColor: 'text-gray-700' },
+    { value: 'pod', label: 'Print on Demand', icon: '', color: 'bg-magenta', textColor: 'text-white' },
+    { value: 'retail', label: 'Retail', icon: '', color: 'bg-green', textColor: 'text-white' },
+    { value: 'wholesale', label: 'Wholesale', icon: '', color: 'bg-royal-blue', textColor: 'text-white' },
   ];
 
   const getSubCategories = () => {
     const allCategories = {
       retail: [
-        { value: 'all', label: 'All Retail', icon: '🛍️' },
-        { value: 't-shirts', label: 'T-Shirts', icon: '👕' },
-        { value: 'caps', label: 'Caps', icon: '🧢' },
-        { value: 'bags', label: 'Bags', icon: '👜' },
-        { value: 'hoodies', label: 'Hoodies', icon: '👔' },
+        { value: 'all', label: 'All Retail', icon: '' },
+        { value: 't-shirts', label: 'T-Shirts', icon: '' },
+        { value: 'caps', label: 'Caps', icon: '' },
+        { value: 'bags', label: 'Bags', icon: '' },
+        { value: 'hoodies', label: 'Hoodies', icon: '' },
       ],
       wholesale: [
-        { value: 'all', label: 'All Wholesale', icon: '🏭' },
-        { value: 't-shirts', label: 'Bulk T-Shirts', icon: '👕' },
-        { value: 'caps', label: 'Bulk Caps', icon: '🧢' },
-        { value: 'uniforms', label: 'Work Wear/Uniforms', icon: '👔' },
+        { value: 'all', label: 'All Wholesale', icon: '' },
+        { value: 't-shirts', label: 'Bulk T-Shirts', icon: '' },
+        { value: 'caps', label: 'Bulk Caps', icon: '' },
+        { value: 'uniforms', label: 'Work Wear/Uniforms', icon: '' },
       ],
       pod: [
-        { value: 'all', label: 'All POD', icon: '🎨' },
-        { value: 't-shirts', label: 'Custom T-Shirts', icon: '👕' },
-        { value: 'hoodies', label: 'Custom Hoodies', icon: '👔' },
-        { value: 'gifts', label: 'Gift Items', icon: '🎁' },
+        { value: 'all', label: 'All POD', icon: '' },
+        { value: 't-shirts', label: 'Custom T-Shirts', icon: '' },
+        { value: 'hoodies', label: 'Custom Hoodies', icon: '' },
+        { value: 'gifts', label: 'Gift Items', icon: '' },
       ],
     };
     return selectedService === 'all' 
@@ -74,26 +73,19 @@ const Products: React.FC = () => {
       if (searchTerm) {
         filters.search = searchTerm;
       }
-      filters.min_price = priceRange[0];
-      filters.max_price = priceRange[1];
       filters.sort = sortBy;
       
       const response = await productService.getProducts(filters);
       
       setAllProducts(response.data);
       setFilteredProducts(response.data);
-      
-      if (response.data.length > 0) {
-        const max = Math.max(...response.data.map((p: Product) => p.price));
-        setMaxPrice(max);
-      }
     } catch (error) {
       console.error('Failed to fetch products:', error);
       setError('Failed to load products. Please try again.');
     } finally {
       setLoading(false);
     }
-  }, [selectedService, selectedCategory, searchTerm, sortBy, priceRange[0], priceRange[1]]);
+  }, [selectedService, selectedCategory, searchTerm, sortBy]);
 
   useEffect(() => {
     fetchProducts();
@@ -103,10 +95,18 @@ const Products: React.FC = () => {
     setSelectedService(service);
     setSelectedCategory('all');
     setMobileFiltersOpen(false);
+    // Minimize filter on mobile after selection
+    if (window.innerWidth < 1024) {
+      setIsFilterMinimized(true);
+    }
   };
 
   const handleCategoryChange = (category: string) => {
     setSelectedCategory(category);
+    // Minimize filter on mobile after selection
+    if (window.innerWidth < 1024) {
+      setIsFilterMinimized(true);
+    }
   };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -122,7 +122,14 @@ const Products: React.FC = () => {
     setSelectedCategory('all');
     setSearchTerm('');
     setSortBy('featured');
-    setPriceRange([0, maxPrice]);
+    // Keep filter minimized on mobile after clearing
+    if (window.innerWidth < 1024) {
+      setIsFilterMinimized(true);
+    }
+  };
+
+  const toggleFilterMinimized = () => {
+    setIsFilterMinimized(!isFilterMinimized);
   };
 
   // Render content based on selected service and view mode
@@ -166,36 +173,45 @@ const Products: React.FC = () => {
           {grouped.pod.length > 0 && (
             <ProductCarousel 
               title="Print on Demand" 
-              icon="🎨" 
+              icon="" 
               products={grouped.pod} 
-              bgColor="bg-magenta"
+              bgColor=""
               onViewAll={() => {
                 setSelectedService('pod');
                 setSelectedCategory('all');
+                if (window.innerWidth < 1024) {
+                  setIsFilterMinimized(true);
+                }
               }}
             />
           )}
           {grouped.retail.length > 0 && (
             <ProductCarousel 
               title="Retail" 
-              icon="🛍️" 
+              icon="" 
               products={grouped.retail} 
-              bgColor="bg-green"
+              bgColor=""
               onViewAll={() => {
                 setSelectedService('retail');
                 setSelectedCategory('all');
+                if (window.innerWidth < 1024) {
+                  setIsFilterMinimized(true);
+                }
               }}
             />
           )}
           {grouped.wholesale.length > 0 && (
             <ProductCarousel 
               title="Wholesale" 
-              icon="🏭" 
+              icon="" 
               products={grouped.wholesale} 
-              bgColor="bg-royal-blue"
+              bgColor=""
               onViewAll={() => {
                 setSelectedService('wholesale');
                 setSelectedCategory('all');
+                if (window.innerWidth < 1024) {
+                  setIsFilterMinimized(true);
+                }
               }}
             />
           )}
@@ -204,9 +220,9 @@ const Products: React.FC = () => {
     } else {
       // Single service type - Use carousel for specific type
       const serviceMap = {
-        pod: { title: 'Print on Demand', icon: '🎨', bgColor: 'bg-magenta' },
-        retail: { title: 'Retail', icon: '🛍️', bgColor: 'bg-green' },
-        wholesale: { title: 'Wholesale', icon: '🏭', bgColor: 'bg-royal-blue' }
+        pod: { title: 'Print on Demand', icon: '', bgColor: '' },
+        retail: { title: 'Retail', icon: '', bgColor: '' },
+        wholesale: { title: 'Wholesale', icon: '', bgColor: '' }
       };
       const config = serviceMap[selectedService];
       
@@ -282,228 +298,265 @@ const Products: React.FC = () => {
       </div>
 
       <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-8">
-        {/* Search and Filter Bar - Keep your existing code */}
-        <div className="bg-white rounded-xl shadow-md p-3 sm:p-4 mb-6 sm:mb-8 sticky top-20 z-30">
-          <div className="flex flex-col lg:flex-row gap-3 sm:gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-                <input
-                  type="text"
-                  placeholder="Search products..."
-                  className="w-full px-3 sm:px-4 py-2 pl-9 sm:pl-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-royal-blue focus:border-transparent text-sm sm:text-base"
-                  value={searchTerm}
-                  onChange={handleSearchChange}
-                />
-              </div>
-            </div>
-            
-            <div className="flex gap-2 flex-nowrap lg:flex-wrap overflow-x-auto lg:overflow-visible pb-2 lg:pb-0 -mx-1 px-1">
-              {serviceTypes.map(service => (
-                <button
-                  key={service.value}
-                  onClick={() => handleServiceChange(service.value as any)}
-                  className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-full font-semibold transition-all duration-300 flex items-center gap-1 sm:gap-2 whitespace-nowrap text-sm sm:text-base ${
-                    selectedService === service.value
-                      ? `${service.color} ${service.textColor} shadow-md`
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                >
-                  <span className="text-base sm:text-lg">{service.icon}</span>
-                  <span className="hidden sm:inline">{service.label}</span>
-                </button>
-              ))}
-            </div>
-            
-            <div className="flex gap-2">
-              <button
-                onClick={() => setMobileFiltersOpen(!mobileFiltersOpen)}
-                className="lg:hidden flex items-center justify-center gap-2 bg-gray-100 px-3 sm:px-4 py-2 rounded-lg text-sm sm:text-base"
-              >
-                <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-                </svg>
-                Filters
-              </button>
-              
-              <div className="flex gap-2 sm:gap-3">
-                <select
-                  className="px-2 sm:px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-royal-blue text-sm sm:text-base w-32 sm:w-40"
-                  value={sortBy}
-                  onChange={handleSortChange}
-                >
-                  <option value="featured">Featured</option>
-                  <option value="price-low">Price: Low to High</option>
-                  <option value="price-high">Price: High to Low</option>
-                  <option value="rating">Top Rated</option>
-                  <option value="popular">Most Popular</option>
-                </select>
-                
-                <div className="hidden md:flex gap-1 sm:gap-2 border rounded-lg p-1">
-                  <button
-                    onClick={() => setViewMode('grid')}
-                    className={`p-1.5 sm:p-2 rounded ${viewMode === 'grid' ? 'bg-royal-blue text-white' : 'text-gray-400'}`}
-                  >
-                    <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-                    </svg>
-                  </button>
-                  <button
-                    onClick={() => setViewMode('list')}
-                    className={`p-1.5 sm:p-2 rounded ${viewMode === 'list' ? 'bg-royal-blue text-white' : 'text-gray-400'}`}
-                  >
-                    <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          {mobileFiltersOpen && (
-            <div className="mt-4 pt-4 border-t lg:hidden animate-slide-down">
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-charcoal mb-2">Sub-Category</label>
-                <div className="flex flex-wrap gap-2">
-                  {subCategories.map(cat => (
-                    <button
-                      key={cat.value}
-                      onClick={() => {
-                        handleCategoryChange(cat.value);
-                        setMobileFiltersOpen(false);
-                      }}
-                      className={`px-3 py-1 rounded-full text-sm transition ${
-                        selectedCategory === cat.value
-                          ? 'bg-royal-blue text-white'
-                          : 'bg-gray-100 text-gray-600'
-                      }`}
-                    >
-                      <span className="mr-1">{cat.icon}</span>
-                      {cat.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-charcoal mb-2">Price Range (ETB)</label>
-                <input
-                  type="range"
-                  min={0}
-                  max={maxPrice}
-                  value={priceRange[1]}
-                  onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value)])}
-                  className="w-full"
-                />
-                <div className="flex justify-between text-sm text-gray-600 mt-2">
-                  <span>ETB {priceRange[0]}</span>
-                  <span>ETB {priceRange[1]}</span>
-                </div>
-              </div>
-              
-              <button
-                onClick={clearAllFilters}
-                className="w-full bg-gray-100 text-royal-blue py-2 rounded-lg font-semibold text-sm sm:text-base"
-              >
-                Clear All Filters
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Desktop Sidebar Filters */}
-        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
-          <div className="hidden lg:block w-64 flex-shrink-0">
-            <div className="bg-white rounded-xl shadow-md p-6 sticky top-32">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="font-bold text-lg text-charcoal">Categories</h3>
-                {selectedCategory !== 'all' && (
-                  <button
-                    onClick={() => handleCategoryChange('all')}
-                    className="text-xs text-royal-blue hover:underline"
-                  >
-                    Clear
-                  </button>
+        {/* Search and Filter Bar - Responsive for mobile */}
+        <div className="bg-white rounded-xl shadow-md mb-6 sm:mb-8 sticky top-20 z-30">
+          {/* Minimized filter bar for mobile */}
+          {isFilterMinimized && window.innerWidth < 1024 && (
+            <div className="p-3 flex items-center justify-between cursor-pointer" onClick={toggleFilterMinimized}>
+              <div className="flex items-center gap-2">
+                <span className="text-royal-blue font-semibold text-sm">Filters Applied</span>
+                {(selectedService !== 'all' || selectedCategory !== 'all' || searchTerm || sortBy !== 'featured') && (
+                  <span className="bg-royal-blue text-white text-xs px-2 py-1 rounded-full">
+                    {[
+                      selectedService !== 'all' ? 1 : 0,
+                      selectedCategory !== 'all' ? 1 : 0,
+                      searchTerm ? 1 : 0,
+                      sortBy !== 'featured' ? 1 : 0
+                    ].reduce((a, b) => a + b, 0)}
+                  </span>
                 )}
               </div>
-              <div className="space-y-2 mb-6">
-                {subCategories.map(cat => (
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    clearAllFilters();
+                  }}
+                  className="text-xs text-gray-500 hover:text-royal-blue"
+                >
+                  Clear all
+                </button>
+                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </div>
+          )}
+
+          {/* Full filter bar - hidden on mobile when minimized */}
+          <div className={`p-3 sm:p-4 transition-all duration-300 ${
+            isFilterMinimized && window.innerWidth < 1024 ? 'hidden' : 'block'
+          }`}>
+            <div className="flex flex-col lg:flex-row gap-3 sm:gap-4">
+              <div className="flex-1">
+                <div className="relative">
+                  <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  <input
+                    type="text"
+                    placeholder="Search products..."
+                    className="w-full px-3 sm:px-4 py-2 pl-9 sm:pl-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-royal-blue focus:border-transparent text-sm sm:text-base"
+                    value={searchTerm}
+                    onChange={handleSearchChange}
+                  />
+                </div>
+              </div>
+              
+              <div className="flex gap-2 flex-nowrap lg:flex-wrap overflow-x-auto lg:overflow-visible pb-2 lg:pb-0 -mx-1 px-1">
+                {serviceTypes.map(service => (
                   <button
-                    key={cat.value}
-                    onClick={() => handleCategoryChange(cat.value)}
-                    className={`w-full text-left px-3 py-2 rounded-lg transition flex items-center gap-2 text-sm ${
-                      selectedCategory === cat.value
-                        ? 'bg-royal-blue/10 text-royal-blue font-semibold'
-                        : 'hover:bg-gray-50'
+                    key={service.value}
+                    onClick={() => handleServiceChange(service.value as any)}
+                    className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-full font-semibold transition-all duration-300 flex items-center gap-1 sm:gap-2 whitespace-nowrap text-sm sm:text-base ${
+                      selectedService === service.value
+                        ? `${service.color} ${service.textColor} shadow-md`
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                     }`}
                   >
-                    <span className="text-lg">{cat.icon}</span>
-                    <span>{cat.label}</span>
-                    {selectedCategory === cat.value && (
-                      <svg className="w-4 h-4 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                    )}
+                    <span className="text-base sm:text-lg">{service.label}</span>
                   </button>
                 ))}
               </div>
               
-              <h3 className="font-bold text-lg mb-4 text-charcoal">Price Range</h3>
-              <div className="space-y-3">
-                <input
-                  type="range"
-                  min={0}
-                  max={maxPrice}
-                  value={priceRange[1]}
-                  onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value)])}
-                  className="w-full"
-                />
-                <div className="flex justify-between text-sm text-gray-600">
-                  <span>ETB {priceRange[0]}</span>
-                  <span>ETB {priceRange[1]}</span>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    setMobileFiltersOpen(!mobileFiltersOpen);
+                    if (mobileFiltersOpen) {
+                      setIsFilterMinimized(false);
+                    }
+                  }}
+                  className="lg:hidden flex items-center justify-center gap-2 bg-gray-100 px-3 sm:px-4 py-2 rounded-lg text-sm sm:text-base"
+                >
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110 4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                  </svg>
+                  Filters
+                </button>
+                
+                <div className="flex gap-2 sm:gap-3">
+                  
+                  <div className="hidden md:flex gap-1 sm:gap-2 border rounded-lg p-1">
+                    <button
+                      onClick={() => setViewMode('grid')}
+                      className={`p-1.5 sm:p-2 rounded ${viewMode === 'grid' ? 'bg-royal-blue text-white' : 'text-gray-400'}`}
+                    >
+                      <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={() => setViewMode('list')}
+                      className={`p-1.5 sm:p-2 rounded ${viewMode === 'list' ? 'bg-royal-blue text-white' : 'text-gray-400'}`}
+                    >
+                      <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
               </div>
-              
-              {(selectedService !== 'all' || selectedCategory !== 'all' || searchTerm || sortBy !== 'featured') && (
+            </div>
+            
+            {mobileFiltersOpen && (
+              <div className="mt-4 pt-4 border-t lg:hidden animate-slide-down">
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-charcoal mb-2">Sub-Category</label>
+                  <div className="flex flex-wrap gap-2">
+                    {subCategories.map(cat => (
+                      <button
+                        key={cat.value}
+                        onClick={() => {
+                          handleCategoryChange(cat.value);
+                          setMobileFiltersOpen(false);
+                        }}
+                        className={`px-3 py-1 rounded-full text-sm transition ${
+                          selectedCategory === cat.value
+                            ? 'bg-royal-blue text-white'
+                            : 'bg-gray-100 text-gray-600'
+                        }`}
+                      >
+                        <span className="mr-1">{cat.icon}</span>
+                        {cat.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                
                 <button
-                  onClick={clearAllFilters}
-                  className="mt-6 w-full text-center text-sm text-royal-blue hover:underline"
+                  onClick={() => {
+                    clearAllFilters();
+                    setMobileFiltersOpen(false);
+                  }}
+                  className="w-full bg-gray-100 text-royal-blue py-2 rounded-lg font-semibold text-sm sm:text-base"
                 >
                   Clear All Filters
                 </button>
-              )}
-            </div>
-          </div>
-
-          {/* Main Content Area */}
-          <div className="flex-1">
-            <div className="mb-4 flex justify-between items-center">
-              <div className="text-gray-600 text-sm sm:text-base">
-                Found {filteredProducts.length} products
               </div>
-              {loading && (
-                <div className="inline-block animate-spin rounded-full h-5 w-5 border-b-2 border-royal-blue"></div>
-              )}
-            </div>
-            
-            {filteredProducts.length === 0 && !loading ? (
-              <div className="text-center py-12 sm:py-20 bg-white rounded-xl">
-                <div className="text-6xl mb-4">🔍</div>
-                <p className="text-charcoal text-lg">No products found.</p>
-                <button
-                  onClick={clearAllFilters}
-                  className="mt-4 text-royal-blue hover:underline"
-                >
-                  Clear all filters
-                </button>
-              </div>
-            ) : (
-              renderContent()
             )}
           </div>
+        </div>
+
+        {/* Desktop Sidebar Filters - Only visible on large devices */}
+        <div className="hidden lg:block">
+          <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+            <div className="w-64 flex-shrink-0">
+              <div className="bg-white rounded-xl shadow-md p-6 sticky top-32">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="font-bold text-lg text-charcoal">Sub-Categories</h3>
+                  {selectedCategory !== 'all' && (
+                    <button
+                      onClick={() => handleCategoryChange('all')}
+                      className="text-xs text-royal-blue hover:underline"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  {subCategories.map(cat => (
+                    <button
+                      key={cat.value}
+                      onClick={() => handleCategoryChange(cat.value)}
+                      className={`w-full text-left px-3 py-2 rounded-lg transition flex items-center gap-2 text-sm ${
+                        selectedCategory === cat.value
+                          ? 'bg-royal-blue/10 text-royal-blue font-semibold'
+                          : 'hover:bg-gray-50'
+                      }`}
+                    >
+                      <span className="text-lg">{cat.icon}</span>
+                      <span>{cat.label}</span>
+                      {selectedCategory === cat.value && (
+                        <svg className="w-4 h-4 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                    </button>
+                  ))}
+                </div>
+                
+                {(selectedService !== 'all' || selectedCategory !== 'all' || searchTerm || sortBy !== 'featured') && (
+                  <button
+                    onClick={clearAllFilters}
+                    className="mt-6 w-full text-center text-sm text-royal-blue hover:underline"
+                  >
+                    Clear All Filters
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Main Content Area */}
+            <div className="flex-1">
+              <div className="mb-4 flex justify-between items-center">
+                <div className="text-gray-600 text-sm sm:text-base">
+                  Found {filteredProducts.length} products
+                </div>
+                {loading && (
+                  <div className="inline-block animate-spin rounded-full h-5 w-5 border-b-2 border-royal-blue"></div>
+                )}
+              </div>
+              
+              {filteredProducts.length === 0 && !loading ? (
+                <div className="text-center py-12 sm:py-20 bg-white rounded-xl">
+                  <div className="text-6xl mb-4">🔍</div>
+                  <p className="text-charcoal text-lg">No products found.</p>
+                  <button
+                    onClick={() => {
+                      clearAllFilters();
+                      setIsFilterMinimized(false);
+                    }}
+                    className="mt-4 text-royal-blue hover:underline"
+                  >
+                    Clear all filters
+                  </button>
+                </div>
+              ) : (
+                renderContent()
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Mobile layout - Only visible on small devices */}
+        <div className="lg:hidden">
+          <div className="mb-4 flex justify-between items-center">
+            <div className="text-gray-600 text-sm sm:text-base">
+              Found {filteredProducts.length} products
+            </div>
+            {loading && (
+              <div className="inline-block animate-spin rounded-full h-5 w-5 border-b-2 border-royal-blue"></div>
+            )}
+          </div>
+          
+          {filteredProducts.length === 0 && !loading ? (
+            <div className="text-center py-12 sm:py-20 bg-white rounded-xl">
+              <div className="text-6xl mb-4">🔍</div>
+              <p className="text-charcoal text-lg">No products found.</p>
+              <button
+                onClick={() => {
+                  clearAllFilters();
+                  setIsFilterMinimized(false);
+                }}
+                className="mt-4 text-royal-blue hover:underline"
+              >
+                Clear all filters
+              </button>
+            </div>
+          ) : (
+            renderContent()
+          )}
         </div>
       </div>
     </div>

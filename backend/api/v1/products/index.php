@@ -1,5 +1,27 @@
 <?php
 // This file is included by the main index.php router
+// Add CORS headers here (copy from your main index.php)
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+$allowed_origins = [
+    'https://infinity-fashion-e-commerce.vercel.app',
+    'https://infinity-fashion-e-commerce-git-main-bereket-fikres-projects.vercel.app',
+    'http://localhost:3000',
+    'http://localhost:3001'
+];
+
+if (in_array($origin, $allowed_origins)) {
+    header('Access-Control-Allow-Origin: ' . $origin);
+    header('Access-Control-Allow-Credentials: true');
+    header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+    header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, Accept');
+}
+
+header('Content-Type: application/json');
+
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
 
 // ============================================
 // FIXED PATH FOR RENDER
