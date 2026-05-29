@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { productService, Product } from '../services/productService';
+import ProductCarousel from '../components/common/ProductCarousel';
 
 const Products: React.FC = () => {
   const [allProducts, setAllProducts] = useState<Product[]>([]);
@@ -124,156 +125,118 @@ const Products: React.FC = () => {
     setPriceRange([0, maxPrice]);
   };
 
-  // Responsive Product Card Component
-  const ProductCard = ({ product }: { product: Product }) => (
-    <Link to={`/product/${product.id}`} className="block h-full">
-      <div className="group bg-white rounded-xl shadow-md hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 overflow-hidden cursor-pointer h-full flex flex-col">
-        <div className="relative">
-          <div className="text-6xl sm:text-7xl py-8 sm:py-12 text-center bg-gradient-to-br from-gray-50 to-gray-100">
-            {product.icon}
-          </div>
-          {product.badge && (
-            <span className={`absolute top-3 right-3 ${product.badgeColor} text-white text-xs px-2 py-1 rounded-full`}>
-              {product.badge}
-            </span>
-          )}
-        </div>
-        <div className="p-3 sm:p-4 flex flex-col flex-grow">
-          <h3 className="font-semibold text-base sm:text-lg mb-1 text-charcoal group-hover:text-royal-blue transition line-clamp-2 min-h-[3.5rem]">
-            {product.name}
-          </h3>
-          <div className="flex items-center gap-2 mb-3 flex-wrap">
-            <p className="text-royal-blue font-bold text-lg sm:text-xl">ETB {product.price}</p>
-            {product.originalPrice && (
-              <p className="text-gray-400 line-through text-xs sm:text-sm">ETB {product.originalPrice}</p>
-            )}
-          </div>
-          <button className="w-full bg-gradient-to-r from-royal-blue to-magenta text-white py-2 rounded-lg hover:shadow-lg transition text-sm sm:text-base mt-auto">
-            {product.serviceType === 'wholesale' ? 'Request Quote' : 
-             product.serviceType === 'pod' ? 'Customize Now' : 'Add to Cart'}
-          </button>
-        </div>
-      </div>
-    </Link>
-  );
-
-  // Product Grid Component (Responsive)
-  const ProductGrid = ({ products }: { products: Product[] }) => {
-    const displayProducts = products.slice(0, 12);
-    
-    return (
-      <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-        {displayProducts.map((product) => (
-          <ProductCard key={product.id} product={product} />
-        ))}
-      </div>
-    );
-  };
-
-  // Product List Component
-  const ProductList = ({ products }: { products: Product[] }) => {
-    const displayProducts = products.slice(0, 12);
-    
-    return (
-      <div className="space-y-3 sm:space-y-4">
-        {displayProducts.map((product) => (
-          <Link to={`/product/${product.id}`} key={product.id}>
-            <div className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 p-3 sm:p-4 flex flex-col sm:flex-row gap-3 sm:gap-4 items-start sm:items-center">
-              <div className="text-4xl sm:text-5xl w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg flex-shrink-0">
-                {product.icon}
-              </div>
-              <div className="flex-1 w-full">
-                <h3 className="font-semibold text-base sm:text-lg text-charcoal">{product.name}</h3>
-                {product.minQuantity && (
-                  <p className="text-xs text-royal-blue mt-1">Min order: {product.minQuantity} pieces</p>
-                )}
-                <p className="text-sm text-gray-500 mt-1 line-clamp-2">{product.description}</p>
-              </div>
-              <div className="text-left sm:text-right w-full sm:w-auto">
-                <p className="text-royal-blue font-bold text-lg sm:text-xl">ETB {product.price}</p>
-                <button className="mt-2 bg-gradient-to-r from-royal-blue to-magenta text-white px-3 sm:px-4 py-1.5 rounded-lg text-sm hover:shadow-lg transition w-full sm:w-auto">
-                  {product.serviceType === 'wholesale' ? 'Request Quote' : 
-                   product.serviceType === 'pod' ? 'Customize' : 'Add to Cart'}
-                </button>
-              </div>
-            </div>
-          </Link>
-        ))}
-      </div>
-    );
-  };
-
-  // Product Section Component
-  const ProductSection = ({ title, icon, products, bgColor }: { title: string; icon: string; products: Product[]; bgColor: string }) => {
-    if (products.length === 0) return null;
-    
-    const hasMore = products.length > 12;
-    
-    return (
-      <div className="mb-12 sm:mb-16">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 sm:mb-6 gap-3">
-          <div className="flex items-center gap-3">
-            <div className={`text-2xl sm:text-3xl ${bgColor} w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center text-white`}>
-              {icon}
-            </div>
-            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-charcoal">{title}</h2>
-            <span className="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
-              {products.length}
-            </span>
-          </div>
-          {hasMore && (
-            <button 
-              onClick={() => {
-                setSelectedService(products[0].serviceType as any);
-                setSelectedCategory('all');
-              }}
-              className="text-royal-blue hover:text-royal-blue-dark font-semibold text-sm md:text-base"
-            >
-              View All ({products.length}) →
-            </button>
-          )}
-        </div>
-        
-        {viewMode === 'grid' ? (
-          <ProductGrid products={products} />
-        ) : (
-          <ProductList products={products} />
-        )}
-      </div>
-    );
-  };
-
+  // Render content based on selected service and view mode
   const renderContent = () => {
+    if (viewMode === 'list') {
+      // List view - show all products in a list
+      return (
+        <div className="space-y-3 sm:space-y-4">
+          {filteredProducts.slice(0, 12).map((product) => (
+            <Link to={`/product/${product.id}`} key={product.id}>
+              <div className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 p-3 sm:p-4 flex flex-col sm:flex-row gap-3 sm:gap-4 items-start sm:items-center">
+                <div className="text-4xl sm:text-5xl w-14 h-14 sm:w-20 sm:h-20 flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg flex-shrink-0">
+                  {product.icon}
+                </div>
+                <div className="flex-1 w-full">
+                  <h3 className="font-semibold text-sm sm:text-base md:text-lg text-charcoal">{product.name}</h3>
+                  {product.minQuantity && (
+                    <p className="text-xs text-royal-blue mt-1">Min order: {product.minQuantity} pieces</p>
+                  )}
+                  <p className="text-xs sm:text-sm text-gray-500 mt-1 line-clamp-2">{product.description}</p>
+                </div>
+                <div className="text-left sm:text-right w-full sm:w-auto">
+                  <p className="text-royal-blue font-bold text-base sm:text-lg md:text-xl">ETB {product.price}</p>
+                  <button className="mt-2 bg-gradient-to-r from-royal-blue to-magenta text-white px-3 sm:px-4 py-1.5 rounded-lg text-xs sm:text-sm hover:shadow-lg transition w-full sm:w-auto">
+                    {product.serviceType === 'wholesale' ? 'Request Quote' : 
+                     product.serviceType === 'pod' ? 'Customize' : 'Add to Cart'}
+                  </button>
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
+      );
+    }
+
+    // Grid view with carousel for "All Products" section
     if (selectedService === 'all') {
       const grouped = groupProductsByType(filteredProducts);
       return (
         <>
           {grouped.pod.length > 0 && (
-            <ProductSection title="Print on Demand" icon="🎨" products={grouped.pod} bgColor="bg-magenta" />
+            <ProductCarousel 
+              title="Print on Demand" 
+              icon="🎨" 
+              products={grouped.pod} 
+              bgColor="bg-magenta"
+              onViewAll={() => {
+                setSelectedService('pod');
+                setSelectedCategory('all');
+              }}
+            />
           )}
           {grouped.retail.length > 0 && (
-            <ProductSection title="Retail" icon="🛍️" products={grouped.retail} bgColor="bg-green" />
+            <ProductCarousel 
+              title="Retail" 
+              icon="🛍️" 
+              products={grouped.retail} 
+              bgColor="bg-green"
+              onViewAll={() => {
+                setSelectedService('retail');
+                setSelectedCategory('all');
+              }}
+            />
           )}
           {grouped.wholesale.length > 0 && (
-            <ProductSection title="Wholesale" icon="🏭" products={grouped.wholesale} bgColor="bg-royal-blue" />
+            <ProductCarousel 
+              title="Wholesale" 
+              icon="🏭" 
+              products={grouped.wholesale} 
+              bgColor="bg-royal-blue"
+              onViewAll={() => {
+                setSelectedService('wholesale');
+                setSelectedCategory('all');
+              }}
+            />
           )}
         </>
       );
     } else {
-      const serviceMap = {
-        pod: { title: 'Print on Demand', icon: '🎨', bgColor: 'bg-magenta' },
-        retail: { title: 'Retail', icon: '🛍️', bgColor: 'bg-green' },
-        wholesale: { title: 'Wholesale', icon: '🏭', bgColor: 'bg-royal-blue' }
-      };
-      const config = serviceMap[selectedService];
-      
+      // Single service type - show regular grid
       return (
-        <ProductSection 
-          title={config.title} 
-          icon={config.icon} 
-          products={filteredProducts} 
-          bgColor={config.bgColor}
-        />
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+          {filteredProducts.slice(0, 12).map((product) => (
+            <Link to={`/product/${product.id}`} key={product.id} className="block h-full">
+              <div className="group bg-white rounded-xl shadow-md hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 overflow-hidden cursor-pointer h-full flex flex-col">
+                <div className="relative">
+                  <div className="text-5xl sm:text-6xl py-8 sm:py-12 text-center bg-gradient-to-br from-gray-50 to-gray-100">
+                    {product.icon}
+                  </div>
+                  {product.badge && (
+                    <span className={`absolute top-2 right-2 sm:top-3 sm:right-3 ${product.badgeColor} text-white text-xs px-2 py-1 rounded-full`}>
+                      {product.badge}
+                    </span>
+                  )}
+                </div>
+                <div className="p-3 sm:p-4 flex flex-col flex-grow">
+                  <h3 className="font-semibold text-sm sm:text-base md:text-lg mb-1 text-charcoal group-hover:text-royal-blue transition line-clamp-2 min-h-[2.5rem] sm:min-h-[3rem]">
+                    {product.name}
+                  </h3>
+                  <div className="flex items-center gap-2 mb-3 flex-wrap">
+                    <p className="text-royal-blue font-bold text-base sm:text-lg md:text-xl">ETB {product.price}</p>
+                    {product.originalPrice && (
+                      <p className="text-gray-400 line-through text-xs sm:text-sm">ETB {product.originalPrice}</p>
+                    )}
+                  </div>
+                  <button className="w-full bg-gradient-to-r from-royal-blue to-magenta text-white py-1.5 sm:py-2 rounded-lg hover:shadow-lg transition text-xs sm:text-sm md:text-base mt-auto">
+                    {product.serviceType === 'wholesale' ? 'Request Quote' : 
+                     product.serviceType === 'pod' ? 'Customize Now' : 'Add to Cart'}
+                  </button>
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
       );
     }
   };
@@ -366,7 +329,7 @@ const Products: React.FC = () => {
                   }`}
                 >
                   <span className="text-base sm:text-lg">{service.icon}</span>
-                  <span className="hidden xs:inline">{service.label}</span>
+                  <span className="hidden sm:inline">{service.label}</span>
                 </button>
               ))}
             </div>
