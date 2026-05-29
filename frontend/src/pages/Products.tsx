@@ -158,7 +158,7 @@ const Products: React.FC = () => {
       );
     }
 
-    // Grid view with carousel for "All Products" section
+    // Grid view with carousel for ALL cases
     if (selectedService === 'all') {
       const grouped = groupProductsByType(filteredProducts);
       return (
@@ -202,41 +202,25 @@ const Products: React.FC = () => {
         </>
       );
     } else {
-      // Single service type - show regular grid
+      // Single service type - Use carousel for specific type
+      const serviceMap = {
+        pod: { title: 'Print on Demand', icon: '🎨', bgColor: 'bg-magenta' },
+        retail: { title: 'Retail', icon: '🛍️', bgColor: 'bg-green' },
+        wholesale: { title: 'Wholesale', icon: '🏭', bgColor: 'bg-royal-blue' }
+      };
+      const config = serviceMap[selectedService];
+      
       return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-          {filteredProducts.slice(0, 12).map((product) => (
-            <Link to={`/product/${product.id}`} key={product.id} className="block h-full">
-              <div className="group bg-white rounded-xl shadow-md hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 overflow-hidden cursor-pointer h-full flex flex-col">
-                <div className="relative">
-                  <div className="text-5xl sm:text-6xl py-8 sm:py-12 text-center bg-gradient-to-br from-gray-50 to-gray-100">
-                    {product.icon}
-                  </div>
-                  {product.badge && (
-                    <span className={`absolute top-2 right-2 sm:top-3 sm:right-3 ${product.badgeColor} text-white text-xs px-2 py-1 rounded-full`}>
-                      {product.badge}
-                    </span>
-                  )}
-                </div>
-                <div className="p-3 sm:p-4 flex flex-col flex-grow">
-                  <h3 className="font-semibold text-sm sm:text-base md:text-lg mb-1 text-charcoal group-hover:text-royal-blue transition line-clamp-2 min-h-[2.5rem] sm:min-h-[3rem]">
-                    {product.name}
-                  </h3>
-                  <div className="flex items-center gap-2 mb-3 flex-wrap">
-                    <p className="text-royal-blue font-bold text-base sm:text-lg md:text-xl">ETB {product.price}</p>
-                    {product.originalPrice && (
-                      <p className="text-gray-400 line-through text-xs sm:text-sm">ETB {product.originalPrice}</p>
-                    )}
-                  </div>
-                  <button className="w-full bg-gradient-to-r from-royal-blue to-magenta text-white py-1.5 sm:py-2 rounded-lg hover:shadow-lg transition text-xs sm:text-sm md:text-base mt-auto">
-                    {product.serviceType === 'wholesale' ? 'Request Quote' : 
-                     product.serviceType === 'pod' ? 'Customize Now' : 'Add to Cart'}
-                  </button>
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
+        <ProductCarousel 
+          title={config.title} 
+          icon={config.icon} 
+          products={filteredProducts} 
+          bgColor={config.bgColor}
+          onViewAll={() => {
+            // Already viewing this type, so just scroll to top or do nothing
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+        />
       );
     }
   };
@@ -298,7 +282,7 @@ const Products: React.FC = () => {
       </div>
 
       <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-8">
-        {/* Search and Filter Bar */}
+        {/* Search and Filter Bar - Keep your existing code */}
         <div className="bg-white rounded-xl shadow-md p-3 sm:p-4 mb-6 sm:mb-8 sticky top-20 z-30">
           <div className="flex flex-col lg:flex-row gap-3 sm:gap-4">
             <div className="flex-1">
@@ -316,7 +300,6 @@ const Products: React.FC = () => {
               </div>
             </div>
             
-            {/* Service Type Buttons */}
             <div className="flex gap-2 flex-nowrap lg:flex-wrap overflow-x-auto lg:overflow-visible pb-2 lg:pb-0 -mx-1 px-1">
               {serviceTypes.map(service => (
                 <button
@@ -334,7 +317,6 @@ const Products: React.FC = () => {
               ))}
             </div>
             
-            {/* Action Buttons */}
             <div className="flex gap-2">
               <button
                 onClick={() => setMobileFiltersOpen(!mobileFiltersOpen)}
@@ -381,7 +363,6 @@ const Products: React.FC = () => {
             </div>
           </div>
           
-          {/* Mobile Filters Panel */}
           {mobileFiltersOpen && (
             <div className="mt-4 pt-4 border-t lg:hidden animate-slide-down">
               <div className="mb-4">

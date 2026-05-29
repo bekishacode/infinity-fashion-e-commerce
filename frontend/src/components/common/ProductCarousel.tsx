@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Product } from '../../services/productService';
 
@@ -18,12 +18,14 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
   onViewAll 
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [itemsPerView, setItemsPerView] = useState(3);
+  const [itemsPerView, setItemsPerView] = useState(4);
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
-  const [scrollLeft, setScrollLeft] = useState(0);
-  const carouselRef = React.useRef<HTMLDivElement>(null);
-  const autoPlayRef = React.useRef<NodeJS.Timeout>();
+  const [translateX, setTranslateX] = useState(0);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const autoPlayRef = useRef<NodeJS.Timeout>();
+  const touchTimeoutRef = useRef<NodeJS.Timeout>();
 
   // Calculate items per view based on screen size
   useEffect(() => {
@@ -45,15 +47,24 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
     return () => window.removeEventListener('resize', updateItemsPerView);
   }, []);
 
-  const totalPages = Math.ceil(products.length / itemsPerView);
-  const maxIndex = Math.max(0, totalPages - 1);
+  // Create an infinite array by duplicating products
+  const infiniteProducts = [...products, ...products, ...products];
+  const totalSlides = Math.ceil(infiniteProducts.length / itemsPerView);
+  const middleIndex = Math.floor(totalSlides / 3);
+  
+  // Reset to middle when component mounts
+  useEffect(() => {
+    if (products.length > 0) {
+      setCurrentIndex(middleIndex);
+    }
+  }, [products.length, itemsPerView, middleIndex]);
 
-  // Auto-play functionality
+  // Auto-play functionality - slower speed
   useEffect(() => {
     if (products.length > itemsPerView) {
       autoPlayRef.current = setInterval(() => {
         nextSlide();
-      }, 5000);
+      }, 8000); // 8 seconds - slower
     }
     return () => {
       if (autoPlayRef.current) {
@@ -63,46 +74,100 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
   }, [currentIndex, products.length, itemsPerView]);
 
   const nextSlide = () => {
-    setCurrentIndex((prev) => (prev >= maxIndex ? 0 : prev + 1));
+    if (isTransitioning) return;
+    setIsTransitioning(true);
+    setCurrentIndex((prev) => prev + 1);
+    setTimeout(() => setIsTransitioning(false), 500);
   };
 
-  const prevSlide = () => {
-    setCurrentIndex((prev) => (prev <= 0 ? maxIndex : prev - 1));
-  };
-
-  const goToSlide = (index: number) => {
-    setCurrentIndex(index);
-  };
-
-  // Touch events for mobile swipe
+  // Handle touch start
   const handleTouchStart = (e: React.TouchEvent) => {
+    if (autoPlayRef.current) {
+      clearInterval(autoPlayRef.current);
+    }
     setIsDragging(true);
     setStartX(e.touches[0].clientX);
-    if (carouselRef.current) {
-      setScrollLeft(carouselRef.current.scrollLeft);
-    }
+    setTranslateX(0);
   };
 
+  // Handle touch move
   const handleTouchMove = (e: React.TouchEvent) => {
     if (!isDragging) return;
-    const x = e.touches[0].clientX;
-    const walk = (startX - x) * 2;
-    if (carouselRef.current) {
-      carouselRef.current.scrollLeft = scrollLeft + walk;
-    }
-  };
-
-  const handleTouchEnd = () => {
-    setIsDragging(false);
-    if (carouselRef.current) {
-      const scrollPosition = carouselRef.current.scrollLeft;
-      const itemWidth = carouselRef.current.children[0]?.clientWidth || 0;
-      const newIndex = Math.round(scrollPosition / itemWidth);
-      if (newIndex !== currentIndex) {
-        setCurrentIndex(newIndex);
+    const currentX = e.touches[0].clientX;
+    const diff = currentX - startX;
+    setTranslateX(diff);
+    
+    // Add drag effect
+    if (containerRef.current) {
+      const container = containerRef.current;
+      const slides = container.children;
+      const currentSlide = slides[currentIndex] as HTMLElement;
+      if (currentSlide) {
+        currentSlide.style.transform = `translateX(${diff}px)`;
       }
     }
   };
+
+  // Handle touch end
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!isDragging) return;
+    setIsDragging(false);
+    
+    const endX = e.changedTouches[0].clientX;
+    const diff = endX - startX;
+    const threshold = 50; // Minimum swipe distance
+    
+    if (containerRef.current) {
+      const container = containerRef.current;
+      const slides = container.children;
+      const currentSlide = slides[currentIndex] as HTMLElement;
+      if (currentSlide) {
+        currentSlide.style.transform = '';
+      }
+    }
+    
+    if (Math.abs(diff) > threshold) {
+      if (diff > 0) {
+        // Swipe right - go to previous
+        if (currentIndex > 0) {
+          setCurrentIndex(prev => prev - 1);
+        }
+      } else {
+        // Swipe left - go to next
+        nextSlide();
+      }
+    }
+    
+    setTranslateX(0);
+    
+    // Restart auto-play after 10 seconds of inactivity
+    if (touchTimeoutRef.current) {
+      clearTimeout(touchTimeoutRef.current);
+    }
+    touchTimeoutRef.current = setTimeout(() => {
+      if (autoPlayRef.current) {
+        clearInterval(autoPlayRef.current);
+      }
+      autoPlayRef.current = setInterval(() => {
+        nextSlide();
+      }, 8000);
+    }, 10000);
+  };
+
+  // Reset infinite loop when reaching boundaries
+  useEffect(() => {
+    if (currentIndex >= totalSlides - Math.ceil(products.length / itemsPerView)) {
+      setTimeout(() => {
+        setIsTransitioning(false);
+        setCurrentIndex(middleIndex);
+      }, 500);
+    } else if (currentIndex <= 0) {
+      setTimeout(() => {
+        setIsTransitioning(false);
+        setCurrentIndex(middleIndex);
+      }, 500);
+    }
+  }, [currentIndex, totalSlides, products.length, itemsPerView, middleIndex]);
 
   // Product Card Component
   const ProductCard = ({ product }: { product: Product }) => (
@@ -139,6 +204,14 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
 
   if (products.length === 0) return null;
 
+  // Create visible slides
+  const visibleSlides = [];
+  for (let i = 0; i < totalSlides; i++) {
+    const startIdx = i * itemsPerView;
+    const slideProducts = infiniteProducts.slice(startIdx, startIdx + itemsPerView);
+    visibleSlides.push(slideProducts);
+  }
+
   return (
     <div className="mb-12 sm:mb-16">
       {/* Section Header */}
@@ -162,73 +235,51 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
         )}
       </div>
 
-      {/* Carousel Container */}
-      <div className="relative">
-        {/* Navigation Arrows - Desktop */}
-        {products.length > itemsPerView && (
-          <>
-            <button
-              onClick={prevSlide}
-              className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 -ml-4 z-10 w-8 h-8 sm:w-10 sm:h-10 bg-white rounded-full shadow-lg items-center justify-center hover:bg-gray-100 transition disabled:opacity-50"
-              style={{ display: currentIndex === 0 ? 'none' : 'flex' }}
-            >
-              <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            <button
-              onClick={nextSlide}
-              className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 -mr-4 z-10 w-8 h-8 sm:w-10 sm:h-10 bg-white rounded-full shadow-lg items-center justify-center hover:bg-gray-100 transition disabled:opacity-50"
-              style={{ display: currentIndex === maxIndex ? 'none' : 'flex' }}
-            >
-              <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-          </>
-        )}
-
-        {/* Carousel Content */}
-        <div
-          ref={carouselRef}
-          className="overflow-hidden"
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
+      {/* Carousel Container - Touch/Drag enabled */}
+      <div 
+        className="relative overflow-hidden"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        <div 
+          ref={containerRef}
+          className="flex transition-transform duration-500 ease-out"
+          style={{ 
+            transform: `translateX(-${currentIndex * 100}%)`,
+            transition: isTransitioning ? 'transform 0.5s ease-out' : 'none'
+          }}
         >
-          <div 
-            className="flex transition-transform duration-500 ease-out"
-            style={{ transform: `translateX(-${currentIndex * 100}%)` }}
-          >
-            {Array.from({ length: totalPages }).map((_, pageIndex) => (
-              <div key={pageIndex} className="flex-shrink-0 w-full">
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
-                  {products.slice(pageIndex * itemsPerView, (pageIndex + 1) * itemsPerView).map((product) => (
-                    <ProductCard key={product.id} product={product} />
-                  ))}
-                </div>
+          {visibleSlides.map((slide, idx) => (
+            <div key={idx} className="flex-shrink-0 w-full">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
+                {slide.map((product, productIdx) => (
+                  <ProductCard key={`${idx}-${productIdx}`} product={product} />
+                ))}
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
-
-        {/* Dots Indicator */}
-        {products.length > itemsPerView && totalPages > 1 && (
-          <div className="flex justify-center gap-1.5 sm:gap-2 mt-4 sm:mt-6">
-            {Array.from({ length: totalPages }).map((_, idx) => (
-              <button
-                key={idx}
-                onClick={() => goToSlide(idx)}
-                className={`transition-all duration-300 rounded-full ${
-                  idx === currentIndex
-                    ? 'w-6 sm:w-8 h-1.5 sm:h-2 bg-royal-blue'
-                    : 'w-1.5 sm:w-2 h-1.5 sm:h-2 bg-gray-300 hover:bg-gray-400'
-                }`}
-              />
-            ))}
-          </div>
-        )}
       </div>
+
+      {/* Dots Indicator */}
+      {products.length > itemsPerView && (
+        <div className="flex justify-center gap-1.5 sm:gap-2 mt-4 sm:mt-6">
+          {Array.from({ length: Math.ceil(products.length / itemsPerView) }).map((_, idx) => (
+            <button
+              key={idx}
+              onClick={() => {
+                setCurrentIndex(idx + Math.floor(middleIndex / 2));
+              }}
+              className={`transition-all duration-300 rounded-full ${
+                idx === (currentIndex % Math.ceil(products.length / itemsPerView))
+                  ? 'w-6 sm:w-8 h-1.5 sm:h-2 bg-royal-blue'
+                  : 'w-1.5 sm:w-2 h-1.5 sm:h-2 bg-gray-300 hover:bg-gray-400'
+              }`}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 };
