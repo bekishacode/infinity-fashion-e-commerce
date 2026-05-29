@@ -19,20 +19,21 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [itemsPerView, setItemsPerView] = useState(4);
+  const [touchStartX, setTouchStartX] = useState(0);
+  const [touchEndX, setTouchEndX] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
-  const [startX, setStartX] = useState(0);
-  const [currentTranslate, setCurrentTranslate] = useState(0);
-  const [prevTranslate, setPrevTranslate] = useState(0);
-  const [animation, setAnimation] = useState(true);
+  const [dragOffset, setDragOffset] = useState(0);
   const carouselRef = useRef<HTMLDivElement>(null);
   const autoPlayRef = useRef<NodeJS.Timeout>();
-  
+  const dragTimeoutRef = useRef<NodeJS.Timeout>();
+
   // Create infinite array by duplicating products 3 times
   const infiniteProducts = [...products, ...products, ...products];
   const totalItems = infiniteProducts.length;
   const itemsPerSlide = itemsPerView;
   const totalSlides = Math.ceil(totalItems / itemsPerSlide);
   const centerIndex = Math.floor(totalSlides / 3);
+  const actualProductCount = Math.ceil(products.length / itemsPerView);
 
   // Calculate items per view based on screen size
   useEffect(() => {
@@ -61,9 +62,9 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
     }
   }, [products.length, centerIndex]);
 
-  // Auto-play functionality
+  // Auto-play functionality - slower
   useEffect(() => {
-    if (products.length > itemsPerView) {
+    if (products.length > itemsPerView && !isDragging) {
       autoPlayRef.current = setInterval(() => {
         nextSlide();
       }, 5000);
@@ -73,15 +74,13 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
         clearInterval(autoPlayRef.current);
       }
     };
-  }, [currentIndex, products.length, itemsPerView]);
+  }, [currentIndex, products.length, itemsPerView, isDragging]);
 
   const nextSlide = () => {
-    setAnimation(true);
     setCurrentIndex(prev => prev + 1);
   };
 
   const prevSlide = () => {
-    setAnimation(true);
     setCurrentIndex(prev => prev - 1);
   };
 
@@ -89,86 +88,114 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
   useEffect(() => {
     if (currentIndex >= totalSlides - centerIndex) {
       setTimeout(() => {
-        setAnimation(false);
         setCurrentIndex(centerIndex);
-        setTimeout(() => setAnimation(true), 50);
       }, 300);
     } else if (currentIndex <= 0) {
       setTimeout(() => {
-        setAnimation(false);
         setCurrentIndex(centerIndex);
-        setTimeout(() => setAnimation(true), 50);
       }, 300);
     }
   }, [currentIndex, totalSlides, centerIndex]);
 
-  // Touch/Drag handlers for gallery-like experience
-  const handleDragStart = (e: React.TouchEvent | React.MouseEvent) => {
+  // Touch handlers for REAL sliding
+  const handleTouchStart = (e: React.TouchEvent) => {
     if (autoPlayRef.current) {
       clearInterval(autoPlayRef.current);
     }
-    
+    setTouchStartX(e.touches[0].clientX);
+    setTouchEndX(e.touches[0].clientX);
     setIsDragging(true);
-    setAnimation(false);
     
-    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-    setStartX(clientX);
-    setPrevTranslate(currentTranslate);
+    // Add grab cursor style
+    if (carouselRef.current) {
+      carouselRef.current.style.cursor = 'grabbing';
+    }
   };
 
-  const handleDragMove = (e: React.TouchEvent | React.MouseEvent) => {
+  const handleTouchMove = (e: React.TouchEvent) => {
     if (!isDragging) return;
     
-    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-    const diff = clientX - startX;
+    const currentX = e.touches[0].clientX;
+    setTouchEndX(currentX);
+    
+    // Calculate drag offset for visual feedback
+    const diff = currentX - touchStartX;
     const containerWidth = carouselRef.current?.offsetWidth || 0;
     const dragPercentage = (diff / containerWidth) * 100;
     
-    setCurrentTranslate(prevTranslate + dragPercentage);
+    // Limit drag resistance
+    const limitedDrag = Math.min(Math.max(dragPercentage, -30), 30);
+    setDragOffset(limitedDrag);
+    
+    // Apply drag transform
+    if (carouselRef.current) {
+      const wrapper = carouselRef.current.querySelector('.carousel-wrapper') as HTMLElement;
+      if (wrapper) {
+        const currentTransform = -currentIndex * 100;
+        wrapper.style.transform = `translateX(calc(${currentTransform}% + ${limitedDrag}px))`;
+        wrapper.style.transition = 'none';
+      }
+    }
   };
 
-  const handleDragEnd = (e: React.TouchEvent | React.MouseEvent) => {
-    if (!isDragging) return;
+  const handleTouchEnd = () => {
     setIsDragging(false);
-    setAnimation(true);
     
-    const clientX = 'changedTouches' in e ? e.changedTouches[0].clientX : e.clientX;
-    const diff = clientX - startX;
-    const threshold = 50;
+    // Reset cursor
+    if (carouselRef.current) {
+      carouselRef.current.style.cursor = 'grab';
+    }
+    
+    // Determine if swipe was significant
+    const diff = touchEndX - touchStartX;
+    const threshold = 50; // Minimum swipe distance
+    
+    // Reset drag offset
+    setDragOffset(0);
     
     if (Math.abs(diff) > threshold) {
       if (diff > 0) {
+        // Swipe right - go to previous
         prevSlide();
       } else {
+        // Swipe left - go to next
         nextSlide();
+      }
+    } else {
+      // Reset position without changing slide
+      if (carouselRef.current) {
+        const wrapper = carouselRef.current.querySelector('.carousel-wrapper') as HTMLElement;
+        if (wrapper) {
+          wrapper.style.transform = `translateX(-${currentIndex * 100}%)`;
+          wrapper.style.transition = 'transform 0.3s ease-out';
+        }
       }
     }
     
-    setCurrentTranslate(0);
-    setPrevTranslate(0);
-    
-    // Restart auto-play
-    if (autoPlayRef.current) {
-      clearInterval(autoPlayRef.current);
+    // Restart auto-play after 10 seconds
+    if (dragTimeoutRef.current) {
+      clearTimeout(dragTimeoutRef.current);
     }
-    autoPlayRef.current = setInterval(() => {
-      nextSlide();
-    }, 5000);
+    dragTimeoutRef.current = setTimeout(() => {
+      if (autoPlayRef.current) {
+        clearInterval(autoPlayRef.current);
+      }
+      autoPlayRef.current = setInterval(() => {
+        nextSlide();
+      }, 5000);
+    }, 10000);
   };
 
-  // Prevent default touch behavior
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (isDragging) {
-      e.preventDefault();
+  // Reset transform when currentIndex changes
+  useEffect(() => {
+    if (!isDragging && carouselRef.current) {
+      const wrapper = carouselRef.current.querySelector('.carousel-wrapper') as HTMLElement;
+      if (wrapper) {
+        wrapper.style.transform = `translateX(-${currentIndex * 100}%)`;
+        wrapper.style.transition = 'transform 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.1)';
+      }
     }
-  };
-
-  // Get visible products for current slide
-  const getVisibleProducts = () => {
-    const startIdx = currentIndex * itemsPerSlide;
-    const endIdx = Math.min(startIdx + itemsPerSlide, totalItems);
-    return infiniteProducts.slice(startIdx, endIdx);
-  };
+  }, [currentIndex, isDragging]);
 
   // Product Card Component
   const ProductCard = ({ product }: { product: Product }) => (
@@ -205,9 +232,6 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
 
   if (products.length === 0) return null;
 
-  const visibleProducts = getVisibleProducts();
-  const transformValue = currentTranslate;
-
   return (
     <div className="mb-12 sm:mb-16">
       {/* Section Header */}
@@ -231,26 +255,16 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
         )}
       </div>
 
-      {/* Carousel Container with Touch/Drag Support */}
+      {/* Carousel Container - Touch Sliding Enabled */}
       <div 
+        ref={carouselRef}
         className="relative overflow-hidden select-none"
-        onTouchStart={handleDragStart}
+        style={{ cursor: 'grab' }}
+        onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
-        onTouchEnd={handleDragEnd}
-        onMouseDown={handleDragStart}
-        onMouseMove={handleDragMove}
-        onMouseUp={handleDragEnd}
-        onMouseLeave={handleDragEnd}
+        onTouchEnd={handleTouchEnd}
       >
-        <div 
-          ref={carouselRef}
-          className="transition-transform"
-          style={{
-            transform: animation ? `translateX(-${currentIndex * 100}%)` : `translateX(calc(-${currentIndex * 100}% + ${transformValue}px))`,
-            transition: animation && !isDragging ? 'transform 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.1)' : 'none',
-            cursor: isDragging ? 'grabbing' : 'grab'
-          }}
-        >
+        <div className="carousel-wrapper" style={{ width: '100%' }}>
           <div className="flex">
             {Array.from({ length: totalSlides }).map((_, slideIndex) => {
               const startIdx = slideIndex * itemsPerSlide;
@@ -272,17 +286,16 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
       {/* Dots Indicator */}
       {products.length > itemsPerView && (
         <div className="flex justify-center gap-1.5 sm:gap-2 mt-4 sm:mt-6">
-          {Array.from({ length: Math.ceil(products.length / itemsPerView) }).map((_, idx) => {
-            const actualIndex = idx + (centerIndex % Math.ceil(products.length / itemsPerView));
+          {Array.from({ length: actualProductCount }).map((_, idx) => {
+            const isActive = (currentIndex % actualProductCount) === idx;
             return (
               <button
                 key={idx}
                 onClick={() => {
-                  setAnimation(true);
-                  setCurrentIndex(actualIndex);
+                  setCurrentIndex(idx + centerIndex);
                 }}
                 className={`transition-all duration-300 rounded-full ${
-                  (currentIndex % Math.ceil(products.length / itemsPerView)) === idx
+                  isActive
                     ? 'w-6 sm:w-8 h-1.5 sm:h-2 bg-royal-blue'
                     : 'w-1.5 sm:w-2 h-1.5 sm:h-2 bg-gray-300 hover:bg-gray-400'
                 }`}
