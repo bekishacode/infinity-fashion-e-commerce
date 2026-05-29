@@ -45,14 +45,23 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
     return () => window.removeEventListener('resize', updateItemsPerView);
   }, []);
 
-  // Scroll to current index when it changes
+  // Calculate card width based on items per view
+  const getCardWidth = () => {
+    if (!scrollContainerRef.current) return 0;
+    const containerWidth = scrollContainerRef.current.clientWidth;
+    return containerWidth / itemsPerView;
+  };
+
+  // Scroll to current index
   useEffect(() => {
-    if (scrollContainerRef.current) {
-      const cardWidth = scrollContainerRef.current.children[0]?.clientWidth || 0;
-      scrollContainerRef.current.scrollTo({
-        left: currentIndex * cardWidth,
-        behavior: 'smooth'
-      });
+    if (scrollContainerRef.current && !isDragging.current) {
+      const cardWidth = getCardWidth();
+      if (cardWidth > 0) {
+        scrollContainerRef.current.scrollTo({
+          left: currentIndex * cardWidth,
+          behavior: 'smooth'
+        });
+      }
     }
   }, [currentIndex, itemsPerView]);
 
@@ -86,14 +95,13 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
     }
   };
 
-  // Touch handlers for dragging
+  // Touch handlers for fast dragging
   const handleTouchStart = (e: React.TouchEvent) => {
     if (!scrollContainerRef.current) return;
     isDragging.current = true;
-    startX.current = e.touches[0].pageX - scrollContainerRef.current.offsetLeft;
+    startX.current = e.touches[0].pageX;
     scrollLeft.current = scrollContainerRef.current.scrollLeft;
     
-    // Stop auto-play while dragging
     if (autoPlayRef.current) {
       clearInterval(autoPlayRef.current);
     }
@@ -102,8 +110,8 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
   const handleTouchMove = (e: React.TouchEvent) => {
     if (!isDragging.current || !scrollContainerRef.current) return;
     e.preventDefault();
-    const x = e.touches[0].pageX - scrollContainerRef.current.offsetLeft;
-    const walk = (x - startX.current) * 1.5;
+    const x = e.touches[0].pageX;
+    const walk = (x - startX.current) * 1.2; // Fast sliding
     scrollContainerRef.current.scrollLeft = scrollLeft.current - walk;
   };
 
@@ -111,62 +119,57 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
     if (!scrollContainerRef.current) return;
     isDragging.current = false;
     
-    // Calculate which slide we're on based on scroll position
-    const cardWidth = scrollContainerRef.current.children[0]?.clientWidth || 0;
-    const scrollPosition = scrollContainerRef.current.scrollLeft;
-    const newIndex = Math.round(scrollPosition / cardWidth);
+    const cardWidth = getCardWidth();
+    if (cardWidth > 0) {
+      const scrollPosition = scrollContainerRef.current.scrollLeft;
+      const newIndex = Math.round(scrollPosition / cardWidth);
+      const maxIndex = Math.ceil(products.length / itemsPerView) - 1;
+      const finalIndex = Math.min(Math.max(0, newIndex), maxIndex);
+      setCurrentIndex(finalIndex);
+    }
     
-    setCurrentIndex(newIndex);
-    
-    // Restart auto-play
     autoPlayRef.current = setInterval(() => {
       nextSlide();
     }, 5000);
   };
 
-  // Get products for current page
-  const getCurrentProducts = () => {
-    const start = currentIndex * itemsPerView;
-    const end = start + itemsPerView;
-    return products.slice(start, end);
-  };
-
-  // Product Card
+  // Product Card with fixed width
   const ProductCard = ({ product }: { product: Product }) => (
-    <Link to={`/product/${product.id}`} className="block h-full px-2 flex-shrink-0 w-full sm:w-1/2 md:w-1/3 lg:w-1/4">
-      <div className="group bg-white rounded-xl shadow-md hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 overflow-hidden cursor-pointer h-full flex flex-col">
-        <div className="relative">
-          <div className="text-5xl sm:text-6xl py-8 sm:py-12 text-center bg-gradient-to-br from-gray-50 to-gray-100">
-            {product.icon}
-          </div>
-          {product.badge && (
-            <span className={`absolute top-2 right-2 sm:top-3 sm:right-3 ${product.badgeColor} text-white text-xs px-2 py-1 rounded-full`}>
-              {product.badge}
-            </span>
-          )}
-        </div>
-        <div className="p-3 sm:p-4 flex flex-col flex-grow">
-          <h3 className="font-semibold text-sm sm:text-base md:text-lg mb-1 text-charcoal group-hover:text-royal-blue transition line-clamp-2">
-            {product.name}
-          </h3>
-          <div className="flex items-center gap-2 mb-3 flex-wrap">
-            <p className="text-royal-blue font-bold text-base sm:text-lg md:text-xl">ETB {product.price}</p>
-            {product.originalPrice && (
-              <p className="text-gray-400 line-through text-xs sm:text-sm">ETB {product.originalPrice}</p>
+    <div className="px-2" style={{ width: `${100 / itemsPerView}%`, flexShrink: 0 }}>
+      <Link to={`/product/${product.id}`} className="block h-full">
+        <div className="group bg-white rounded-xl shadow-md hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 overflow-hidden cursor-pointer h-full flex flex-col">
+          <div className="relative">
+            <div className="text-5xl sm:text-6xl py-8 sm:py-12 text-center bg-gradient-to-br from-gray-50 to-gray-100">
+              {product.icon}
+            </div>
+            {product.badge && (
+              <span className={`absolute top-2 right-2 sm:top-3 sm:right-3 ${product.badgeColor} text-white text-xs px-2 py-1 rounded-full`}>
+                {product.badge}
+              </span>
             )}
           </div>
-          <button className="w-full bg-gradient-to-r from-royal-blue to-magenta text-white py-1.5 sm:py-2 rounded-lg hover:shadow-lg transition text-xs sm:text-sm md:text-base mt-auto">
-            {product.serviceType === 'wholesale' ? 'Request Quote' : 
-             product.serviceType === 'pod' ? 'Customize Now' : 'Add to Cart'}
-          </button>
+          <div className="p-3 sm:p-4 flex flex-col flex-grow">
+            <h3 className="font-semibold text-sm sm:text-base md:text-lg mb-1 text-charcoal group-hover:text-royal-blue transition line-clamp-2">
+              {product.name}
+            </h3>
+            <div className="flex items-center gap-2 mb-3 flex-wrap">
+              <p className="text-royal-blue font-bold text-base sm:text-lg md:text-xl">ETB {product.price}</p>
+              {product.originalPrice && (
+                <p className="text-gray-400 line-through text-xs sm:text-sm">ETB {product.originalPrice}</p>
+              )}
+            </div>
+            <button className="w-full bg-gradient-to-r from-royal-blue to-magenta text-white py-1.5 sm:py-2 rounded-lg hover:shadow-lg transition text-xs sm:text-sm md:text-base mt-auto">
+              {product.serviceType === 'wholesale' ? 'Request Quote' : 
+               product.serviceType === 'pod' ? 'Customize Now' : 'Add to Cart'}
+            </button>
+          </div>
         </div>
-      </div>
-    </Link>
+      </Link>
+    </div>
   );
 
   if (products.length === 0) return null;
 
-  const currentProducts = getCurrentProducts();
   const totalPages = Math.ceil(products.length / itemsPerView);
 
   return (
@@ -194,20 +197,21 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
 
       {/* Touch Slider Container */}
       <div className="relative">
-        {/* Horizontal Scroll Container */}
         <div
           ref={scrollContainerRef}
-          className="overflow-x-auto scroll-smooth hide-scrollbar"
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          className="overflow-x-auto hide-scrollbar"
+          style={{ 
+            scrollbarWidth: 'none', 
+            msOverflowStyle: 'none',
+            WebkitOverflowScrolling: 'touch'
+          }}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
         >
-          <div className="flex">
+          <div className="flex" style={{ width: `${products.length * (100 / itemsPerView)}%` }}>
             {products.map((product) => (
-              <div key={product.id} className="flex-shrink-0 w-full sm:w-1/2 md:w-1/3 lg:w-1/4 px-2">
-                <ProductCard product={product} />
-              </div>
+              <ProductCard key={product.id} product={product} />
             ))}
           </div>
         </div>
@@ -221,7 +225,7 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
                 onClick={() => {
                   setCurrentIndex(idx);
                   if (scrollContainerRef.current) {
-                    const cardWidth = scrollContainerRef.current.children[0]?.clientWidth || 0;
+                    const cardWidth = getCardWidth();
                     scrollContainerRef.current.scrollTo({
                       left: idx * cardWidth,
                       behavior: 'smooth'
