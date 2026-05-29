@@ -309,3 +309,62 @@ html {
   background-color: #273B89;
   color: white;
 }
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-down {
+  animation: slideDown 0.3s ease-out;
+}
+
+/* Custom slick carousel styling */
+.slick-prev:before,
+.slick-next:before {
+  color: #273B89 !important;
+  font-size: 24px !important;
+}
+
+.slick-dots li button:before {
+  font-size: 12px !important;
+  color: #273B89 !important;
+}
+
+.slick-dots li.slick-active button:before {
+  color: #ED5925 !important;
+}
+
+/* Line clamp for product titles */
+.line-clamp-1 {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Hide scrollbar on mobile filter buttons */
+.overflow-x-auto {
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+}
+
+.overflow-x-auto::-webkit-scrollbar {
+  height: 4px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 10px;
+}
