@@ -17,21 +17,13 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
   bgColor, 
   onViewAll 
 }) => {
-  const [currentPage, setCurrentPage] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [itemsPerView, setItemsPerView] = useState(4);
-  const [touchStart, setTouchStart] = useState(0);
-  const [touchEnd, setTouchEnd] = useState(0);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const autoPlayRef = useRef<NodeJS.Timeout>();
-
-  // Calculate how many pages we need
-  const totalPages = Math.ceil(products.length / itemsPerView);
-  
-  // Get current products to display
-  const getCurrentProducts = () => {
-    const start = currentPage * itemsPerView;
-    const end = start + itemsPerView;
-    return products.slice(start, end);
-  };
+  const isDragging = useRef(false);
+  const startX = useRef(0);
+  const scrollLeft = useRef(0);
 
   // Update items per view based on screen size
   useEffect(() => {
@@ -53,76 +45,95 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
     return () => window.removeEventListener('resize', updateItemsPerView);
   }, []);
 
-  // Reset to first page when products change
+  // Scroll to current index when it changes
   useEffect(() => {
-    setCurrentPage(0);
-  }, [products.length]);
+    if (scrollContainerRef.current) {
+      const cardWidth = scrollContainerRef.current.children[0]?.clientWidth || 0;
+      scrollContainerRef.current.scrollTo({
+        left: currentIndex * cardWidth,
+        behavior: 'smooth'
+      });
+    }
+  }, [currentIndex, itemsPerView]);
 
-  // Auto-play functionality
+  // Auto-play
   useEffect(() => {
     if (products.length > itemsPerView) {
       autoPlayRef.current = setInterval(() => {
-        nextPage();
+        nextSlide();
       }, 5000);
     }
     return () => {
-      if (autoPlayRef.current) {
-        clearInterval(autoPlayRef.current);
-      }
+      if (autoPlayRef.current) clearInterval(autoPlayRef.current);
     };
-  }, [currentPage, products.length, itemsPerView]);
+  }, [currentIndex, products.length, itemsPerView]);
 
-  const nextPage = () => {
-    if (currentPage < totalPages - 1) {
-      setCurrentPage(prev => prev + 1);
+  const nextSlide = () => {
+    const maxIndex = Math.ceil(products.length / itemsPerView) - 1;
+    if (currentIndex < maxIndex) {
+      setCurrentIndex(prev => prev + 1);
     } else {
-      // Loop back to first page
-      setCurrentPage(0);
+      setCurrentIndex(0);
     }
   };
 
-  const prevPage = () => {
-    if (currentPage > 0) {
-      setCurrentPage(prev => prev - 1);
+  const prevSlide = () => {
+    const maxIndex = Math.ceil(products.length / itemsPerView) - 1;
+    if (currentIndex > 0) {
+      setCurrentIndex(prev => prev - 1);
     } else {
-      // Loop to last page
-      setCurrentPage(totalPages - 1);
+      setCurrentIndex(maxIndex);
     }
   };
 
-  // Touch handlers for mobile swipe
+  // Touch handlers for dragging
   const handleTouchStart = (e: React.TouchEvent) => {
-    setTouchStart(e.touches[0].clientX);
+    if (!scrollContainerRef.current) return;
+    isDragging.current = true;
+    startX.current = e.touches[0].pageX - scrollContainerRef.current.offsetLeft;
+    scrollLeft.current = scrollContainerRef.current.scrollLeft;
+    
+    // Stop auto-play while dragging
+    if (autoPlayRef.current) {
+      clearInterval(autoPlayRef.current);
+    }
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    setTouchEnd(e.touches[0].clientX);
+    if (!isDragging.current || !scrollContainerRef.current) return;
+    e.preventDefault();
+    const x = e.touches[0].pageX - scrollContainerRef.current.offsetLeft;
+    const walk = (x - startX.current) * 1.5;
+    scrollContainerRef.current.scrollLeft = scrollLeft.current - walk;
   };
 
   const handleTouchEnd = () => {
-    if (!touchStart || !touchEnd) return;
+    if (!scrollContainerRef.current) return;
+    isDragging.current = false;
     
-    const distance = touchStart - touchEnd;
-    const minSwipeDistance = 50;
+    // Calculate which slide we're on based on scroll position
+    const cardWidth = scrollContainerRef.current.children[0]?.clientWidth || 0;
+    const scrollPosition = scrollContainerRef.current.scrollLeft;
+    const newIndex = Math.round(scrollPosition / cardWidth);
     
-    if (Math.abs(distance) > minSwipeDistance) {
-      if (distance > 0) {
-        // Swiped left - go to next
-        nextPage();
-      } else {
-        // Swiped right - go to previous
-        prevPage();
-      }
-    }
+    setCurrentIndex(newIndex);
     
-    // Reset values
-    setTouchStart(0);
-    setTouchEnd(0);
+    // Restart auto-play
+    autoPlayRef.current = setInterval(() => {
+      nextSlide();
+    }, 5000);
   };
 
-  // Product Card Component
+  // Get products for current page
+  const getCurrentProducts = () => {
+    const start = currentIndex * itemsPerView;
+    const end = start + itemsPerView;
+    return products.slice(start, end);
+  };
+
+  // Product Card
   const ProductCard = ({ product }: { product: Product }) => (
-    <Link to={`/product/${product.id}`} className="block h-full px-2">
+    <Link to={`/product/${product.id}`} className="block h-full px-2 flex-shrink-0 w-full sm:w-1/2 md:w-1/3 lg:w-1/4">
       <div className="group bg-white rounded-xl shadow-md hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 overflow-hidden cursor-pointer h-full flex flex-col">
         <div className="relative">
           <div className="text-5xl sm:text-6xl py-8 sm:py-12 text-center bg-gradient-to-br from-gray-50 to-gray-100">
@@ -135,7 +146,7 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
           )}
         </div>
         <div className="p-3 sm:p-4 flex flex-col flex-grow">
-          <h3 className="font-semibold text-sm sm:text-base md:text-lg mb-1 text-charcoal group-hover:text-royal-blue transition line-clamp-2 min-h-[2.5rem] sm:min-h-[3rem]">
+          <h3 className="font-semibold text-sm sm:text-base md:text-lg mb-1 text-charcoal group-hover:text-royal-blue transition line-clamp-2">
             {product.name}
           </h3>
           <div className="flex items-center gap-2 mb-3 flex-wrap">
@@ -156,10 +167,11 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
   if (products.length === 0) return null;
 
   const currentProducts = getCurrentProducts();
+  const totalPages = Math.ceil(products.length / itemsPerView);
 
   return (
     <div className="mb-12 sm:mb-16">
-      {/* Section Header */}
+      {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 sm:mb-6 gap-3">
         <div className="flex items-center gap-2 sm:gap-3">
           <div className={`text-xl sm:text-2xl md:text-3xl ${bgColor} w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center text-white`}>
@@ -180,51 +192,44 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
         )}
       </div>
 
-      {/* Carousel Container */}
-      <div 
-        className="relative"
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-      >
-        {/* Products Grid - Simple and Reliable */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
-          {currentProducts.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
+      {/* Touch Slider Container */}
+      <div className="relative">
+        {/* Horizontal Scroll Container */}
+        <div
+          ref={scrollContainerRef}
+          className="overflow-x-auto scroll-smooth hide-scrollbar"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
+          <div className="flex">
+            {products.map((product) => (
+              <div key={product.id} className="flex-shrink-0 w-full sm:w-1/2 md:w-1/3 lg:w-1/4 px-2">
+                <ProductCard product={product} />
+              </div>
+            ))}
+          </div>
         </div>
 
-        {/* Navigation Arrows - Only on desktop if needed */}
-        {totalPages > 1 && (
-          <>
-            <button
-              onClick={prevPage}
-              className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 -ml-4 w-8 h-8 sm:w-10 sm:h-10 bg-white rounded-full shadow-lg items-center justify-center hover:bg-gray-100 transition z-10"
-            >
-              <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            <button
-              onClick={nextPage}
-              className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 -mr-4 w-8 h-8 sm:w-10 sm:h-10 bg-white rounded-full shadow-lg items-center justify-center hover:bg-gray-100 transition z-10"
-            >
-              <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-          </>
-        )}
-
-        {/* Dots Indicator */}
+        {/* Dots */}
         {totalPages > 1 && (
           <div className="flex justify-center gap-1.5 sm:gap-2 mt-4 sm:mt-6">
             {Array.from({ length: totalPages }).map((_, idx) => (
               <button
                 key={idx}
-                onClick={() => setCurrentPage(idx)}
+                onClick={() => {
+                  setCurrentIndex(idx);
+                  if (scrollContainerRef.current) {
+                    const cardWidth = scrollContainerRef.current.children[0]?.clientWidth || 0;
+                    scrollContainerRef.current.scrollTo({
+                      left: idx * cardWidth,
+                      behavior: 'smooth'
+                    });
+                  }
+                }}
                 className={`transition-all duration-300 rounded-full ${
-                  idx === currentPage
+                  idx === currentIndex
                     ? 'w-6 sm:w-8 h-1.5 sm:h-2 bg-royal-blue'
                     : 'w-1.5 sm:w-2 h-1.5 sm:h-2 bg-gray-300 hover:bg-gray-400'
                 }`}

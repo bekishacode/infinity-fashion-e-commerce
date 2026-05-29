@@ -351,3 +351,12 @@ html {
 .animate-slide-down {
   animation: slideDown 0.3s ease-out;
 }
+/* Hide scrollbar for carousel */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
