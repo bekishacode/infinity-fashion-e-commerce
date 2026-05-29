@@ -25,12 +25,6 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
   const startX = useRef(0);
   const scrollLeft = useRef(0);
 
-  // Create infinite products by duplicating 3 times
-  const infiniteProducts = [...products, ...products, ...products];
-  const originalLength = products.length;
-  const totalPages = Math.ceil(originalLength / itemsPerView);
-  const centerIndex = totalPages; // Start from the middle copy
-
   // Update items per view based on screen size
   useEffect(() => {
     const updateItemsPerView = () => {
@@ -58,18 +52,6 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
     return containerWidth / itemsPerView;
   };
 
-  // Initialize at center position for infinite scroll
-  useEffect(() => {
-    if (scrollContainerRef.current && originalLength > 0 && currentIndex === 0) {
-      const cardWidth = getCardWidth();
-      if (cardWidth > 0) {
-        const centerScrollPosition = centerIndex * cardWidth;
-        scrollContainerRef.current.scrollLeft = centerScrollPosition;
-        setCurrentIndex(centerIndex);
-      }
-    }
-  }, [itemsPerView, originalLength]);
-
   // Scroll to current index
   useEffect(() => {
     if (scrollContainerRef.current && !isDragging.current) {
@@ -96,22 +78,20 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
   }, [currentIndex, products.length, itemsPerView]);
 
   const nextSlide = () => {
-    const maxIndex = centerIndex + totalPages - 1;
+    const maxIndex = Math.ceil(products.length / itemsPerView) - 1;
     if (currentIndex < maxIndex) {
       setCurrentIndex(prev => prev + 1);
     } else {
-      // Jump back to center seamlessly
-      setCurrentIndex(centerIndex);
+      setCurrentIndex(0);
     }
   };
 
   const prevSlide = () => {
-    const minIndex = centerIndex - totalPages + 1;
-    if (currentIndex > minIndex) {
+    const maxIndex = Math.ceil(products.length / itemsPerView) - 1;
+    if (currentIndex > 0) {
       setCurrentIndex(prev => prev - 1);
     } else {
-      // Jump back to center seamlessly
-      setCurrentIndex(centerIndex + totalPages - 1);
+      setCurrentIndex(maxIndex);
     }
   };
 
@@ -142,14 +122,10 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
     const cardWidth = getCardWidth();
     if (cardWidth > 0) {
       const scrollPosition = scrollContainerRef.current.scrollLeft;
-      let newIndex = Math.round(scrollPosition / cardWidth);
-      
-      // Keep index within bounds
-      const maxIndex = centerIndex + totalPages - 1;
-      const minIndex = centerIndex - totalPages + 1;
-      newIndex = Math.min(Math.max(minIndex, newIndex), maxIndex);
-      
-      setCurrentIndex(newIndex);
+      const newIndex = Math.round(scrollPosition / cardWidth);
+      const maxIndex = Math.ceil(products.length / itemsPerView) - 1;
+      const finalIndex = Math.min(Math.max(0, newIndex), maxIndex);
+      setCurrentIndex(finalIndex);
     }
     
     autoPlayRef.current = setInterval(() => {
@@ -157,7 +133,7 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
     }, 5000);
   };
 
-  // Product Card - EXACTLY THE SAME as your working version
+  // Product Card - Fixed sizing
   const ProductCard = ({ product }: { product: Product }) => (
     <div className="flex-shrink-0 px-2" style={{ width: `${100 / itemsPerView}%` }}>
       <Link to={`/product/${product.id}`} className="block h-full">
@@ -194,8 +170,7 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
 
   if (products.length === 0) return null;
 
-  // Calculate which page to show in dots (0 to totalPages-1)
-  const currentPageDisplay = ((currentIndex - centerIndex) % totalPages + totalPages) % totalPages;
+  const totalPages = Math.ceil(products.length / itemsPerView);
 
   return (
     <div className="mb-12 sm:mb-16">
@@ -235,8 +210,8 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
           onTouchEnd={handleTouchEnd}
         >
           <div className="flex">
-            {infiniteProducts.map((product, idx) => (
-              <ProductCard key={`${product.id}-${idx}`} product={product} />
+            {products.map((product) => (
+              <ProductCard key={product.id} product={product} />
             ))}
           </div>
         </div>
@@ -248,18 +223,17 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
               <button
                 key={idx}
                 onClick={() => {
-                  const newIndex = centerIndex - currentPageDisplay + idx;
-                  setCurrentIndex(newIndex);
+                  setCurrentIndex(idx);
                   if (scrollContainerRef.current) {
                     const cardWidth = getCardWidth();
                     scrollContainerRef.current.scrollTo({
-                      left: newIndex * cardWidth,
+                      left: idx * cardWidth,
                       behavior: 'smooth'
                     });
                   }
                 }}
                 className={`transition-all duration-300 rounded-full ${
-                  idx === currentPageDisplay
+                  idx === currentIndex
                     ? 'w-6 sm:w-8 h-1.5 sm:h-2 bg-royal-blue'
                     : 'w-1.5 sm:w-2 h-1.5 sm:h-2 bg-gray-300 hover:bg-gray-400'
                 }`}
