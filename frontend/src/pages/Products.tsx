@@ -1,9 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { productService, Product } from '../services/productService';
-import Slider from 'react-slick';
-import 'slick-carousel/slick/slick.css';
-import 'slick-carousel/slick/slick-theme.css';
 
 const Products: React.FC = () => {
   const [allProducts, setAllProducts] = useState<Product[]>([]);
@@ -15,64 +12,37 @@ const Products: React.FC = () => {
   const [sortBy, setSortBy] = useState('featured');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 2000]);
-  const [showFilters, setShowFilters] = useState(false);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [maxPrice, setMaxPrice] = useState(2000);
   const [error, setError] = useState<string | null>(null);
 
   const serviceTypes = [
-    { value: 'all', label: 'All Products', icon: '', color: 'bg-gray-100', textColor: 'text-gray-700' },
-    { value: 'pod', label: 'Print on Demand', icon: '', color: 'bg-magenta', textColor: 'text-white' },
-    { value: 'retail', label: 'Retail', icon: '', color: 'bg-green', textColor: 'text-white' },
-    { value: 'wholesale', label: 'Wholesale', icon: '', color: 'bg-royal-blue', textColor: 'text-white' },
+    { value: 'all', label: 'All Products', icon: '📦', color: 'bg-gray-100', textColor: 'text-gray-700' },
+    { value: 'pod', label: 'Print on Demand', icon: '🎨', color: 'bg-magenta', textColor: 'text-white' },
+    { value: 'retail', label: 'Retail', icon: '🛍️', color: 'bg-green', textColor: 'text-white' },
+    { value: 'wholesale', label: 'Wholesale', icon: '🏭', color: 'bg-royal-blue', textColor: 'text-white' },
   ];
-
-  // Carousel settings
-  const carouselSettings = {
-    dots: true,
-    infinite: false,
-    speed: 500,
-    slidesToShow: 3,
-    slidesToScroll: 3,
-    initialSlide: 0,
-    responsive: [
-      {
-        breakpoint: 1024,
-        settings: {
-          slidesToShow: 2,
-          slidesToScroll: 2,
-        }
-      },
-      {
-        breakpoint: 640,
-        settings: {
-          slidesToShow: 1,
-          slidesToScroll: 1,
-        }
-      }
-    ]
-  };
 
   const getSubCategories = () => {
     const allCategories = {
       retail: [
-        { value: 'all', label: 'All Retail', icon: '' },
-        { value: 't-shirts', label: 'T-Shirts', icon: '' },
-        { value: 'caps', label: 'Caps', icon: '' },
-        { value: 'bags', label: 'Bags', icon: '' },
-        { value: 'hoodies', label: 'Hoodies', icon: '' },
+        { value: 'all', label: 'All Retail', icon: '🛍️' },
+        { value: 't-shirts', label: 'T-Shirts', icon: '👕' },
+        { value: 'caps', label: 'Caps', icon: '🧢' },
+        { value: 'bags', label: 'Bags', icon: '👜' },
+        { value: 'hoodies', label: 'Hoodies', icon: '👔' },
       ],
       wholesale: [
-        { value: 'all', label: 'All Wholesale', icon: '' },
-        { value: 't-shirts', label: 'Bulk T-Shirts', icon: '' },
-        { value: 'caps', label: 'Bulk Caps', icon: '' },
-        { value: 'uniforms', label: 'Work Wear/Uniforms', icon: '' },
+        { value: 'all', label: 'All Wholesale', icon: '🏭' },
+        { value: 't-shirts', label: 'Bulk T-Shirts', icon: '👕' },
+        { value: 'caps', label: 'Bulk Caps', icon: '🧢' },
+        { value: 'uniforms', label: 'Work Wear/Uniforms', icon: '👔' },
       ],
       pod: [
-        { value: 'all', label: 'All POD', icon: '' },
-        { value: 't-shirts', label: 'Custom T-Shirts', icon: '' },
-        { value: 'hoodies', label: 'Custom Hoodies', icon: '' },
-        { value: 'gifts', label: 'Gift Items', icon: '' },
+        { value: 'all', label: 'All POD', icon: '🎨' },
+        { value: 't-shirts', label: 'Custom T-Shirts', icon: '👕' },
+        { value: 'hoodies', label: 'Custom Hoodies', icon: '👔' },
+        { value: 'gifts', label: 'Gift Items', icon: '🎁' },
       ],
     };
     return selectedService === 'all' 
@@ -80,7 +50,6 @@ const Products: React.FC = () => {
       : allCategories[selectedService as keyof typeof allCategories] || allCategories.retail;
   };
 
-  // Group products by service type
   const groupProductsByType = (products: Product[]) => {
     return {
       retail: products.filter(p => p.serviceType === 'retail'),
@@ -89,7 +58,6 @@ const Products: React.FC = () => {
     };
   };
 
-  // Fetch products
   const fetchProducts = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -156,12 +124,12 @@ const Products: React.FC = () => {
     setPriceRange([0, maxPrice]);
   };
 
-  // Render product card
+  // Responsive Product Card Component
   const ProductCard = ({ product }: { product: Product }) => (
-    <Link to={`/product/${product.id}`}>
-      <div className="group bg-white rounded-xl shadow-md hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 overflow-hidden cursor-pointer mx-2">
+    <Link to={`/product/${product.id}`} className="block h-full">
+      <div className="group bg-white rounded-xl shadow-md hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 overflow-hidden cursor-pointer h-full flex flex-col">
         <div className="relative">
-          <div className="text-7xl py-12 text-center bg-gradient-to-br from-gray-50 to-gray-100">
+          <div className="text-6xl sm:text-7xl py-8 sm:py-12 text-center bg-gradient-to-br from-gray-50 to-gray-100">
             {product.icon}
           </div>
           {product.badge && (
@@ -170,17 +138,17 @@ const Products: React.FC = () => {
             </span>
           )}
         </div>
-        <div className="p-4">
-          <h3 className="font-semibold text-lg mb-1 text-charcoal group-hover:text-royal-blue transition line-clamp-1">
+        <div className="p-3 sm:p-4 flex flex-col flex-grow">
+          <h3 className="font-semibold text-base sm:text-lg mb-1 text-charcoal group-hover:text-royal-blue transition line-clamp-2 min-h-[3.5rem]">
             {product.name}
           </h3>
-          <div className="flex items-center gap-2 mb-3">
-            <p className="text-royal-blue font-bold text-xl">ETB {product.price}</p>
+          <div className="flex items-center gap-2 mb-3 flex-wrap">
+            <p className="text-royal-blue font-bold text-lg sm:text-xl">ETB {product.price}</p>
             {product.originalPrice && (
-              <p className="text-gray-400 line-through text-sm">ETB {product.originalPrice}</p>
+              <p className="text-gray-400 line-through text-xs sm:text-sm">ETB {product.originalPrice}</p>
             )}
           </div>
-          <button className="w-full bg-gradient-to-r from-royal-blue to-magenta text-white py-2 rounded-lg hover:shadow-lg transition">
+          <button className="w-full bg-gradient-to-r from-royal-blue to-magenta text-white py-2 rounded-lg hover:shadow-lg transition text-sm sm:text-base mt-auto">
             {product.serviceType === 'wholesale' ? 'Request Quote' : 
              product.serviceType === 'pod' ? 'Customize Now' : 'Add to Cart'}
           </button>
@@ -189,21 +157,69 @@ const Products: React.FC = () => {
     </Link>
   );
 
-  // Render product section with carousel
+  // Product Grid Component (Responsive)
+  const ProductGrid = ({ products }: { products: Product[] }) => {
+    const displayProducts = products.slice(0, 12);
+    
+    return (
+      <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+        {displayProducts.map((product) => (
+          <ProductCard key={product.id} product={product} />
+        ))}
+      </div>
+    );
+  };
+
+  // Product List Component
+  const ProductList = ({ products }: { products: Product[] }) => {
+    const displayProducts = products.slice(0, 12);
+    
+    return (
+      <div className="space-y-3 sm:space-y-4">
+        {displayProducts.map((product) => (
+          <Link to={`/product/${product.id}`} key={product.id}>
+            <div className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 p-3 sm:p-4 flex flex-col sm:flex-row gap-3 sm:gap-4 items-start sm:items-center">
+              <div className="text-4xl sm:text-5xl w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg flex-shrink-0">
+                {product.icon}
+              </div>
+              <div className="flex-1 w-full">
+                <h3 className="font-semibold text-base sm:text-lg text-charcoal">{product.name}</h3>
+                {product.minQuantity && (
+                  <p className="text-xs text-royal-blue mt-1">Min order: {product.minQuantity} pieces</p>
+                )}
+                <p className="text-sm text-gray-500 mt-1 line-clamp-2">{product.description}</p>
+              </div>
+              <div className="text-left sm:text-right w-full sm:w-auto">
+                <p className="text-royal-blue font-bold text-lg sm:text-xl">ETB {product.price}</p>
+                <button className="mt-2 bg-gradient-to-r from-royal-blue to-magenta text-white px-3 sm:px-4 py-1.5 rounded-lg text-sm hover:shadow-lg transition w-full sm:w-auto">
+                  {product.serviceType === 'wholesale' ? 'Request Quote' : 
+                   product.serviceType === 'pod' ? 'Customize' : 'Add to Cart'}
+                </button>
+              </div>
+            </div>
+          </Link>
+        ))}
+      </div>
+    );
+  };
+
+  // Product Section Component
   const ProductSection = ({ title, icon, products, bgColor }: { title: string; icon: string; products: Product[]; bgColor: string }) => {
     if (products.length === 0) return null;
     
-    const displayProducts = products.slice(0, 12); // Show up to 12 products
-    const hasMore = products.length > 6;
+    const hasMore = products.length > 12;
     
     return (
-      <div className="mb-16">
-        <div className="flex items-center justify-between mb-6">
+      <div className="mb-12 sm:mb-16">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 sm:mb-6 gap-3">
           <div className="flex items-center gap-3">
-            <div className={`text-3xl ${bgColor} w-12 h-12 rounded-full flex items-center justify-center text-white`}>
+            <div className={`text-2xl sm:text-3xl ${bgColor} w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center text-white`}>
               {icon}
             </div>
-            <h2 className="text-2xl md:text-3xl font-bold text-charcoal">{title}</h2>
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-charcoal">{title}</h2>
+            <span className="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+              {products.length}
+            </span>
           </div>
           {hasMore && (
             <button 
@@ -219,56 +235,31 @@ const Products: React.FC = () => {
         </div>
         
         {viewMode === 'grid' ? (
-          <Slider {...carouselSettings}>
-            {displayProducts.map((product) => (
-              <div key={product.id}>
-                <ProductCard product={product} />
-              </div>
-            ))}
-          </Slider>
+          <ProductGrid products={products} />
         ) : (
-          <div className="space-y-4">
-            {displayProducts.map((product) => (
-              <Link to={`/product/${product.id}`} key={product.id}>
-                <div className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 p-4 flex gap-4 items-center">
-                  <div className="text-5xl w-20 h-20 flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg">
-                    {product.icon}
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-lg text-charcoal">{product.name}</h3>
-                    {product.minQuantity && (
-                      <p className="text-xs text-royal-blue mt-1">Min order: {product.minQuantity} pieces</p>
-                    )}
-                  </div>
-                  <div className="text-right">
-                    <p className="text-royal-blue font-bold text-xl">ETB {product.price}</p>
-                    <button className="mt-2 bg-gradient-to-r from-royal-blue to-magenta text-white px-4 py-1 rounded-lg text-sm hover:shadow-lg transition">
-                      {product.serviceType === 'wholesale' ? 'Request Quote' : 
-                       product.serviceType === 'pod' ? 'Customize' : 'Add to Cart'}
-                    </button>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
+          <ProductList products={products} />
         )}
       </div>
     );
   };
 
-  // Render content based on selected service
   const renderContent = () => {
     if (selectedService === 'all') {
       const grouped = groupProductsByType(filteredProducts);
       return (
         <>
-          <ProductSection title="Print on Demand" icon="🎨" products={grouped.pod} bgColor="bg-magenta" />
-          <ProductSection title="Retail" icon="🛍️" products={grouped.retail} bgColor="bg-green" />
-          <ProductSection title="Wholesale" icon="🏭" products={grouped.wholesale} bgColor="bg-royal-blue" />
+          {grouped.pod.length > 0 && (
+            <ProductSection title="Print on Demand" icon="🎨" products={grouped.pod} bgColor="bg-magenta" />
+          )}
+          {grouped.retail.length > 0 && (
+            <ProductSection title="Retail" icon="🛍️" products={grouped.retail} bgColor="bg-green" />
+          )}
+          {grouped.wholesale.length > 0 && (
+            <ProductSection title="Wholesale" icon="🏭" products={grouped.wholesale} bgColor="bg-royal-blue" />
+          )}
         </>
       );
     } else {
-      // Show single section for selected service
       const serviceMap = {
         pod: { title: 'Print on Demand', icon: '🎨', bgColor: 'bg-magenta' },
         retail: { title: 'Retail', icon: '🛍️', bgColor: 'bg-green' },
@@ -326,15 +317,15 @@ const Products: React.FC = () => {
         selectedService === 'pod' ? 'from-magenta to-magenta-dark' :
         selectedService === 'retail' ? 'from-green to-green-dark' :
         'from-royal-blue to-magenta'
-      } py-12 md:py-16 transition-all duration-500`}>
+      } py-8 sm:py-12 md:py-16 transition-all duration-500`}>
         <div className="container mx-auto px-4 text-center text-white">
-          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-2 sm:mb-4">
             {selectedService === 'wholesale' ? 'Wholesale Collection' :
              selectedService === 'pod' ? 'Print on Demand' :
              selectedService === 'retail' ? 'Retail Collection' :
              'Our Collection'}
           </h1>
-          <p className="text-white/90 text-lg md:text-xl max-w-2xl mx-auto">
+          <p className="text-white/90 text-sm sm:text-base md:text-lg lg:text-xl max-w-2xl mx-auto px-2">
             {selectedService === 'wholesale' ? 'Bulk orders with special pricing. Minimum 50 pieces.' :
              selectedService === 'pod' ? 'Upload your design. We print and ship. No minimum order.' :
              selectedService === 'retail' ? 'High-quality products for personal use and gifts.' :
@@ -343,58 +334,58 @@ const Products: React.FC = () => {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-8">
         {/* Search and Filter Bar */}
-        <div className="bg-white rounded-xl shadow-md p-4 mb-8 sticky top-20 z-30">
-          <div className="flex flex-col lg:flex-row gap-4">
+        <div className="bg-white rounded-xl shadow-md p-3 sm:p-4 mb-6 sm:mb-8 sticky top-20 z-30">
+          <div className="flex flex-col lg:flex-row gap-3 sm:gap-4">
             <div className="flex-1">
               <div className="relative">
-                <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
                 <input
                   type="text"
                   placeholder="Search products..."
-                  className="input pl-10"
+                  className="w-full px-3 sm:px-4 py-2 pl-9 sm:pl-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-royal-blue focus:border-transparent text-sm sm:text-base"
                   value={searchTerm}
                   onChange={handleSearchChange}
                 />
               </div>
             </div>
             
-            {/* Service Type Buttons - Scrollable on mobile */}
-            <div className="flex gap-2 flex-nowrap lg:flex-wrap overflow-x-auto lg:overflow-visible pb-2 lg:pb-0">
+            {/* Service Type Buttons */}
+            <div className="flex gap-2 flex-nowrap lg:flex-wrap overflow-x-auto lg:overflow-visible pb-2 lg:pb-0 -mx-1 px-1">
               {serviceTypes.map(service => (
                 <button
                   key={service.value}
                   onClick={() => handleServiceChange(service.value as any)}
-                  className={`px-4 py-2 rounded-full font-semibold transition-all duration-300 flex items-center gap-2 whitespace-nowrap ${
+                  className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-full font-semibold transition-all duration-300 flex items-center gap-1 sm:gap-2 whitespace-nowrap text-sm sm:text-base ${
                     selectedService === service.value
                       ? `${service.color} ${service.textColor} shadow-md`
                       : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}
                 >
-                  <span>{service.icon}</span>
-                  <span className="hidden sm:inline">{service.label}</span>
+                  <span className="text-base sm:text-lg">{service.icon}</span>
+                  <span className="hidden xs:inline">{service.label}</span>
                 </button>
               ))}
             </div>
             
-            {/* Mobile Filter Toggle */}
+            {/* Action Buttons */}
             <div className="flex gap-2">
               <button
                 onClick={() => setMobileFiltersOpen(!mobileFiltersOpen)}
-                className="lg:hidden flex items-center justify-center gap-2 bg-gray-100 px-4 py-2 rounded-lg"
+                className="lg:hidden flex items-center justify-center gap-2 bg-gray-100 px-3 sm:px-4 py-2 rounded-lg text-sm sm:text-base"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
                 </svg>
                 Filters
               </button>
               
-              <div className="flex gap-3">
+              <div className="flex gap-2 sm:gap-3">
                 <select
-                  className="input w-40"
+                  className="px-2 sm:px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-royal-blue text-sm sm:text-base w-32 sm:w-40"
                   value={sortBy}
                   onChange={handleSortChange}
                 >
@@ -405,20 +396,20 @@ const Products: React.FC = () => {
                   <option value="popular">Most Popular</option>
                 </select>
                 
-                <div className="hidden md:flex gap-2 border rounded-lg p-1">
+                <div className="hidden md:flex gap-1 sm:gap-2 border rounded-lg p-1">
                   <button
                     onClick={() => setViewMode('grid')}
-                    className={`p-2 rounded ${viewMode === 'grid' ? 'bg-royal-blue text-white' : 'text-gray-400'}`}
+                    className={`p-1.5 sm:p-2 rounded ${viewMode === 'grid' ? 'bg-royal-blue text-white' : 'text-gray-400'}`}
                   >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
                     </svg>
                   </button>
                   <button
                     onClick={() => setViewMode('list')}
-                    className={`p-2 rounded ${viewMode === 'list' ? 'bg-royal-blue text-white' : 'text-gray-400'}`}
+                    className={`p-1.5 sm:p-2 rounded ${viewMode === 'list' ? 'bg-royal-blue text-white' : 'text-gray-400'}`}
                   >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
                     </svg>
                   </button>
@@ -427,11 +418,11 @@ const Products: React.FC = () => {
             </div>
           </div>
           
-          {/* Mobile Filters Panel - Slide down */}
+          {/* Mobile Filters Panel */}
           {mobileFiltersOpen && (
             <div className="mt-4 pt-4 border-t lg:hidden animate-slide-down">
               <div className="mb-4">
-                <label className="label mb-2">Sub-Category</label>
+                <label className="block text-sm font-medium text-charcoal mb-2">Sub-Category</label>
                 <div className="flex flex-wrap gap-2">
                   {subCategories.map(cat => (
                     <button
@@ -454,7 +445,7 @@ const Products: React.FC = () => {
               </div>
               
               <div className="mb-4">
-                <label className="label mb-2">Price Range</label>
+                <label className="block text-sm font-medium text-charcoal mb-2">Price Range (ETB)</label>
                 <input
                   type="range"
                   min={0}
@@ -471,7 +462,7 @@ const Products: React.FC = () => {
               
               <button
                 onClick={clearAllFilters}
-                className="w-full bg-gray-100 text-royal-blue py-2 rounded-lg font-semibold"
+                className="w-full bg-gray-100 text-royal-blue py-2 rounded-lg font-semibold text-sm sm:text-base"
               >
                 Clear All Filters
               </button>
@@ -480,7 +471,7 @@ const Products: React.FC = () => {
         </div>
 
         {/* Desktop Sidebar Filters */}
-        <div className="flex gap-8">
+        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
           <div className="hidden lg:block w-64 flex-shrink-0">
             <div className="bg-white rounded-xl shadow-md p-6 sticky top-32">
               <div className="flex justify-between items-center mb-4">
@@ -499,13 +490,13 @@ const Products: React.FC = () => {
                   <button
                     key={cat.value}
                     onClick={() => handleCategoryChange(cat.value)}
-                    className={`w-full text-left px-3 py-2 rounded-lg transition flex items-center gap-2 ${
+                    className={`w-full text-left px-3 py-2 rounded-lg transition flex items-center gap-2 text-sm ${
                       selectedCategory === cat.value
                         ? 'bg-royal-blue/10 text-royal-blue font-semibold'
                         : 'hover:bg-gray-50'
                     }`}
                   >
-                    <span>{cat.icon}</span>
+                    <span className="text-lg">{cat.icon}</span>
                     <span>{cat.label}</span>
                     {selectedCategory === cat.value && (
                       <svg className="w-4 h-4 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -546,7 +537,7 @@ const Products: React.FC = () => {
           {/* Main Content Area */}
           <div className="flex-1">
             <div className="mb-4 flex justify-between items-center">
-              <div className="text-gray-600">
+              <div className="text-gray-600 text-sm sm:text-base">
                 Found {filteredProducts.length} products
               </div>
               {loading && (
@@ -555,7 +546,7 @@ const Products: React.FC = () => {
             </div>
             
             {filteredProducts.length === 0 && !loading ? (
-              <div className="text-center py-20 bg-white rounded-xl">
+              <div className="text-center py-12 sm:py-20 bg-white rounded-xl">
                 <div className="text-6xl mb-4">🔍</div>
                 <p className="text-charcoal text-lg">No products found.</p>
                 <button
