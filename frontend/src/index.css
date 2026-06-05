@@ -3,11 +3,28 @@
 @tailwind utilities;
 
 @layer base {
-  body {
+  /* Prevent horizontal overflow on html and body */
+  html, body {
     @apply bg-white text-charcoal;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
       'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
       sans-serif;
+    overflow-x: hidden;
+    width: 100%;
+    position: relative;
+  }
+  
+  /* Ensure root element doesn't overflow */
+  #root {
+    overflow-x: hidden;
+    width: 100%;
+    position: relative;
+  }
+  
+  /* Prevent any element from causing horizontal scroll */
+  *, *::before, *::after {
+    max-width: 100%;
+    box-sizing: border-box;
   }
 }
 
@@ -75,6 +92,9 @@
   .gradient-primary {
     @apply bg-gradient-to-r from-royal-blue to-royal-blue-dark;
   }
+  .gradient-primary-bt {
+    @apply bg-gradient-to-b from-royal-blue via-royal-blue-dark to-royal-blue-dark;
+  }
   
   .gradient-secondary {
     @apply bg-gradient-to-r from-orange to-orange-dark;
@@ -83,7 +103,12 @@
   .gradient-hero {
     @apply bg-gradient-to-r from-royal-blue via-magenta to-orange;
   }
-  
+  .gradient-hero-bt {
+    @apply bg-gradient-to-b from-royal-blue to-orange;
+  }
+  .gradient-hero-dark {
+   @apply bg-gradient-to-r from-royal-blue to-magenta
+  }
   .gradient-blue-dark {
     @apply bg-gradient-to-t from-royal-blue via-royal-blue to-royal-blue;
   }
@@ -98,7 +123,7 @@
   
   /* Text gradients */
   .text-gradient-primary {
-    @apply bg-gradient-to-r from-royal-blue to-green bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-green to-magenta ;
   }
   
   /* Hover effects */
@@ -121,11 +146,12 @@
   .text-charcoal { color: #010101; }
   
   /* Background colors */
-  .bg-royal-blue { background-color: #273B89; }
+  .bg-royal-blue { background-color: #273B89 ; }
   .bg-royal-blue-dark { background-color: #1E2D6E; }
   .bg-orange { background-color: #ED5925; }
   .bg-orange-dark { background-color: #D44A1A; }
   .bg-green { background-color: #0B9647; }
+  .bg-green-light { background-color: #d6f3e3; }
   .bg-green-dark { background-color: #097A3A; }
   .bg-magenta { background-color: #EC2D7B; }
   .bg-magenta-dark { background-color: #CC1D65; }
@@ -351,6 +377,7 @@ html {
 .animate-slide-down {
   animation: slideDown 0.3s ease-out;
 }
+
 /* Hide scrollbar for carousel */
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
@@ -360,24 +387,22 @@ html {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
-/* Force carousel to show all cards */
-.w-full {
+
+/* Carousel specific styles - without forcing overflow visible on everything */
+.carousel-container {
   width: 100%;
-  overflow: visible !important;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
 }
 
-.overflow-visible {
-  overflow: visible !important;
+.carousel-container::-webkit-scrollbar {
+  display: none;
 }
 
-.overflow-x-auto {
-  overflow-x: auto !important;
-  overflow-y: visible !important;
+/* Only apply overflow visible to specific carousel elements, not globally */
+.product-carousel-parent {
+  overflow: visible;
 }
 
-/* Remove any hidden overflow from parent containers that might clip the carousel */
-.product-carousel-parent,
-.flex-1,
-.relative {
-  overflow: visible !important;
-}

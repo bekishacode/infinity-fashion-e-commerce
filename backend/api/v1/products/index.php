@@ -1,130 +1,116 @@
 <?php
-// This file is included by the main index.php router
-// Add CORS headers here (copy from your main index.php)
-$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
-$allowed_origins = [
-    'https://infinity-fashion-e-commerce.vercel.app',
-    'https://infinity-fashion-e-commerce-git-main-bereket-fikres-projects.vercel.app',
-    'http://localhost:3000',
-    'http://localhost:3001'
-];
+require_once '../../../config/database.php';
 
-if (in_array($origin, $allowed_origins)) {
-    header('Access-Control-Allow-Origin: ' . $origin);
-    header('Access-Control-Allow-Credentials: true');
-    header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-    header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, Accept');
-}
-
-header('Content-Type: application/json');
-
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit();
-}
-
-// ============================================
-// FIXED PATH FOR RENDER
-// ============================================
-$dataFile = __DIR__ . '/../../data/products.json';
-
-// Alternative: Try multiple possible paths
-if (!file_exists($dataFile)) {
-    // Try absolute path from document root
-    $dataFile = $_SERVER['DOCUMENT_ROOT'] . '/data/products.json';
-}
-if (!file_exists($dataFile)) {
-    // Try relative to current file
-    $dataFile = dirname(__DIR__, 2) . '/data/products.json';
-}
-if (!file_exists($dataFile)) {
-    // Try one more level up
-    $dataFile = dirname(__DIR__, 3) . '/data/products.json';
-}
-
-// Debug: Log the path we're trying
-error_log("Looking for products.json at: " . $dataFile);
-
-if (!file_exists($dataFile)) {
-    http_response_code(500);
-    echo json_encode([
-        'success' => false,
-        'message' => 'Products data file not found',
-        'debug_path' => $dataFile,
-        'document_root' => $_SERVER['DOCUMENT_ROOT'],
-        'current_dir' => __DIR__
-    ]);
-    exit;
-}
-
-// Read products
-$jsonContent = file_get_contents($dataFile);
-$productsData = json_decode($jsonContent, true);
-
-if (!$productsData || !isset($productsData['products'])) {
-    http_response_code(500);
-    echo json_encode([
-        'success' => false,
-        'message' => 'Invalid products data format'
-    ]);
-    exit;
-}
-
-$products = $productsData['products'];
+$database = new Database();
+$db = $database->getConnection();
 
 // Get filters
-$serviceType = $_GET['service'] ?? 'all';
-$category = $_GET['category'] ?? 'all';
-$search = $_GET['search'] ?? '';
-$minPrice = isset($_GET['min_price']) ? (float)$_GET['min_price'] : 0;
-$maxPrice = isset($_GET['max_price']) ? (float)$_GET['max_price'] : 999999;
-$sort = $_GET['sort'] ?? 'featured';
+$service = isset($_GET['service']) ? $_GET['service'] : '';
+$category = isset($_GET['category']) ? $_GET['category'] : '';
+$search = isset($_GET['search']) ? $_GET['search'] : '';
 
-// Apply filters
-$filteredProducts = array_filter($products, function($product) use ($serviceType, $category, $search, $minPrice, $maxPrice) {
-    if ($serviceType !== 'all' && $product['serviceType'] !== $serviceType) {
-        return false;
-    }
-    if ($category !== 'all' && $product['category'] !== $category) {
-        return false;
-    }
-    if (!empty($search) && stripos($product['name'], $search) === false) {
-        return false;
-    }
-    if ($product['price'] < $minPrice || $product['price'] > $maxPrice) {
-        return false;
-    }
-    return true;
-});
+// Pagination parameters
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 20;
+$offset = ($page - 1) * $limit;
 
-$filteredProducts = array_values($filteredProducts);
+// Validate pagination
+if ($page < 1) $page = 1;
+if ($limit < 1) $limit = 20;
+if ($limit > 100) $limit = 100; // Max 100 items per page
 
-// Apply sorting
-usort($filteredProducts, function($a, $b) use ($sort) {
-    switch ($sort) {
-        case 'price-low':
-            return $a['price'] <=> $b['price'];
-        case 'price-high':
-            return $b['price'] <=> $a['price'];
-        case 'rating':
-            return ($b['rating'] ?? 0) <=> ($a['rating'] ?? 0);
-        default:
-            return $a['id'] <=> $b['id'];
+// Build WHERE clause
+$where = "WHERE is_active = 1";
+$params = [];
+$types = "";
+
+if ($service && $service != 'all') {
+    $where .= " AND service_type = ?";
+    $params[] = $service;
+    $types .= "s";
+}
+
+if ($category && $category != 'all') {
+    $where .= " AND category = ?";
+    $params[] = $category;
+    $types .= "s";
+}
+
+if ($search) {
+    $where .= " AND (name LIKE ? OR description LIKE ?)";
+    $searchParam = "%$search%";
+    $params[] = $searchParam;
+    $params[] = $searchParam;
+    $types .= "ss";
+}
+
+// ============================================
+// 1. Get TOTAL COUNT for pagination
+// ============================================
+$countSql = "SELECT COUNT(*) as total FROM products $where";
+$countStmt = $db->prepare($countSql);
+
+if (!empty($params)) {
+    $countStmt->bind_param($types, ...$params);
+}
+
+$countStmt->execute();
+$countResult = $countStmt->get_result();
+$total = $countResult->fetch_assoc()['total'];
+$totalPages = ceil($total / $limit);
+
+// ============================================
+// 2. Get PRODUCTS for current page
+// ============================================
+$sql = "SELECT * FROM products $where ORDER BY id DESC LIMIT ? OFFSET ?";
+$params[] = $limit;
+$params[] = $offset;
+$types .= "ii";
+
+$stmt = $db->prepare($sql);
+$stmt->bind_param($types, ...$params);
+$stmt->execute();
+$result = $stmt->get_result();
+
+$products = [];
+while ($row = $result->fetch_assoc()) {
+    $products[$row['id']] = $row;
+    $products[$row['id']]['images'] = [];
+}
+
+// ============================================
+// 3. Get ALL images for these products (ONE query)
+// ============================================
+if (!empty($products)) {
+    $productIds = array_keys($products);
+    $idsString = implode(',', $productIds);
+    
+    $imgSql = "SELECT product_id, image_url, is_primary, sort_order 
+               FROM product_images 
+               WHERE product_id IN ($idsString) 
+               ORDER BY product_id, sort_order";
+    $imgResult = $db->query($imgSql);
+    
+    while ($imgRow = $imgResult->fetch_assoc()) {
+        $products[$imgRow['product_id']]['images'][] = $imgRow['image_url'];
     }
-});
+}
 
-// Return response
-echo json_encode([
-    'success' => true,
-    'data' => $filteredProducts,
-    'total' => count($filteredProducts),
-    'filters' => [
-        'service' => $serviceType,
-        'category' => $category,
-        'search' => $search,
-        'min_price' => $minPrice,
-        'max_price' => $maxPrice,
-        'sort' => $sort
+// Convert to indexed array
+$productsArray = array_values($products);
+
+// ============================================
+// 4. Return response with pagination info
+// ============================================
+sendResponse(true, "Products retrieved successfully", [
+    'products' => $productsArray,
+    'pagination' => [
+        'current_page' => $page,
+        'per_page' => $limit,
+        'total' => $total,
+        'total_pages' => $totalPages,
+        'has_next' => $page < $totalPages,
+        'has_previous' => $page > 1
     ]
 ]);
 ?>

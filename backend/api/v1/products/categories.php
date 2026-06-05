@@ -1,39 +1,16 @@
 <?php
-// Get categories
+require_once '../../../config/database.php';
 
-$dataFile = __DIR__ . '/../../data/products.json';
+$database = new Database();
+$db = $database->getConnection();
 
-if (!file_exists($dataFile)) {
-    http_response_code(500);
-    echo json_encode([
-        'success' => false,
-        'message' => 'Products data file not found'
-    ]);
-    exit;
+$sql = "SELECT DISTINCT category FROM products WHERE is_active = 1";
+$result = $db->query($sql);
+$categories = [];
+
+while ($row = $result->fetch_assoc()) {
+    $categories[] = $row['category'];
 }
 
-$jsonContent = file_get_contents($dataFile);
-$productsData = json_decode($jsonContent, true);
-$products = $productsData['products'];
-
-// Group categories by service type
-$categories = [
-    'retail' => [],
-    'wholesale' => [],
-    'pod' => []
-];
-
-foreach ($products as $product) {
-    $serviceType = $product['serviceType'];
-    $category = $product['category'];
-    
-    if (!in_array($category, $categories[$serviceType])) {
-        $categories[$serviceType][] = $category;
-    }
-}
-
-echo json_encode([
-    'success' => true,
-    'data' => $categories
-]);
+sendResponse(true, "Categories retrieved successfully", $categories);
 ?>

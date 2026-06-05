@@ -18,93 +18,89 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
   onViewAll 
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [itemsPerView, setItemsPerView] = useState(4);
+  const [itemsPerView, setItemsPerView] = useState(3);
+  const [imageErrors, setImageErrors] = useState<{ [key: number]: boolean }>({});
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const autoPlayRef = useRef<NodeJS.Timeout>();
   const isDragging = useRef(false);
   const startX = useRef(0);
   const scrollLeft = useRef(0);
+  const isResetting = useRef(false);
 
-  // Update items per view based on screen size
+  const totalPages = Math.ceil(products.length / itemsPerView);
+  const cloneCount = itemsPerView;
+  const clonedProducts = [...products, ...products.slice(0, cloneCount)];
+
+  // Helper function to get image URL
+  const getImageUrl = (product: Product): string => {
+    if (!product.images) return '';
+    if (typeof product.images === 'string') return product.images;
+    if (Array.isArray(product.images) && product.images.length > 0) return product.images[0];
+    return '';
+  };
+
+  // ─── Responsive items per view (max 3) ───────────────────────────────────
   useEffect(() => {
     const updateItemsPerView = () => {
       const width = window.innerWidth;
-      if (width < 640) {
-        setItemsPerView(1);
-      } else if (width < 768) {
-        setItemsPerView(2);
-      } else if (width < 1024) {
-        setItemsPerView(3);
-      } else {
-        setItemsPerView(4);
-      }
+      if (width < 640) setItemsPerView(1);
+      else if (width < 1024) setItemsPerView(2);
+      else setItemsPerView(3);
     };
-
     updateItemsPerView();
     window.addEventListener('resize', updateItemsPerView);
     return () => window.removeEventListener('resize', updateItemsPerView);
   }, []);
 
-  // Calculate card width based on items per view
   const getCardWidth = () => {
     if (!scrollContainerRef.current) return 0;
-    const containerWidth = scrollContainerRef.current.clientWidth;
-    return containerWidth / itemsPerView;
+    return scrollContainerRef.current.clientWidth / itemsPerView;
   };
 
-  // Scroll to current index
+  const scrollToIndex = (index: number, smooth: boolean) => {
+    if (!scrollContainerRef.current) return;
+    const cw = getCardWidth();
+    if (cw === 0) return;
+    scrollContainerRef.current.scrollTo({
+      left: index * cw,
+      behavior: smooth ? 'smooth' : 'instant' as ScrollBehavior,
+    });
+  };
+
   useEffect(() => {
-    if (scrollContainerRef.current && !isDragging.current) {
-      const cardWidth = getCardWidth();
-      if (cardWidth > 0) {
-        scrollContainerRef.current.scrollTo({
-          left: currentIndex * cardWidth,
-          behavior: 'smooth'
-        });
-      }
+    if (!isDragging.current && !isResetting.current) {
+      scrollToIndex(currentIndex, true);
     }
   }, [currentIndex, itemsPerView]);
 
-  // Auto-play
-  useEffect(() => {
-    if (products.length > itemsPerView) {
-      autoPlayRef.current = setInterval(() => {
-        nextSlide();
-      }, 5000);
-    }
-    return () => {
-      if (autoPlayRef.current) clearInterval(autoPlayRef.current);
-    };
-  }, [currentIndex, products.length, itemsPerView]);
-
   const nextSlide = () => {
-    const maxIndex = Math.ceil(products.length / itemsPerView) - 1;
-    if (currentIndex < maxIndex) {
+    if (isResetting.current) return;
+    if (currentIndex < totalPages - 1) {
       setCurrentIndex(prev => prev + 1);
     } else {
-      setCurrentIndex(0);
+      isResetting.current = true;
+      scrollToIndex(totalPages, true);
+      setTimeout(() => {
+        scrollToIndex(0, false);
+        setCurrentIndex(0);
+        isResetting.current = false;
+      }, 500);
     }
   };
 
-  const prevSlide = () => {
-    const maxIndex = Math.ceil(products.length / itemsPerView) - 1;
-    if (currentIndex > 0) {
-      setCurrentIndex(prev => prev - 1);
-    } else {
-      setCurrentIndex(maxIndex);
+  useEffect(() => {
+    if (products.length > itemsPerView) {
+      autoPlayRef.current = setInterval(nextSlide, 4000);
     }
-  };
+    return () => { if (autoPlayRef.current) clearInterval(autoPlayRef.current); };
+  }, [currentIndex, products.length, itemsPerView]);
 
-  // Touch handlers for fast dragging
   const handleTouchStart = (e: React.TouchEvent) => {
     if (!scrollContainerRef.current) return;
     isDragging.current = true;
     startX.current = e.touches[0].pageX;
     scrollLeft.current = scrollContainerRef.current.scrollLeft;
-    
-    if (autoPlayRef.current) {
-      clearInterval(autoPlayRef.current);
-    }
+    if (autoPlayRef.current) clearInterval(autoPlayRef.current);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
@@ -118,63 +114,68 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
   const handleTouchEnd = () => {
     if (!scrollContainerRef.current) return;
     isDragging.current = false;
-    
-    const cardWidth = getCardWidth();
-    if (cardWidth > 0) {
+    const cw = getCardWidth();
+    if (cw > 0) {
       const scrollPosition = scrollContainerRef.current.scrollLeft;
-      const newIndex = Math.round(scrollPosition / cardWidth);
-      const maxIndex = Math.ceil(products.length / itemsPerView) - 1;
-      const finalIndex = Math.min(Math.max(0, newIndex), maxIndex);
+      const newIndex = Math.round(scrollPosition / cw);
+      const finalIndex = Math.min(Math.max(0, newIndex), totalPages - 1);
       setCurrentIndex(finalIndex);
     }
-    
-    autoPlayRef.current = setInterval(() => {
-      nextSlide();
-    }, 5000);
+    autoPlayRef.current = setInterval(nextSlide, 4000);
   };
 
-  // Product Card - Fixed sizing
-  const ProductCard = ({ product }: { product: Product }) => (
-    <div className="flex-shrink-0 px-2" style={{ width: `${100 / itemsPerView}%` }}>
-      <Link to={`/product/${product.id}`} className="block h-full">
-        <div className="group bg-white rounded-xl shadow-md hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 overflow-hidden cursor-pointer h-full flex flex-col">
-          <div className="relative">
-            <div className="text-5xl sm:text-6xl py-8 sm:py-12 text-center bg-gradient-to-br from-gray-50 to-gray-100">
-              {product.icon}
-            </div>
-            {product.badge && (
-              <span className={`absolute top-2 right-2 sm:top-3 sm:right-3 ${product.badgeColor} text-white text-xs px-2 py-1 rounded-full`}>
-                {product.badge}
-              </span>
-            )}
-          </div>
-          <div className="p-3 sm:p-4 flex flex-col flex-grow">
-            <h3 className="font-semibold text-sm sm:text-base md:text-lg mb-1 text-charcoal group-hover:text-royal-blue transition line-clamp-2 min-h-[2.5rem]">
-              {product.name}
-            </h3>
-            <div className="flex items-center gap-2 mb-3 flex-wrap">
-              <p className="text-royal-blue font-bold text-base sm:text-lg md:text-xl">ETB {product.price}</p>
-              {product.originalPrice && (
-                <p className="text-gray-400 line-through text-xs sm:text-sm">ETB {product.originalPrice}</p>
+  const ProductCard = ({ product }: { product: Product }) => {
+    const imageUrl = getImageUrl(product);
+    const hasError = imageErrors[product.id];
+    
+    return (
+      <div className="flex-shrink-0 px-2" style={{ width: `${100 / itemsPerView}%` }}>
+        <Link to={`/product/${product.id}`} className="block h-full">
+          <div className="group bg-white rounded-xl shadow-md hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 overflow-hidden cursor-pointer h-full flex flex-col">
+            <div className="relative">
+              {imageUrl && !hasError ? (
+                <img 
+                  src={imageUrl} 
+                  alt={product.name}
+                  className="w-full h-48 sm:h-56 md:h-64 object-cover bg-gradient-to-br from-gray-50 to-gray-100"
+                  onError={() => setImageErrors(prev => ({ ...prev, [product.id]: true }))}
+                />
+              ) : (
+                <div className="text-5xl sm:text-6xl py-8 sm:py-12 text-center bg-gradient-to-br from-gray-50 to-gray-100">
+                  {product.icon}
+                </div>
+              )}
+              {product.badge && (
+                <span className={`absolute top-2 right-2 sm:top-3 sm:right-3 ${product.badge_color} text-white text-xs px-2 py-1 rounded-full`}>
+                  {product.badge}
+                </span>
               )}
             </div>
-            <button className="w-full bg-gradient-to-r from-royal-blue to-magenta text-white py-2 rounded-lg hover:shadow-lg transition text-sm sm:text-base md:text-base mt-auto">
-              {product.serviceType === 'wholesale' ? 'Request Quote' : 
-               product.serviceType === 'pod' ? 'Customize Now' : 'Add to Cart'}
-            </button>
+            <div className="p-3 sm:p-4 flex flex-col flex-grow">
+              <h3 className="font-semibold text-sm sm:text-base md:text-lg mb-1 text-charcoal group-hover:text-royal-blue transition line-clamp-2 min-h-[2.5rem]">
+                {product.name}
+              </h3>
+              <div className="flex items-center gap-2 mb-3 flex-wrap">
+                <p className="text-royal-blue font-bold text-base sm:text-lg md:text-xl">ETB {product.price}</p>
+                {product.compare_price && (
+                  <p className="text-gray-400 line-through text-xs sm:text-sm">ETB {product.compare_price}</p>
+                )}
+              </div>
+              <button className="w-full bg-gradient-to-r from-royal-blue to-magenta text-white py-2 rounded-lg hover:shadow-lg transition text-sm sm:text-base md:text-base mt-auto">
+                {product.service_type === 'wholesale' ? 'Request Quote' : 
+                 product.service_type=== 'pod' ? 'Customize Now' : 'Add to Cart'}
+              </button>
+            </div>
           </div>
-        </div>
-      </Link>
-    </div>
-  );
+        </Link>
+      </div>
+    );
+  };
 
   if (products.length === 0) return null;
 
-  const totalPages = Math.ceil(products.length / itemsPerView);
-
   return (
     <div className="mb-12 sm:mb-16">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 sm:mb-6 gap-3">
         <div className="flex items-center gap-2 sm:gap-3">
           <div className={`text-xl sm:text-2xl md:text-3xl ${bgColor} w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center text-white`}>
@@ -195,8 +196,8 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
         )}
       </div>
 
-      {/* Touch Slider Container */}
-      <div className="relative">
+      {/* ↓ overflow-hidden clips the cloned cards and the partial 4th card */}
+      <div className="relative overflow-hidden">
         <div
           ref={scrollContainerRef}
           className="overflow-x-auto hide-scrollbar"
@@ -210,13 +211,12 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
           onTouchEnd={handleTouchEnd}
         >
           <div className="flex">
-            {products.map((product) => (
-              <ProductCard key={product.id} product={product} />
+            {clonedProducts.map((product, idx) => (
+              <ProductCard key={`${product.id}-${idx}`} product={product} />
             ))}
           </div>
         </div>
 
-        {/* Dots */}
         {totalPages > 1 && (
           <div className="flex justify-center gap-1.5 sm:gap-2 mt-4 sm:mt-6">
             {Array.from({ length: totalPages }).map((_, idx) => (
@@ -224,13 +224,7 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
                 key={idx}
                 onClick={() => {
                   setCurrentIndex(idx);
-                  if (scrollContainerRef.current) {
-                    const cardWidth = getCardWidth();
-                    scrollContainerRef.current.scrollTo({
-                      left: idx * cardWidth,
-                      behavior: 'smooth'
-                    });
-                  }
+                  scrollToIndex(idx, true);
                 }}
                 className={`transition-all duration-300 rounded-full ${
                   idx === currentIndex

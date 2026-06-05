@@ -52,9 +52,9 @@ const Products: React.FC = () => {
 
   const groupProductsByType = (products: Product[]) => {
     return {
-      retail: products.filter(p => p.serviceType === 'retail'),
-      wholesale: products.filter(p => p.serviceType === 'wholesale'),
-      pod: products.filter(p => p.serviceType === 'pod'),
+      retail: products.filter(p => p.service_type === 'retail'),
+      wholesale: products.filter(p => p.service_type === 'wholesale'),
+      pod: products.filter(p => p.service_type === 'pod'),
     };
   };
 
@@ -77,8 +77,10 @@ const Products: React.FC = () => {
       
       const response = await productService.getProducts(filters);
       
-      setAllProducts(response.data);
-      setFilteredProducts(response.data);
+      // response now has { products: [...], pagination: {...} }
+      const productsList = response.products || [];
+      setAllProducts(productsList);
+      setFilteredProducts(productsList);
     } catch (error) {
       console.error('Failed to fetch products:', error);
       setError('Failed to load products. Please try again.');
@@ -146,16 +148,16 @@ const Products: React.FC = () => {
                 </div>
                 <div className="flex-1 w-full">
                   <h3 className="font-semibold text-sm sm:text-base md:text-lg text-charcoal">{product.name}</h3>
-                  {product.minQuantity && (
-                    <p className="text-xs text-royal-blue mt-1">Min order: {product.minQuantity} pieces</p>
+                  {product.min_quantity && (
+                    <p className="text-xs text-royal-blue mt-1">Min order: {product.min_quantity} pieces</p>
                   )}
                   <p className="text-xs sm:text-sm text-gray-500 mt-1 line-clamp-2">{product.description}</p>
                 </div>
                 <div className="text-left sm:text-right w-full sm:w-auto">
                   <p className="text-royal-blue font-bold text-base sm:text-lg md:text-xl">ETB {product.price}</p>
                   <button className="mt-2 bg-gradient-to-r from-royal-blue to-magenta text-white px-3 sm:px-4 py-1.5 rounded-lg text-xs sm:text-sm hover:shadow-lg transition w-full sm:w-auto">
-                    {product.serviceType === 'wholesale' ? 'Request Quote' : 
-                     product.serviceType === 'pod' ? 'Customize' : 'Add to Cart'}
+                    {product.service_type === 'wholesale' ? 'Request Quote' : 
+                     product.service_type === 'pod' ? 'Customize' : 'Add to Cart'}
                   </button>
                 </div>
               </div>
@@ -274,21 +276,21 @@ const Products: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Hero Banner */}
+      {/* Hero Banner - Reduced padding */}
       <div className={`bg-gradient-to-r ${
         selectedService === 'wholesale' ? 'from-royal-blue to-royal-blue-dark' :
         selectedService === 'pod' ? 'from-magenta to-magenta-dark' :
         selectedService === 'retail' ? 'from-green to-green-dark' :
         'from-royal-blue to-magenta'
-      } py-8 sm:py-12 md:py-16 transition-all duration-500`}>
-        <div className="container mx-auto px-4 text-center text-white">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-2 sm:mb-4">
+      } py-6 sm:py-8 md:py-12 transition-all duration-500`}>
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 text-center text-white">
+          <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold mb-2">
             {selectedService === 'wholesale' ? 'Wholesale Collection' :
              selectedService === 'pod' ? 'Print on Demand' :
              selectedService === 'retail' ? 'Retail Collection' :
              'Our Collection'}
           </h1>
-          <p className="text-white/90 text-sm sm:text-base md:text-lg lg:text-xl max-w-2xl mx-auto px-2">
+          <p className="text-white/90 text-sm sm:text-base max-w-2xl mx-auto">
             {selectedService === 'wholesale' ? 'Bulk orders with special pricing. Minimum 50 pieces.' :
              selectedService === 'pod' ? 'Upload your design. We print and ship. No minimum order.' :
              selectedService === 'retail' ? 'High-quality products for personal use and gifts.' :
@@ -297,16 +299,17 @@ const Products: React.FC = () => {
         </div>
       </div>
 
-      <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-8">
+      {/* Main content - Removed padding, using max-w-7xl for better centering */}
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
         {/* Search and Filter Bar - Responsive for mobile */}
-        <div className="bg-white rounded-xl shadow-md mb-6 sm:mb-8 sticky top-20 z-30">
+        <div className="bg-royal-blue rounded-xl shadow-md mb-4 sm:mb-6 sticky top-20 z-30">
           {/* Minimized filter bar for mobile */}
           {isFilterMinimized && window.innerWidth < 1024 && (
-            <div className="p-3 flex items-center justify-between cursor-pointer" onClick={toggleFilterMinimized}>
+            <div className="p-2 sm:p-3 flex items-center justify-between cursor-pointer" onClick={toggleFilterMinimized}>
               <div className="flex items-center gap-2">
-                <span className="text-royal-blue font-semibold text-sm">Filters Applied</span>
+                <span className="text-royal-blue font-semibold text-xs sm:text-sm">Filters Applied</span>
                 {(selectedService !== 'all' || selectedCategory !== 'all' || searchTerm || sortBy !== 'featured') && (
-                  <span className="bg-royal-blue text-white text-xs px-2 py-1 rounded-full">
+                  <span className="bg-royal-blue-dark text-white text-xs px-2 py-0.5 rounded-full">
                     {[
                       selectedService !== 'all' ? 1 : 0,
                       selectedCategory !== 'all' ? 1 : 0,
@@ -316,7 +319,7 @@ const Products: React.FC = () => {
                   </span>
                 )}
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -326,7 +329,7 @@ const Products: React.FC = () => {
                 >
                   Clear all
                 </button>
-                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </div>
@@ -334,37 +337,37 @@ const Products: React.FC = () => {
           )}
 
           {/* Full filter bar - hidden on mobile when minimized */}
-          <div className={`p-3 sm:p-4 transition-all duration-300 ${
+          <div className={`p-2 sm:p-3 transition-all duration-300 ${
             isFilterMinimized && window.innerWidth < 1024 ? 'hidden' : 'block'
           }`}>
-            <div className="flex flex-col lg:flex-row gap-3 sm:gap-4">
+            <div className="flex flex-col lg:flex-row gap-2 sm:gap-3">
               <div className="flex-1">
                 <div className="relative">
-                  <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
                   <input
                     type="text"
                     placeholder="Search products..."
-                    className="w-full px-3 sm:px-4 py-2 pl-9 sm:pl-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-royal-blue focus:border-transparent text-sm sm:text-base"
+                    className="w-full px-3 py-1.5 pl-9 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-royal-blue focus:border-transparent text-sm"
                     value={searchTerm}
                     onChange={handleSearchChange}
                   />
                 </div>
               </div>
               
-              <div className="flex gap-2 flex-nowrap lg:flex-wrap overflow-x-auto lg:overflow-visible pb-2 lg:pb-0 -mx-1 px-1">
+              <div className="flex gap-1.5 flex-nowrap lg:flex-wrap overflow-x-auto lg:overflow-visible pb-1 lg:pb-0">
                 {serviceTypes.map(service => (
                   <button
                     key={service.value}
                     onClick={() => handleServiceChange(service.value as any)}
-                    className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-full font-semibold transition-all duration-300 flex items-center gap-1 sm:gap-2 whitespace-nowrap text-sm sm:text-base ${
+                    className={`bg-white px-3 py-1 rounded-full font-semibold transition-all duration-300 flex items-center gap-1 whitespace-nowrap text-xs sm:text-sm ${
                       selectedService === service.value
                         ? `${service.color} ${service.textColor} shadow-md`
                         : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                     }`}
                   >
-                    <span className="text-base sm:text-lg">{service.label}</span>
+                    <span>{service.label}</span>
                   </button>
                 ))}
               </div>
@@ -377,30 +380,30 @@ const Products: React.FC = () => {
                       setIsFilterMinimized(false);
                     }
                   }}
-                  className="lg:hidden flex items-center justify-center gap-2 bg-gray-100 px-3 sm:px-4 py-2 rounded-lg text-sm sm:text-base"
+                  className="lg:hidden flex items-center justify-center gap-1 bg-gray-100 px-3 py-1.5 rounded-lg text-sm"
                 >
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110 4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
                   </svg>
                   Filters
                 </button>
                 
-                <div className="flex gap-2 sm:gap-3">
+                <div className="flex gap-2">
                   
-                  <div className="hidden md:flex gap-1 sm:gap-2 border rounded-lg p-1">
+                  <div className="hidden md:flex gap-1 border rounded-lg p-0.5">
                     <button
                       onClick={() => setViewMode('grid')}
-                      className={`p-1.5 sm:p-2 rounded ${viewMode === 'grid' ? 'bg-royal-blue text-white' : 'text-gray-400'}`}
+                      className={`p-1 rounded ${viewMode === 'grid' ? 'bg-royal-blue text-white' : 'text-gray-400'}`}
                     >
-                      <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
                       </svg>
                     </button>
                     <button
                       onClick={() => setViewMode('list')}
-                      className={`p-1.5 sm:p-2 rounded ${viewMode === 'list' ? 'bg-royal-blue text-white' : 'text-gray-400'}`}
+                      className={`p-1 rounded ${viewMode === 'list' ? 'bg-royal-blue text-white' : 'text-gray-400'}`}
                     >
-                      <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
                       </svg>
                     </button>
@@ -410,10 +413,10 @@ const Products: React.FC = () => {
             </div>
             
             {mobileFiltersOpen && (
-              <div className="mt-4 pt-4 border-t lg:hidden animate-slide-down">
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-charcoal mb-2">Sub-Category</label>
-                  <div className="flex flex-wrap gap-2">
+              <div className="mt-3 pt-3 border-t lg:hidden">
+                <div className="mb-3">
+                  <label className="block text-sm font-medium text-charcoal mb-1.5">Sub-Category</label>
+                  <div className="flex flex-wrap gap-1.5">
                     {subCategories.map(cat => (
                       <button
                         key={cat.value}
@@ -421,7 +424,7 @@ const Products: React.FC = () => {
                           handleCategoryChange(cat.value);
                           setMobileFiltersOpen(false);
                         }}
-                        className={`px-3 py-1 rounded-full text-sm transition ${
+                        className={`px-2.5 py-1 rounded-full text-xs transition ${
                           selectedCategory === cat.value
                             ? 'bg-royal-blue text-white'
                             : 'bg-gray-100 text-gray-600'
@@ -439,7 +442,7 @@ const Products: React.FC = () => {
                     clearAllFilters();
                     setMobileFiltersOpen(false);
                   }}
-                  className="w-full bg-gray-100 text-royal-blue py-2 rounded-lg font-semibold text-sm sm:text-base"
+                  className="w-full bg-gray-100 text-royal-blue py-1.5 rounded-lg font-semibold text-sm"
                 >
                   Clear All Filters
                 </button>
@@ -449,36 +452,36 @@ const Products: React.FC = () => {
         </div>
 
         {/* Desktop Sidebar Filters - Only visible on large devices */}
-        <div className="hidden lg:block">
-          <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
-            <div className="w-64 flex-shrink-0">
-              <div className="bg-white rounded-xl shadow-md p-6 sticky top-32">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="font-bold text-lg text-charcoal">Sub-Categories</h3>
+        <div className="hidden lg:block ">
+          <div className="flex flex-col lg:flex-row gap-5">
+            <div className="w-56 flex-shrink-0 bg-royal-blue-dark rounded-xl shadow-md">
+              <div className="p-4 sticky top-32">
+                <div className="flex justify-between items-center mb-3">
+                  <h3 className="font-bold text-base text-white">Sub-Categories</h3>
                   {selectedCategory !== 'all' && (
                     <button
                       onClick={() => handleCategoryChange('all')}
-                      className="text-xs text-royal-blue hover:underline"
+                      className="text-xs text-orange hover:underline"
                     >
                       Clear
                     </button>
                   )}
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-1 text-white">
                   {subCategories.map(cat => (
                     <button
                       key={cat.value}
                       onClick={() => handleCategoryChange(cat.value)}
-                      className={`w-full text-left px-3 py-2 rounded-lg transition flex items-center gap-2 text-sm ${
+                      className={`w-full text-left px-2 py-1.5 rounded-lg transition flex items-center gap-2 text-sm ${
                         selectedCategory === cat.value
-                          ? 'bg-royal-blue/10 text-royal-blue font-semibold'
-                          : 'hover:bg-gray-50'
+                          ? 'bg-royal-blue/10 text-orange font-semibold'
+                          : 'hover:bg-orange-dark'
                       }`}
                     >
-                      <span className="text-lg">{cat.icon}</span>
+                      <span className="text-base">{cat.icon}</span>
                       <span>{cat.label}</span>
                       {selectedCategory === cat.value && (
-                        <svg className="w-4 h-4 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-3.5 h-3.5 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                         </svg>
                       )}
@@ -489,7 +492,7 @@ const Products: React.FC = () => {
                 {(selectedService !== 'all' || selectedCategory !== 'all' || searchTerm || sortBy !== 'featured') && (
                   <button
                     onClick={clearAllFilters}
-                    className="mt-6 w-full text-center text-sm text-royal-blue hover:underline"
+                    className="mt-4 w-full text-center text-xs text-white hover:underline"
                   >
                     Clear All Filters
                   </button>
@@ -498,26 +501,26 @@ const Products: React.FC = () => {
             </div>
 
             {/* Main Content Area */}
-            <div className="flex-1">
-              <div className="mb-4 flex justify-between items-center">
-                <div className="text-gray-600 text-sm sm:text-base">
+            <div className="flex-1 bg-gray-100">
+              <div className="mb-3 flex justify-between items-center">
+                <div className="text-gray-600 text-sm">
                   Found {filteredProducts.length} products
                 </div>
                 {loading && (
-                  <div className="inline-block animate-spin rounded-full h-5 w-5 border-b-2 border-royal-blue"></div>
+                  <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-royal-blue"></div>
                 )}
               </div>
               
               {filteredProducts.length === 0 && !loading ? (
-                <div className="text-center py-12 sm:py-20 bg-white rounded-xl">
-                  <div className="text-6xl mb-4">🔍</div>
-                  <p className="text-charcoal text-lg">No products found.</p>
+                <div className="text-center py-12 bg-white rounded-xl">
+                  <div className="text-6xl mb-3">🔍</div>
+                  <p className="text-charcoal text-base">No products found.</p>
                   <button
                     onClick={() => {
                       clearAllFilters();
                       setIsFilterMinimized(false);
                     }}
-                    className="mt-4 text-royal-blue hover:underline"
+                    className="mt-3 text-royal-blue hover:underline text-sm"
                   >
                     Clear all filters
                   </button>
@@ -531,25 +534,25 @@ const Products: React.FC = () => {
 
         {/* Mobile layout - Only visible on small devices */}
         <div className="lg:hidden">
-          <div className="mb-4 flex justify-between items-center">
-            <div className="text-gray-600 text-sm sm:text-base">
+          <div className="mb-3 flex justify-between items-center">
+            <div className="text-gray-600 text-sm">
               Found {filteredProducts.length} products
             </div>
             {loading && (
-              <div className="inline-block animate-spin rounded-full h-5 w-5 border-b-2 border-royal-blue"></div>
+              <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-royal-blue"></div>
             )}
           </div>
           
           {filteredProducts.length === 0 && !loading ? (
-            <div className="text-center py-12 sm:py-20 bg-white rounded-xl">
-              <div className="text-6xl mb-4">🔍</div>
-              <p className="text-charcoal text-lg">No products found.</p>
+            <div className="text-center py-12 bg-white rounded-xl">
+              <div className="text-6xl mb-3">🔍</div>
+              <p className="text-charcoal text-base">No products found.</p>
               <button
                 onClick={() => {
                   clearAllFilters();
                   setIsFilterMinimized(false);
                 }}
-                className="mt-4 text-royal-blue hover:underline"
+                className="mt-3 text-royal-blue hover:underline text-sm"
               >
                 Clear all filters
               </button>
