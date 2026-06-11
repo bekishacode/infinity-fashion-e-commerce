@@ -1,8 +1,8 @@
 <?php
 require_once '../../../config/database.php';
 
-$database = new Database();
-$db = $database->getConnection();
+// Note: This endpoint doesn't actually need database connection for file upload
+// But keeping it for consistency
 
 header("Content-Type: application/json");
 
@@ -19,7 +19,11 @@ $allowed_types = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
 $max_size = 5 * 1024 * 1024; // 5MB
 
 // Validate file type
-if (!in_array($file['type'], $allowed_types)) {
+$finfo = finfo_open(FILEINFO_MIME_TYPE);
+$file_type = finfo_file($finfo, $file['tmp_name']);
+finfo_close($finfo);
+
+if (!in_array($file_type, $allowed_types)) {
     sendResponse(false, 'Invalid file type. Allowed: JPG, PNG, WEBP', null, 400);
 }
 

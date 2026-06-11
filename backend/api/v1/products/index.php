@@ -19,29 +19,23 @@ if ($page < 1) $page = 1;
 if ($limit < 1) $limit = 20;
 if ($limit > 100) $limit = 100; // Max 100 items per page
 
-// Build WHERE clause
+// Build WHERE clause and parameters
 $where = "WHERE is_active = 1";
 $params = [];
-$types = "";
 
 if ($service && $service != 'all') {
-    $where .= " AND service_type = ?";
-    $params[] = $service;
-    $types .= "s";
+    $where .= " AND service_type = :service";
+    $params[':service'] = $service;
 }
 
 if ($category && $category != 'all') {
-    $where .= " AND category = ?";
-    $params[] = $category;
-    $types .= "s";
+    $where .= " AND category = :category";
+    $params[':category'] = $category;
 }
 
 if ($search) {
-    $where .= " AND (name LIKE ? OR description LIKE ?)";
-    $searchParam = "%$search%";
-    $params[] = $searchParam;
-    $params[] = $searchParam;
-    $types .= "ss";
+    $where .= " AND (name LIKE :search OR description LIKE :search)";
+    $params[':search'] = "%$search%";
 }
 
 // ============================================
@@ -49,31 +43,28 @@ if ($search) {
 // ============================================
 $countSql = "SELECT COUNT(*) as total FROM products $where";
 $countStmt = $db->prepare($countSql);
-
-if (!empty($params)) {
-    $countStmt->bind_param($types, ...$params);
+foreach ($params as $key => &$val) {
+    $countStmt->bindParam($key, $val);
 }
-
 $countStmt->execute();
-$countResult = $countStmt->get_result();
-$total = $countResult->fetch_assoc()['total'];
+$total = $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
 $totalPages = ceil($total / $limit);
 
 // ============================================
 // 2. Get PRODUCTS for current page
 // ============================================
-$sql = "SELECT * FROM products $where ORDER BY id DESC LIMIT ? OFFSET ?";
-$params[] = $limit;
-$params[] = $offset;
-$types .= "ii";
-
+$sql = "SELECT * FROM products $where ORDER BY id DESC LIMIT :limit OFFSET :offset";
 $stmt = $db->prepare($sql);
-$stmt->bind_param($types, ...$params);
+$stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
+$stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
+foreach ($params as $key => &$val) {
+    $stmt->bindParam($key, $val);
+}
 $stmt->execute();
-$result = $stmt->get_result();
+$rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 $products = [];
-while ($row = $result->fetch_assoc()) {
+foreach ($rows as $row) {
     $products[$row['id']] = $row;
     $products[$row['id']]['images'] = [];
 }
@@ -83,15 +74,22 @@ while ($row = $result->fetch_assoc()) {
 // ============================================
 if (!empty($products)) {
     $productIds = array_keys($products);
-    $idsString = implode(',', $productIds);
+    $placeholders = implode(',', array_fill(0, count($productIds), '?'));
     
     $imgSql = "SELECT product_id, image_url, is_primary, sort_order 
                FROM product_images 
-               WHERE product_id IN ($idsString) 
+               WHERE product_id IN ($placeholders) 
                ORDER BY product_id, sort_order";
-    $imgResult = $db->query($imgSql);
+    $imgStmt = $db->prepare($imgSql);
     
-    while ($imgRow = $imgResult->fetch_assoc()) {
+    // Bind each product ID
+    foreach ($productIds as $idx => $id) {
+        $imgStmt->bindValue($idx + 1, $id, PDO::PARAM_INT);
+    }
+    $imgStmt->execute();
+    $imgRows = $imgStmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    foreach ($imgRows as $imgRow) {
         $products[$imgRow['product_id']]['images'][] = $imgRow['image_url'];
     }
 }

@@ -49,29 +49,57 @@ $sql = "INSERT INTO products (
     badge, badge_color, rating, review_count, min_quantity, description, 
     material, care_instructions, weight, in_stock, is_featured, is_active
 ) VALUES (
-    '$name', '$slug', $price, " . ($compare_price ? $compare_price : "NULL") . ", 
-    " . ($icon ? "'$icon'" : "NULL") . ", '$service_type', '$category', " . ($sub_category ? "'$sub_category'" : "NULL") . ",
-    " . ($badge ? "'$badge'" : "NULL") . ", " . ($badge_color ? "'$badge_color'" : "NULL") . ", 
-    $rating, $review_count, $min_quantity, " . ($description ? "'$description'" : "NULL") . ",
-    " . ($material ? "'$material'" : "NULL") . ", " . ($care_instructions ? "'$care_instructions'" : "NULL") . ", 
-    " . ($weight ? $weight : "NULL") . ", $in_stock, $is_featured, $is_active
+    :name, :slug, :price, :compare_price, :icon, :service_type, :category, :sub_category,
+    :badge, :badge_color, :rating, :review_count, :min_quantity, :description,
+    :material, :care_instructions, :weight, :in_stock, :is_featured, :is_active
 )";
 
-if ($db->query($sql)) {
-    $product_id = $db->insert_id;
+$stmt = $db->prepare($sql);
+$result = $stmt->execute([
+    ':name' => $name,
+    ':slug' => $slug,
+    ':price' => $price,
+    ':compare_price' => $compare_price,
+    ':icon' => $icon,
+    ':service_type' => $service_type,
+    ':category' => $category,
+    ':sub_category' => $sub_category,
+    ':badge' => $badge,
+    ':badge_color' => $badge_color,
+    ':rating' => $rating,
+    ':review_count' => $review_count,
+    ':min_quantity' => $min_quantity,
+    ':description' => $description,
+    ':material' => $material,
+    ':care_instructions' => $care_instructions,
+    ':weight' => $weight,
+    ':in_stock' => $in_stock,
+    ':is_featured' => $is_featured,
+    ':is_active' => $is_active
+]);
+
+if ($result) {
+    $product_id = $db->lastInsertId();
     
     // Insert images
     if (!empty($images)) {
+        $imgSql = "INSERT INTO product_images (product_id, image_url, is_primary, sort_order) 
+                   VALUES (:product_id, :image_url, :is_primary, :sort_order)";
+        $imgStmt = $db->prepare($imgSql);
+        
         foreach ($images as $index => $image_url) {
             $is_primary = ($index == 0) ? 1 : 0;
-            $imgSql = "INSERT INTO product_images (product_id, image_url, is_primary, sort_order) 
-                       VALUES ($product_id, '$image_url', $is_primary, $index)";
-            $db->query($imgSql);
+            $imgStmt->execute([
+                ':product_id' => $product_id,
+                ':image_url' => $image_url,
+                ':is_primary' => $is_primary,
+                ':sort_order' => $index
+            ]);
         }
     }
     
     sendResponse(true, "Product created successfully", ["id" => $product_id, "slug" => $slug]);
 } else {
-    sendResponse(false, "Failed to create product: " . $db->error, null, 500);
+    sendResponse(false, "Failed to create product", null, 500);
 }
 ?>

@@ -1,0 +1,530 @@
+import React, { useState, useEffect } from 'react';
+import { adminService } from '../../services/adminService';
+
+interface ServiceType {
+  id: number;
+  name: string;
+  display_name: string;
+  icon: string;
+  sort_order: number;
+  is_active: boolean;
+}
+
+interface Category {
+  id: number;
+  service_type_id: number;
+  name: string;
+  display_name: string;
+  icon: string;
+  sort_order: number;
+  is_active: boolean;
+  service_type_name?: string;
+}
+
+interface SubCategory {
+  id: number;
+  category_id: number;
+  name: string;
+  display_name: string;
+  sort_order: number;
+  is_active: boolean;
+  category_name?: string;
+}
+
+type TabType = 'service-types' | 'categories' | 'sub-categories';
+
+const PicklistManagement: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<TabType>('service-types');
+  const [serviceTypes, setServiceTypes] = useState<ServiceType[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [subCategories, setSubCategories] = useState<SubCategory[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [editingItem, setEditingItem] = useState<any>(null);
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  
+  // Form state
+  const [formData, setFormData] = useState({
+    name: '',
+    display_name: '',
+    icon: '',
+    sort_order: 0,
+    service_type_id: 0,
+    category_id: 0
+  });
+
+  useEffect(() => {
+    fetchData();
+  }, [activeTab]);
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      if (activeTab === 'service-types') {
+        const result = await adminService.getServiceTypes();
+        if (result.success) setServiceTypes(result.data);
+      } else if (activeTab === 'categories') {
+        const result = await adminService.getCategories();
+        if (result.success) setCategories(result.data);
+      } else {
+        const result = await adminService.getSubCategories();
+        if (result.success) setSubCategories(result.data);
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      showMessage('error', 'Failed to load data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const showMessage = (type: 'success' | 'error', text: string) => {
+    setMessage({ type, text });
+    setTimeout(() => setMessage(null), 5000);
+  };
+
+  const handleCreate = () => {
+    setEditingItem(null);
+    setFormData({
+      name: '',
+      display_name: '',
+      icon: '',
+      sort_order: 0,
+      service_type_id: 0,
+      category_id: 0
+    });
+    setShowModal(true);
+  };
+
+  const handleEdit = (item: any) => {
+    setEditingItem(item);
+    setFormData({
+      name: item.name || '',
+      display_name: item.display_name || '',
+      icon: item.icon || '',
+      sort_order: item.sort_order || 0,
+      service_type_id: item.service_type_id || 0,
+      category_id: item.category_id || 0
+    });
+    setShowModal(true);
+  };
+
+  const handleDelete = async (id: number, name: string) => {
+    if (window.confirm(`Are you sure you want to delete "${name}"?`)) {
+      try {
+        let result;
+        if (activeTab === 'service-types') {
+          result = await adminService.deleteServiceType(id);
+        } else if (activeTab === 'categories') {
+          result = await adminService.deleteCategory(id);
+        } else {
+          result = await adminService.deleteSubCategory(id);
+        }
+        
+        if (result.success) {
+          showMessage('success', 'Deleted successfully');
+          fetchData();
+        } else {
+          showMessage('error', result.message || 'Delete failed');
+        }
+      } catch (error) {
+        showMessage('error', 'Something went wrong');
+      }
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    
+    try {
+      let result;
+      
+      if (activeTab === 'service-types') {
+        const submitData = {
+          name: formData.name,
+          display_name: formData.display_name,
+          icon: formData.icon,
+          sort_order: formData.sort_order
+        };
+        
+        if (editingItem) {
+          result = await adminService.updateServiceType(editingItem.id, submitData);
+        } else {
+          result = await adminService.createServiceType(submitData);
+        }
+      } 
+      else if (activeTab === 'categories') {
+        if (!formData.service_type_id) {
+          showMessage('error', 'Please select a service type');
+          setLoading(false);
+          return;
+        }
+        
+        const submitData = {
+          service_type_id: formData.service_type_id,
+          name: formData.name,
+          display_name: formData.display_name,
+          icon: formData.icon,
+          sort_order: formData.sort_order
+        };
+        
+        if (editingItem) {
+          result = await adminService.updateCategory(editingItem.id, submitData);
+        } else {
+          result = await adminService.createCategory(submitData);
+        }
+      } 
+      else {
+        if (!formData.category_id) {
+          showMessage('error', 'Please select a category');
+          setLoading(false);
+          return;
+        }
+        
+        const submitData = {
+          category_id: formData.category_id,
+          name: formData.name,
+          display_name: formData.display_name,
+          sort_order: formData.sort_order
+        };
+        
+        if (editingItem) {
+          result = await adminService.updateSubCategory(editingItem.id, submitData);
+        } else {
+          result = await adminService.createSubCategory(submitData);
+        }
+      }
+      
+      if (result && result.success) {
+        showMessage('success', editingItem ? 'Updated successfully' : 'Created successfully');
+        setShowModal(false);
+        fetchData();
+      } else {
+        showMessage('error', result?.message || 'Operation failed');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      showMessage('error', 'Something went wrong');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading && (serviceTypes.length === 0 && categories.length === 0 && subCategories.length === 0)) {
+    return (
+      <div className="flex justify-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-royal-blue"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6 mt-14">
+      <div>
+        <h1 className="text-2xl font-bold text-charcoal">Picklist <span className="text-royal-blue">Management</span></h1>
+        <p className="text-gray-500 text-sm">Manage service types, categories, and sub-categories</p>
+      </div>
+
+      {message && (
+        <div className={`p-3 rounded-lg text-sm ${
+          message.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'
+        }`}>
+          {message.text}
+        </div>
+      )}
+
+      {/* Tabs */}
+      <div className="border-b border-gray-200">
+        <nav className="flex gap-6">
+          <button
+            onClick={() => setActiveTab('service-types')}
+            className={`pb-3 px-1 text-sm font-medium transition-colors ${
+              activeTab === 'service-types'
+                ? 'text-royal-blue border-b-2 border-royal-blue'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Service Types
+          </button>
+          <button
+            onClick={() => setActiveTab('categories')}
+            className={`pb-3 px-1 text-sm font-medium transition-colors ${
+              activeTab === 'categories'
+                ? 'text-royal-blue border-b-2 border-royal-blue'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Categories
+          </button>
+          <button
+            onClick={() => setActiveTab('sub-categories')}
+            className={`pb-3 px-1 text-sm font-medium transition-colors ${
+              activeTab === 'sub-categories'
+                ? 'text-royal-blue border-b-2 border-royal-blue'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Sub-Categories
+          </button>
+        </nav>
+      </div>
+
+      {/* Add Button */}
+      <div className="flex justify-end">
+        <button
+          onClick={handleCreate}
+          className="flex items-center gap-2 bg-royal-blue text-white px-4 py-2 rounded-lg hover:bg-royal-blue-dark transition"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+          Add {activeTab === 'service-types' ? 'Service Type' : activeTab === 'categories' ? 'Category' : 'Sub-Category'}
+        </button>
+      </div>
+
+      {/* Service Types Table */}
+      {activeTab === 'service-types' && (
+        <div className="bg-white rounded-lg shadow overflow-hidden">
+          <table className="w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Display Name</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Icon</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sort Order</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {serviceTypes.map((item) => (
+                <tr key={item.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 text-sm text-gray-500">#{item.id}</td>
+                  <td className="px-6 py-4 text-sm font-medium">{item.name}</td>
+                  <td className="px-6 py-4 text-sm">{item.display_name}</td>
+                  <td className="px-6 py-4 text-2xl">{item.icon}</td>
+                  <td className="px-6 py-4 text-sm">{item.sort_order}</td>
+                  <td className="px-6 py-4">
+                    {item.is_active ? (
+                      <span className="text-green-600 text-sm">Active</span>
+                    ) : (
+                      <span className="text-red-600 text-sm">Inactive</span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 text-sm space-x-2">
+                    <button onClick={() => handleEdit(item)} className="text-blue-600 hover:text-blue-800">Edit</button>
+                    <button onClick={() => handleDelete(item.id, item.display_name)} className="text-red-600 hover:text-red-800">Delete</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Categories Table */}
+      {activeTab === 'categories' && (
+        <div className="bg-white rounded-lg shadow overflow-hidden">
+          <table className="w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Service Type</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Display Name</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Icon</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sort Order</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {categories.map((item) => (
+                <tr key={item.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 text-sm text-gray-500">#{item.id}</td>
+                  <td className="px-6 py-4 text-sm">{item.service_type_name}</td>
+                  <td className="px-6 py-4 text-sm font-medium">{item.name}</td>
+                  <td className="px-6 py-4 text-sm">{item.display_name}</td>
+                  <td className="px-6 py-4 text-2xl">{item.icon}</td>
+                  <td className="px-6 py-4 text-sm">{item.sort_order}</td>
+                  <td className="px-6 py-4">
+                    {item.is_active ? (
+                      <span className="text-green-600 text-sm">Active</span>
+                    ) : (
+                      <span className="text-red-600 text-sm">Inactive</span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 text-sm space-x-2">
+                    <button onClick={() => handleEdit(item)} className="text-blue-600 hover:text-blue-800">Edit</button>
+                    <button onClick={() => handleDelete(item.id, item.display_name)} className="text-red-600 hover:text-red-800">Delete</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Sub-Categories Table */}
+      {activeTab === 'sub-categories' && (
+        <div className="bg-white rounded-lg shadow overflow-hidden">
+          <table className="w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Display Name</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sort Order</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {subCategories.map((item) => (
+                <tr key={item.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 text-sm text-gray-500">#{item.id}</td>
+                  <td className="px-6 py-4 text-sm">{item.category_name}</td>
+                  <td className="px-6 py-4 text-sm font-medium">{item.name}</td>
+                  <td className="px-6 py-4 text-sm">{item.display_name}</td>
+                  <td className="px-6 py-4 text-sm">{item.sort_order}</td>
+                  <td className="px-6 py-4">
+                    {item.is_active ? (
+                      <span className="text-green-600 text-sm">Active</span>
+                    ) : (
+                      <span className="text-red-600 text-sm">Inactive</span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 text-sm space-x-2">
+                    <button onClick={() => handleEdit(item)} className="text-blue-600 hover:text-blue-800">Edit</button>
+                    <button onClick={() => handleDelete(item.id, item.display_name)} className="text-red-600 hover:text-red-800">Delete</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Modal for Create/Edit */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
+            <div className="p-6 border-b">
+              <h2 className="text-xl font-bold">
+                {editingItem ? 'Edit' : 'Add'} {activeTab === 'service-types' ? 'Service Type' : activeTab === 'categories' ? 'Category' : 'Sub-Category'}
+              </h2>
+            </div>
+            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+              {activeTab === 'categories' && (
+                <div>
+                  <label className="block text-sm font-medium mb-1">Service Type *</label>
+                  <select
+                    value={formData.service_type_id}
+                    onChange={(e) => setFormData({ ...formData, service_type_id: parseInt(e.target.value) })}
+                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-royal-blue"
+                    required
+                  >
+                    <option value={0}>Select Service Type</option>
+                    {serviceTypes.map(st => (
+                      <option key={st.id} value={st.id}>{st.display_name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              
+              {activeTab === 'sub-categories' && (
+                <div>
+                  <label className="block text-sm font-medium mb-1">Category *</label>
+                  <select
+                    value={formData.category_id}
+                    onChange={(e) => setFormData({ ...formData, category_id: parseInt(e.target.value) })}
+                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-royal-blue"
+                    required
+                  >
+                    <option value={0}>Select Category</option>
+                    {categories.map(cat => (
+                      <option key={cat.id} value={cat.id}>{cat.display_name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">Name (code) *</label>
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-royal-blue"
+                  placeholder="e.g., t-shirts, long-sleeve"
+                  required
+                  disabled={!!editingItem}
+                />
+                <p className="text-xs text-gray-400 mt-1">Unique identifier (lowercase, no spaces)</p>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">Display Name *</label>
+                <input
+                  type="text"
+                  value={formData.display_name}
+                  onChange={(e) => setFormData({ ...formData, display_name: e.target.value })}
+                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-royal-blue"
+                  placeholder="e.g., T-Shirts, Long Sleeve"
+                  required
+                />
+              </div>
+              
+              {(activeTab === 'service-types' || activeTab === 'categories') && (
+                <div>
+                  <label className="block text-sm font-medium mb-1">Icon (emoji)</label>
+                  <input
+                    type="text"
+                    value={formData.icon}
+                    onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-royal-blue"
+                    placeholder="e.g., 👕"
+                    maxLength={2}
+                  />
+                </div>
+              )}
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">Sort Order</label>
+                <input
+                  type="number"
+                  value={formData.sort_order}
+                  onChange={(e) => setFormData({ ...formData, sort_order: parseInt(e.target.value) })}
+                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-royal-blue"
+                  placeholder="0"
+                />
+              </div>
+              
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowModal(false)}
+                  className="flex-1 px-4 py-2 border rounded-lg hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="flex-1 px-4 py-2 bg-royal-blue text-white rounded-lg hover:bg-royal-blue-dark disabled:opacity-50"
+                >
+                  {loading ? 'Saving...' : (editingItem ? 'Update' : 'Create')}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default PicklistManagement;

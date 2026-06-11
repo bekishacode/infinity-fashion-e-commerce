@@ -6,7 +6,7 @@ interface ProductFormData {
   name: string;
   price: number;
   compare_price: number | null;
-  service_type: 'retail' | 'wholesale' | 'pod';
+  service_type: string;
   category: string;
   sub_category: string | null;
   badge: string | null;
@@ -19,17 +19,44 @@ interface ProductFormData {
   images: string[];
 }
 
+interface ServiceType {
+  id: number;
+  name: string;
+  display_name: string;
+  icon: string;
+}
+
+interface Category {
+  id: number;
+  name: string;
+  display_name: string;
+  icon: string;
+}
+
+interface SubCategory {
+  id: number;
+  name: string;
+  display_name: string;
+}
+
 const ProductForm: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  
+  // Picklist data
+  const [serviceTypes, setServiceTypes] = useState<ServiceType[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [subCategories, setSubCategories] = useState<SubCategory[]>([]);
+  const [loadingPicklists, setLoadingPicklists] = useState(true);
+  
   const [product, setProduct] = useState<ProductFormData>({
     name: '',
     price: 0,
     compare_price: null,
-    service_type: 'retail',
+    service_type: '',
     category: '',
     sub_category: null,
     badge: null,
@@ -42,18 +69,115 @@ const ProductForm: React.FC = () => {
     images: []
   });
 
+  // Load picklists
   useEffect(() => {
-    if (id) {
+    loadPicklists();
+  }, []);
+
+  // Load categories when service type changes
+  useEffect(() => {
+    if (product.service_type) {
+      loadCategories();
+    } else {
+      setCategories([]);
+    }
+  }, [product.service_type]);
+
+  // Load sub-categories when category changes
+  useEffect(() => {
+    if (product.category) {
+      loadSubCategories();
+    } else {
+      setSubCategories([]);
+    }
+  }, [product.category]);
+
+  // Change this useEffect:
+  useEffect(() => {
+    if (id && serviceTypes.length > 0) {
       fetchProduct();
     }
-  }, [id]);
+  }, [id, serviceTypes]);  // Add serviceTypes as dependency
+
+  // Set sub-category value after subCategories are loaded
+  useEffect(() => {
+    if (subCategories.length > 0 && product.sub_category) {
+      // Verify the sub_category exists in the loaded list
+      const exists = subCategories.some(sub => sub.name === product.sub_category);
+      if (!exists && product.sub_category) {
+        // If the stored sub_category doesn't exist in current options, clear it
+        setProduct(prev => ({ ...prev, sub_category: null }));
+      }
+    }
+  }, [subCategories]);
+
+  const loadPicklists = async () => {
+    setLoadingPicklists(true);
+    try {
+      const serviceTypesRes = await adminService.getServiceTypes();
+      if (serviceTypesRes.success) {
+        setServiceTypes(serviceTypesRes.data);
+      }
+    } catch (error) {
+      console.error('Error loading picklists:', error);
+    } finally {
+      setLoadingPicklists(false);
+    }
+  };
+
+  const loadCategories = async () => {
+    try {
+      const selectedType = serviceTypes.find(st => st.name === product.service_type);
+      if (selectedType) {
+        const result = await adminService.getCategories(selectedType.id);
+        if (result.success) setCategories(result.data);
+      }
+    } catch (error) {
+      console.error('Error loading categories:', error);
+    }
+  };
+
+  const loadSubCategories = async () => {
+    try {
+      const selectedCategory = categories.find(cat => cat.name === product.category);
+      if (selectedCategory) {
+        const result = await adminService.getSubCategories(selectedCategory.id);
+        if (result.success) setSubCategories(result.data);
+      }
+    } catch (error) {
+      console.error('Error loading sub-categories:', error);
+    }
+  };
 
   const fetchProduct = async () => {
     setLoading(true);
     try {
       const result = await adminService.getProduct(parseInt(id!));
       if (result.success) {
-        setProduct(result.data);
+        const productData = result.data;
+        setProduct(productData);
+        
+        // Load categories for the service type using current serviceTypes
+        if (productData.service_type && serviceTypes.length > 0) {
+          const selectedType = serviceTypes.find(st => st.name === productData.service_type);
+          if (selectedType) {
+            const categoriesResult = await adminService.getCategories(selectedType.id);
+            if (categoriesResult.success) {
+              setCategories(categoriesResult.data);
+              
+              // Load sub-categories for the product's category
+              if (productData.category) {
+                const selectedCategory = categoriesResult.data.find((cat: Category) => cat.name === productData.category);
+                if (selectedCategory) {
+                  const subResult = await adminService.getSubCategories(selectedCategory.id);
+                  if (subResult.success) {
+                    setSubCategories(subResult.data);
+                  }
+                }
+              }
+            }
+          }
+        }
       } else {
         alert('Product not found');
         navigate('/admin/products');
@@ -66,7 +190,6 @@ const ProductForm: React.FC = () => {
     }
   };
 
-  // Handle image file selection and upload
   const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
@@ -106,7 +229,6 @@ const ProductForm: React.FC = () => {
         
         if (result.success) {
           newImageUrls.push(result.data.image_url);
-          // Update state immediately to show preview
           setProduct(prev => ({
             ...prev,
             images: [...prev.images, result.data.image_url]
@@ -152,7 +274,6 @@ const ProductForm: React.FC = () => {
       }
       
       if (result.success) {
-        // Show success message
         alert(id ? 'Product updated successfully!' : 'Product created successfully!');
         navigate('/admin/products');
       } else {
@@ -166,13 +287,16 @@ const ProductForm: React.FC = () => {
     }
   };
 
-  if (loading && id) {
-    return <div className="text-center py-8">Loading product...</div>;
+  if ((loading && id) || loadingPicklists) {
+    return <div className="text-center py-8">Loading...</div>;
   }
 
+  const selectedServiceType = serviceTypes.find(st => st.name === product.service_type);
+  const selectedCategory = categories.find(cat => cat.name === product.category);
+
   return (
-    <div className="max-w-4xl mx-auto mt-12">
-      <h1 className="text-2xl font-bold text-charcoal mb-6">
+    <div className="max-w-4xl mx-auto mt-14">
+      <h1 className="text-2xl font-bold text-royal-blue mb-6">
         {id ? 'Edit Product' : 'Add New Product'}
       </h1>
 
@@ -222,30 +346,62 @@ const ProductForm: React.FC = () => {
               <select
                 required
                 value={product.service_type}
-                onChange={(e) => setProduct({ ...product, service_type: e.target.value as any })}
+                onChange={(e) => setProduct({ ...product, service_type: e.target.value, category: '', sub_category: null })}
                 className="w-full px-3 py-2 border rounded-lg"
               >
-                <option value="retail">Retail</option>
-                <option value="wholesale">Wholesale</option>
-                <option value="pod">Print on Demand (POD)</option>
+                <option value="">Select Service Type</option>
+                {serviceTypes.map(type => (
+                  <option key={type.id} value={type.name}>
+                    {type.icon} {type.display_name}
+                  </option>
+                ))}
               </select>
+              {selectedServiceType && (
+                <p className="text-xs text-gray-400 mt-1">Selected: {selectedServiceType.display_name}</p>
+              )}
             </div>
 
             <div>
               <label className="block text-sm font-medium mb-1">Category *</label>
-              <input
-                type="text"
+              <select
                 required
                 value={product.category}
-                onChange={(e) => setProduct({ ...product, category: e.target.value })}
-                placeholder="e.g., t-shirts, caps, hoodies"
+                onChange={(e) => setProduct({ ...product, category: e.target.value, sub_category: null })}
                 className="w-full px-3 py-2 border rounded-lg"
-              />
+                disabled={!product.service_type}
+              >
+                <option value="">Select Category</option>
+                {categories.map(cat => (
+                  <option key={cat.id} value={cat.name}>
+                    {cat.icon} {cat.display_name}
+                  </option>
+                ))}
+              </select>
+              {selectedCategory && (
+                <p className="text-xs text-gray-400 mt-1">Selected: {selectedCategory.display_name}</p>
+              )}
             </div>
           </div>
 
           {/* Right Column */}
           <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Sub-Category</label>
+              <select
+                value={product.sub_category || ''}
+                onChange={(e) => setProduct({ ...product, sub_category: e.target.value || null })}
+                className="w-full px-3 py-2 border rounded-lg"
+                disabled={!product.category}
+              >
+                <option value="">None</option>
+                {subCategories.map(sub => (
+                  <option key={sub.id} value={sub.name}>
+                    {sub.display_name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <div>
               <label className="block text-sm font-medium mb-1">Badge (Optional)</label>
               <input
@@ -329,7 +485,6 @@ const ProductForm: React.FC = () => {
           <div className="col-span-1 md:col-span-2">
             <label className="block text-sm font-medium mb-1">Product Images</label>
             
-            {/* Image Upload Button */}
             <div className="mb-3">
               <input
                 type="file"
@@ -355,7 +510,6 @@ const ProductForm: React.FC = () => {
               </p>
             </div>
 
-           {/* Image Gallery */}
             <div className="flex gap-3 flex-wrap mt-3">
               {product.images.map((img, index) => (
                 <div key={index} className="relative group">
@@ -364,7 +518,6 @@ const ProductForm: React.FC = () => {
                     alt={`Product ${index + 1}`}
                     className="w-24 h-24 object-cover rounded border"
                     onError={(e) => {
-                      console.error('Image failed to load:', `http://localhost:8000${img}`);
                       (e.target as HTMLImageElement).src = 'https://via.placeholder.com/100?text=No+Image';
                     }}
                   />
@@ -386,7 +539,6 @@ const ProductForm: React.FC = () => {
           </div>
         </div>
 
-        {/* Submit Buttons */}
         <div className="flex justify-end gap-3 mt-6 pt-4 border-t">
           <button
             type="button"

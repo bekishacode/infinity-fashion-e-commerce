@@ -18,24 +18,28 @@ if (!$id) {
 }
 
 // Check if product exists
-$checkSql = "SELECT id, name FROM products WHERE id = $id";
-$checkResult = $db->query($checkSql);
+$checkSql = "SELECT id, name FROM products WHERE id = :id";
+$checkStmt = $db->prepare($checkSql);
+$checkStmt->execute([':id' => $id]);
+$product = $checkStmt->fetch(PDO::FETCH_ASSOC);
 
-if ($checkResult->num_rows == 0) {
+if (!$product) {
     sendResponse(false, 'Product not found', null, 404);
 }
 
-$product = $checkResult->fetch_assoc();
-
 // Soft delete - just mark as inactive
-$sql = "UPDATE products SET is_active = 0 WHERE id = $id";
+$sql = "UPDATE products SET is_active = 0 WHERE id = :id";
+$stmt = $db->prepare($sql);
+$result = $stmt->execute([':id' => $id]);
 
-if ($db->query($sql)) {
+if ($result) {
     sendResponse(true, "Product '{$product['name']}' has been deactivated");
 } else {
-    sendResponse(false, "Failed to delete product: " . $db->error, null, 500);
+    sendResponse(false, "Failed to delete product", null, 500);
 }
 
 // For permanent delete (use with caution):
-// $sql = "DELETE FROM products WHERE id = $id";
+// $sql = "DELETE FROM products WHERE id = :id";
+// $stmt = $db->prepare($sql);
+// $stmt->execute([':id' => $id]);
 ?>

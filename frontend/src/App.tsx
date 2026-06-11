@@ -14,6 +14,15 @@ import ProductList from './pages/admin/Products/ProductList';
 import ProductForm from './pages/admin/Products/ProductForm';
 import ProtectedRoute from './components/admin/ProtectedRoute';
 import AdminProfile from './pages/admin/AdminProfile';
+import OrderList from './pages/admin/Orders/OrderList';
+import OrderDetails from './pages/admin/Orders/OrderDetails';
+import CustomerList from './pages/admin/Customers/CustomerList';
+import CustomerDetails from './pages/admin/Customers/CustomerDetails';
+import ForgotPassword from './pages/admin/ForgotPassword';
+import AdminList from './pages/admin/AdminList';
+import EmailSettings from './pages/admin/EmailSettings';
+import EmailLayoutSettings from './pages/admin/EmailLayoutSettings';
+import PicklistManagement from './pages/admin/PicklistManagement';
 
 function App() {
   return (
@@ -38,6 +47,7 @@ function App() {
 
         {/* Admin Routes - No Navbar/Footer */}
         <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/admin/forgot-password" element={<ForgotPassword />} />
         <Route path="profile" element={<AdminProfile />} />
         <Route path="/admin" element={
           <ProtectedRoute>
@@ -48,6 +58,14 @@ function App() {
           <Route path="products" element={<ProductList />} />
           <Route path="products/create" element={<ProductForm />} />
           <Route path="products/edit/:id" element={<ProductForm />} />
+          <Route path="orders" element={<OrderList />} />
+          <Route path="orders/:id" element={<OrderDetails />} />
+          <Route path="customers" element={<CustomerList />} />
+          <Route path="customers/:id" element={<CustomerDetails />} />
+          <Route path="admins" element={<AdminList />} />
+          <Route path="email-settings" element={<EmailSettings />} />
+          <Route path="email-layout" element={<EmailLayoutSettings />} />
+          <Route path="picklists" element={<PicklistManagement />} />
         </Route>
       </Routes>
     </Router>

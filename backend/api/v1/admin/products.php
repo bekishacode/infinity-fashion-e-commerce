@@ -20,14 +20,13 @@ if ($method === 'GET') {
                 GROUP_CONCAT(pi.image_url) as images
                 FROM products p
                 LEFT JOIN product_images pi ON p.id = pi.product_id
-                WHERE p.id = ?
+                WHERE p.id = :id
                 GROUP BY p.id";
         $stmt = $db->prepare($sql);
-        $stmt->bind_param("i", $id);
-        $stmt->execute();
-        $result = $stmt->get_result();
+        $stmt->execute([':id' => $id]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
         
-        if ($row = $result->fetch_assoc()) {
+        if ($row) {
             $row['images'] = $row['images'] ? explode(',', $row['images']) : [];
             sendResponse(true, 'Product retrieved', $row);
         } else {
@@ -43,25 +42,28 @@ if ($method === 'GET') {
         
         // Build WHERE clause based on show_inactive parameter
         if ($show_inactive === 'true') {
-            // Show all products (both active and inactive)
             $where = "WHERE 1=1";
         } elseif ($show_inactive === 'false') {
-            // Show only active products
             $where = "WHERE is_active = 1";
         } else {
-            // Default: show only active products
             $where = "WHERE is_active = 1";
         }
         
         // Add search condition
+        $params = [];
         if (!empty($search)) {
-            $where .= " AND (name LIKE '%$search%' OR description LIKE '%$search%')";
+            $where .= " AND (name LIKE :search OR description LIKE :search)";
+            $params[':search'] = "%$search%";
         }
         
         // Get total count
         $countSql = "SELECT COUNT(*) as total FROM products $where";
-        $countResult = $db->query($countSql);
-        $total = $countResult->fetch_assoc()['total'];
+        $countStmt = $db->prepare($countSql);
+        foreach ($params as $key => &$val) {
+            $countStmt->bindParam($key, $val);
+        }
+        $countStmt->execute();
+        $total = $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
         
         // Get products with pagination
         $sql = "SELECT p.*, 
@@ -69,13 +71,16 @@ if ($method === 'GET') {
                 FROM products p
                 $where
                 ORDER BY p.id DESC
-                LIMIT $offset, $limit";
-        $result = $db->query($sql);
-        $products = [];
-        
-        while ($row = $result->fetch_assoc()) {
-            $products[] = $row;
+                LIMIT :limit OFFSET :offset";
+        $stmt = $db->prepare($sql);
+        $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
+        $stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
+        foreach ($params as $key => &$val) {
+            $stmt->bindParam($key, $val);
         }
+        $stmt->execute();
+        
+        $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
         sendResponse(true, 'Products retrieved', [
             'products' => $products,
@@ -94,10 +99,9 @@ if ($method === 'GET') {
         if (!$id) {
             sendResponse(false, 'Product ID required', null, 400);
         }
-        $sql = "UPDATE products SET is_active = 1 WHERE id = ?";
+        $sql = "UPDATE products SET is_active = 1 WHERE id = :id";
         $stmt = $db->prepare($sql);
-        $stmt->bind_param("i", $id);
-        if ($stmt->execute()) {
+        if ($stmt->execute([':id' => $id])) {
             sendResponse(true, 'Product restored successfully');
         } else {
             sendResponse(false, 'Failed to restore product', null, 500);
@@ -108,14 +112,15 @@ if ($method === 'GET') {
         $price = $input['price'] ?? 0;
         $service_type = $input['service_type'] ?? '';
         $category = $input['category'] ?? '';
+        $sub_category = $input['sub_category'] ?? null;
         $description = $input['description'] ?? '';
         $compare_price = $input['compare_price'] ?? null;
         $badge = $input['badge'] ?? null;
         $badge_color = $input['badge_color'] ?? null;
         $material = $input['material'] ?? null;
         $min_quantity = $input['min_quantity'] ?? 1;
-        $in_stock = $input['in_stock'] ?? true;
-        $is_featured = $input['is_featured'] ?? false;
+        $in_stock = isset($input['in_stock']) ? (int)$input['in_stock'] : 1;
+        $is_featured = isset($input['is_featured']) ? (int)$input['is_featured'] : 0;
         
         // Validate required fields
         if (!$name || !$price || !$service_type || !$category) {
@@ -126,36 +131,55 @@ if ($method === 'GET') {
         $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $name)));
         
         // Insert product
-        $sql = "INSERT INTO products (name, slug, price, compare_price, service_type, category, description, badge, badge_color, material, min_quantity, in_stock, is_featured) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        $sql = "INSERT INTO products (
+            name, slug, price, compare_price, service_type, category, sub_category, description, 
+            badge, badge_color, material, min_quantity, in_stock, is_featured
+        ) VALUES (
+            :name, :slug, :price, :compare_price, :service_type, :category, :sub_category, :description,
+            :badge, :badge_color, :material, :min_quantity, :in_stock, :is_featured
+        )";
         
         $stmt = $db->prepare($sql);
-        $stmt->bind_param("ssddssssssiii", 
-            $name, $slug, $price, $compare_price, $service_type, $category, 
-            $description, $badge, $badge_color, $material, $min_quantity, $in_stock, $is_featured
-        );
+        $result = $stmt->execute([
+            ':name' => $name,
+            ':slug' => $slug,
+            ':price' => $price,
+            ':compare_price' => $compare_price,
+            ':service_type' => $service_type,
+            ':category' => $category,
+            ':sub_category' => $sub_category,
+            ':description' => $description,
+            ':badge' => $badge,
+            ':badge_color' => $badge_color,
+            ':material' => $material,
+            ':min_quantity' => $min_quantity,
+            ':in_stock' => $in_stock,
+            ':is_featured' => $is_featured
+        ]);
         
-        if ($stmt->execute()) {
-            $product_id = $db->insert_id;
+        if ($result) {
+            $product_id = $db->lastInsertId();
             
             // Insert images if provided
             if (!empty($input['images']) && is_array($input['images'])) {
-                $imgSql = "INSERT INTO product_images (product_id, image_url, is_primary, sort_order) VALUES (?, ?, ?, ?)";
+                $imgSql = "INSERT INTO product_images (product_id, image_url, is_primary, sort_order) VALUES (:product_id, :image_url, :is_primary, :sort_order)";
                 $imgStmt = $db->prepare($imgSql);
                 
                 foreach ($input['images'] as $index => $image_url) {
                     $is_primary = ($index == 0) ? 1 : 0;
-                    $imgStmt->bind_param("isii", $product_id, $image_url, $is_primary, $index);
-                    $imgStmt->execute();
+                    $imgStmt->execute([
+                        ':product_id' => $product_id,
+                        ':image_url' => $image_url,
+                        ':is_primary' => $is_primary,
+                        ':sort_order' => $index
+                    ]);
                 }
-                $imgStmt->close();
             }
             
             sendResponse(true, "Product created successfully", ['id' => $product_id]);
         } else {
-            sendResponse(false, "Failed to create product: " . $db->error, null, 500);
+            sendResponse(false, "Failed to create product", null, 500);
         }
-        $stmt->close();
     }
 } elseif ($method === 'PUT') {
     // UPDATE PRODUCT
@@ -166,113 +190,96 @@ if ($method === 'GET') {
     
     $updates = [];
     $params = [];
-    $types = "";
     
     if (isset($input['name'])) {
-        $updates[] = "name = ?";
-        $params[] = $input['name'];
-        $types .= "s";
+        $updates[] = "name = :name";
+        $params[':name'] = $input['name'];
         
         // Also update slug
         $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $input['name'])));
-        $updates[] = "slug = ?";
-        $params[] = $slug;
-        $types .= "s";
+        $updates[] = "slug = :slug";
+        $params[':slug'] = $slug;
     }
     if (isset($input['price'])) {
-        $updates[] = "price = ?";
-        $params[] = $input['price'];
-        $types .= "d";
+        $updates[] = "price = :price";
+        $params[':price'] = $input['price'];
     }
     if (isset($input['compare_price'])) {
-        $updates[] = "compare_price = ?";
-        $params[] = $input['compare_price'];
-        $types .= "d";
+        $updates[] = "compare_price = :compare_price";
+        $params[':compare_price'] = $input['compare_price'];
     }
     if (isset($input['service_type'])) {
-        $updates[] = "service_type = ?";
-        $params[] = $input['service_type'];
-        $types .= "s";
+        $updates[] = "service_type = :service_type";
+        $params[':service_type'] = $input['service_type'];
     }
     if (isset($input['category'])) {
-        $updates[] = "category = ?";
-        $params[] = $input['category'];
-        $types .= "s";
+        $updates[] = "category = :category";
+        $params[':category'] = $input['category'];
     }
     if (isset($input['description'])) {
-        $updates[] = "description = ?";
-        $params[] = $input['description'];
-        $types .= "s";
+        $updates[] = "description = :description";
+        $params[':description'] = $input['description'];
     }
     if (isset($input['badge'])) {
-        $updates[] = "badge = ?";
-        $params[] = $input['badge'];
-        $types .= "s";
+        $updates[] = "badge = :badge";
+        $params[':badge'] = $input['badge'];
     }
     if (isset($input['badge_color'])) {
-        $updates[] = "badge_color = ?";
-        $params[] = $input['badge_color'];
-        $types .= "s";
+        $updates[] = "badge_color = :badge_color";
+        $params[':badge_color'] = $input['badge_color'];
     }
     if (isset($input['material'])) {
-        $updates[] = "material = ?";
-        $params[] = $input['material'];
-        $types .= "s";
+        $updates[] = "material = :material";
+        $params[':material'] = $input['material'];
     }
     if (isset($input['min_quantity'])) {
-        $updates[] = "min_quantity = ?";
-        $params[] = $input['min_quantity'];
-        $types .= "i";
+        $updates[] = "min_quantity = :min_quantity";
+        $params[':min_quantity'] = $input['min_quantity'];
     }
     if (isset($input['in_stock'])) {
-        $updates[] = "in_stock = ?";
-        $params[] = $input['in_stock'];
-        $types .= "i";
+        $updates[] = "in_stock = :in_stock";
+        $params[':in_stock'] = $input['in_stock'];
     }
     if (isset($input['is_featured'])) {
-        $updates[] = "is_featured = ?";
-        $params[] = $input['is_featured'];
-        $types .= "i";
+        $updates[] = "is_featured = :is_featured";
+        $params[':is_featured'] = $input['is_featured'];
     }
     
     if (empty($updates)) {
         sendResponse(false, 'No fields to update', null, 400);
     }
     
-    $params[] = $id;
-    $types .= "i";
-    
-    $sql = "UPDATE products SET " . implode(", ", $updates) . " WHERE id = ?";
+    $params[':id'] = $id;
+    $sql = "UPDATE products SET " . implode(", ", $updates) . " WHERE id = :id";
     $stmt = $db->prepare($sql);
-    $stmt->bind_param($types, ...$params);
     
-    if ($stmt->execute()) {
+    if ($stmt->execute($params)) {
         // Update images if provided
         if (isset($input['images']) && is_array($input['images'])) {
             // Delete old images
-            $deleteSql = "DELETE FROM product_images WHERE product_id = ?";
+            $deleteSql = "DELETE FROM product_images WHERE product_id = :product_id";
             $deleteStmt = $db->prepare($deleteSql);
-            $deleteStmt->bind_param("i", $id);
-            $deleteStmt->execute();
-            $deleteStmt->close();
+            $deleteStmt->execute([':product_id' => $id]);
             
             // Insert new images
-            $imgSql = "INSERT INTO product_images (product_id, image_url, is_primary, sort_order) VALUES (?, ?, ?, ?)";
+            $imgSql = "INSERT INTO product_images (product_id, image_url, is_primary, sort_order) VALUES (:product_id, :image_url, :is_primary, :sort_order)";
             $imgStmt = $db->prepare($imgSql);
             
             foreach ($input['images'] as $index => $image_url) {
                 $is_primary = ($index == 0) ? 1 : 0;
-                $imgStmt->bind_param("isii", $id, $image_url, $is_primary, $index);
-                $imgStmt->execute();
+                $imgStmt->execute([
+                    ':product_id' => $id,
+                    ':image_url' => $image_url,
+                    ':is_primary' => $is_primary,
+                    ':sort_order' => $index
+                ]);
             }
-            $imgStmt->close();
         }
         
         sendResponse(true, "Product updated successfully");
     } else {
-        sendResponse(false, "Failed to update product: " . $db->error, null, 500);
+        sendResponse(false, "Failed to update product", null, 500);
     }
-    $stmt->close();
     
 } elseif ($method === 'DELETE') {
     // DELETE PRODUCT
@@ -285,40 +292,33 @@ if ($method === 'GET') {
     
     if ($permanent === 'true' || $permanent === true) {
         // Permanent delete - first check if product has orders
-        $checkSql = "SELECT COUNT(*) as order_count FROM orders WHERE product_id = ?";
+        $checkSql = "SELECT COUNT(*) as order_count FROM orders WHERE product_id = :product_id";
         $checkStmt = $db->prepare($checkSql);
-        $checkStmt->bind_param("i", $id);
-        $checkStmt->execute();
-        $checkResult = $checkStmt->get_result();
-        $orderCount = $checkResult->fetch_assoc()['order_count'];
-        $checkStmt->close();
+        $checkStmt->execute([':product_id' => $id]);
+        $orderCount = $checkStmt->fetch(PDO::FETCH_ASSOC)['order_count'];
         
         if ($orderCount > 0) {
             sendResponse(false, "Cannot permanently delete product with $orderCount order(s). Soft delete only.", null, 400);
         }
         
-        $sql = "DELETE FROM products WHERE id = ?";
+        $sql = "DELETE FROM products WHERE id = :id";
         $stmt = $db->prepare($sql);
-        $stmt->bind_param("i", $id);
         
-        if ($stmt->execute()) {
+        if ($stmt->execute([':id' => $id])) {
             sendResponse(true, "Product permanently deleted");
         } else {
             sendResponse(false, "Failed to delete product", null, 500);
         }
-        $stmt->close();
     } else {
         // Soft delete (move to trash)
-        $sql = "UPDATE products SET is_active = 0 WHERE id = ?";
+        $sql = "UPDATE products SET is_active = 0 WHERE id = :id";
         $stmt = $db->prepare($sql);
-        $stmt->bind_param("i", $id);
         
-        if ($stmt->execute()) {
+        if ($stmt->execute([':id' => $id])) {
             sendResponse(true, "Product moved to trash");
         } else {
             sendResponse(false, "Failed to trash product", null, 500);
         }
-        $stmt->close();
     }
 }
 ?>

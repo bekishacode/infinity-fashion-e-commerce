@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const AdminLogin: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -40,6 +40,9 @@ const AdminLogin: React.FC = () => {
     <div className="min-h-screen bg-gray-100 flex items-center justify-center">
       <div className="bg-white rounded-xl shadow-lg p-8 w-full max-w-md">
         <div className="text-center mb-8">
+          <div className="w-16 h-16 bg-gradient-to-r from-royal-blue to-magenta rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <span className="text-white text-2xl font-bold">SB</span>
+          </div>
           <h1 className="text-2xl font-bold text-royal-blue">Admin Login</h1>
           <p className="text-gray-500 mt-2">Access the admin dashboard</p>
         </div>
@@ -56,7 +59,7 @@ const AdminLogin: React.FC = () => {
             />
           </div>
 
-          <div className="mb-6">
+          <div className="mb-4">
             <label className="block text-sm font-medium mb-1">Password</label>
             <input
               type="password"
@@ -65,6 +68,12 @@ const AdminLogin: React.FC = () => {
               className="w-full px-3 py-2 border rounded-lg focus:ring-royal-blue focus:border-royal-blue"
               required
             />
+          </div>
+
+          <div className="text-right mb-6">
+            <Link to="/admin/forgot-password" className="text-sm text-royal-blue hover:underline">
+              Forgot Password?
+            </Link>
           </div>
 
           {error && (

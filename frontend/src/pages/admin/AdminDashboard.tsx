@@ -1,21 +1,37 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import AdminNavbar from '../../components/admin/AdminNavbar';
 
 const AdminDashboard: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [adminRole, setAdminRole] = useState<string | null>(null);
   const location = useLocation();
+
+  useEffect(() => {
+    const storedAdmin = localStorage.getItem('admin_info');
+    if (storedAdmin) {
+      const admin = JSON.parse(storedAdmin);
+      setAdminRole(admin.role);
+    }
+  }, []);
 
   const isActive = (path: string) => {
     return location.pathname === path;
   };
 
   const navItems = [
-    { path: '/admin/products', icon: '', label: 'Product Management' },
-    { path: '/admin/orders', icon: '', label: 'Order Managment' },
-    { path: '/admin/customers', icon: '', label: 'Customer Managment' },
     { path: '/admin/dashboard', icon: '', label: 'Dashboard' },
+    { path: '/admin/products', icon: '', label: 'Product Management' },
+    { path: '/admin/orders', icon: '', label: 'Order Management' },
+    { path: '/admin/customers', icon: '', label: 'Customers' },
   ];
+
+  // Only show Admins menu for super_admin
+  const allNavItems = adminRole === 'super_admin' 
+    ? [...navItems, { path: '/admin/admins', icon: '', label: 'Admin Management' }, 
+      { path: '/admin/email-settings', icon: '', label: 'Email Settings' },
+    { path: '/admin/picklists', icon: '', label: 'Picklist Management' },]
+    : navItems;
 
   return (
     <div className="min-h-screen h-screen bg-gray-50 flex overflow-hidden">
@@ -37,7 +53,7 @@ const AdminDashboard: React.FC = () => {
         {/* Navigation */}
         <nav className="flex-1 p-4 overflow-y-auto">
           <ul className="space-y-1">
-            {navItems.map((item) => (
+            {allNavItems.map((item) => (
               <li key={item.path}>
                 <Link
                   to={item.path}
@@ -94,7 +110,7 @@ const AdminDashboard: React.FC = () => {
         </div>
         <nav className="p-4 overflow-y-auto">
           <ul className="space-y-1">
-            {navItems.map((item) => (
+            {allNavItems.map((item) => (
               <li key={item.path}>
                 <Link
                   to={item.path}

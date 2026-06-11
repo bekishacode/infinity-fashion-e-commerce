@@ -8,6 +8,7 @@ interface Product {
   price: string;
   service_type: string;
   category: string;
+  sub_category: string | null;
   is_active: string | number;
   images?: string[];
   primary_image?: string;
@@ -174,7 +175,6 @@ const ProductList: React.FC = () => {
     return styles[type] || 'bg-gray-100 text-gray-800';
   };
 
-  // Calculate showing range
   const startItem = (pagination.current_page - 1) * pagination.per_page + 1;
   const endItem = Math.min(pagination.current_page * pagination.per_page, pagination.total);
   const showingText = `Showing ${startItem} to ${endItem} of ${pagination.total} products`;
@@ -189,12 +189,12 @@ const ProductList: React.FC = () => {
 
   return (
     <div className="h-full flex flex-col">
-      {/* Fixed Header - stays at top while scrolling */}
-      <div className="sticky top-8 z-10 bg-gray-50 -mt-6 -mx-6 px-6 pt-6 pb-4 border-b border-gray-200">
+      {/* Fixed Header - Sticky at top */}
+      <div className="flex-shrink-0 bg-gray-50 mt-10 -mx-6 px-6 pt-6 pb-4 border-b border-gray-200">
         <div className="flex flex-wrap justify-between items-center gap-4 mb-4">
           <div>
-            <h1 className="text-2xl font-bold text-green">Products</h1>
-            <p className="text-gray-500 text-sm">Manage your product inventory</p>
+            <h1 className="text-3xl font-bold text-green">Company <span className='text-charcoal'>Products</span></h1>
+            <p className="text-gray-500 text-md mt-1">Add, edit, and organize your product catalog. Filter by status or search to quickly find what you need.</p>
           </div>
           <Link
             to="/admin/products/create"
@@ -209,14 +209,12 @@ const ProductList: React.FC = () => {
 
         <div className="flex flex-wrap gap-3">
           <div className="flex-1 min-w-[200px] relative group">
-            {/* Search Icon with pulse animation when focused */}
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <svg className={`h-5 w-5 transition-all duration-300 ${search ? 'text-royal-blue scale-110' : 'text-gray-400 group-focus-within:text-royal-blue'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
             
-            {/* Search Input */}
             <input
               type="text"
               placeholder="Search products..."
@@ -225,7 +223,6 @@ const ProductList: React.FC = () => {
               className="w-full pl-10 pr-28 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-royal-blue/20 focus:border-royal-blue bg-gray-50 hover:bg-white transition-all duration-200"
             />
             
-            {/* Search Stats Badge (shows result count while typing) */}
             {search && products.length > 0 && (
               <div className="absolute inset-y-0 right-12 pr-2 flex items-center pointer-events-none">
                 <span className="text-xs text-royal-blue bg-royal-blue/10 px-2 py-0.5 rounded-full">
@@ -234,7 +231,6 @@ const ProductList: React.FC = () => {
               </div>
             )}
             
-            {/* Clear Button with tooltip */}
             {search && (
               <button
                 onClick={() => setSearch('')}
@@ -247,14 +243,12 @@ const ProductList: React.FC = () => {
               </button>
             )}
             
-            {/* Loading indicator (while searching) */}
             {loading && (
               <div className="absolute inset-y-0 right-12 pr-2 flex items-center">
                 <div className="animate-spin h-4 w-4 border-2 border-royal-blue border-t-transparent rounded-full"></div>
               </div>
             )}
             
-            {/* Animated bottom border on focus */}
             <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-0 h-0.5 bg-gradient-to-r from-royal-blue to-magenta transition-all duration-300 group-focus-within:w-[calc(100%-2rem)]"></div>
           </div>
           <div className="flex gap-2">
@@ -292,89 +286,90 @@ const ProductList: React.FC = () => {
         </div>
       </div>
 
-      {/* Scrollable Table Content */}
-      <div className="flex-1 overflow-auto mt-14">
-        <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-green-light text-orange">
+      {/* Scrollable Table Container - exactly like OrderList */}
+      <div className="flex-1 overflow-auto mt-5 rounded-xl">
+        <div className="bg-white shadow-sm rounded-xl border">
+          <table className="w-full">
+            {/* Fixed Table Header - stays when scrolling */}
+            <thead className="bg-green-light sticky top-0 z-10 rounded-xl">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase">ID</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Image</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-charcoal uppercase">Product</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-charcoal uppercase">Price</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Type</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Category</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Sub-Category</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-charcoal uppercase">Status</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-charcoal uppercase">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {products.length === 0 ? (
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-semibold  uppercase">ID</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold  uppercase">Image</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-charcoal uppercase">Product</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-charcoal uppercase">Price</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold  uppercase">Type</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold  uppercase">Category</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-charcoal uppercase">Status</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-charcoal uppercase">Actions</th>
+                  <td colSpan={9} className="px-4 py-12 text-center text-gray-400">
+                    No products found
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {products.length === 0 ? (
-                  <tr>
-                    <td colSpan={8} className="px-4 py-12 text-center text-gray-400">
-                      No products found
-                    </td>
-                  </tr>
-                ) : (
-                  products.map((product, index) => {
-                    const isActive = isProductActive(product);
-                    const bgColor = index % 2 === 0 ? 'bg-white' : 'bg-gray-50';
-                    return (
-                      <tr key={product.id} className={`${bgColor} border-b hover:bg-blue-50 transition`}>
-                        <td className="px-4 py-3 text-sm text-gray-500">#{product.id}</td>
-                        <td className="px-4 py-3">
-                          {getImageUrl(product) ? (
-                            <img src={getImageUrl(product)!} alt={product.name} className="w-10 h-10 object-cover rounded-lg border" />
-                          ) : (
-                            <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">📷</div>
-                          )}
-                        </td>
-                        <td className="px-4 py-3">
-                          <p className="font-medium text-charcoal">{product.name}</p>
-                        </td>
-                        <td className="px-4 py-3 text-sm font-semibold text-royal-blue">ETB {product.price}</td>
-                        <td className="px-4 py-3">
-                          <span className={`inline-block px-2 py-1 text-xs rounded-full ${getServiceTypeBadge(product.service_type)}`}>
-                            {product.service_type}
+              ) : (
+                products.map((product, index) => {
+                  const isActive = isProductActive(product);
+                  const bgColor = index % 2 === 0 ? 'bg-white' : 'bg-gray-50';
+                  return (
+                    <tr key={product.id} className={`${bgColor} border-b hover:bg-blue-50 transition`}>
+                      <td className="px-2 py-3 text-sm text-gray-500">#{product.id}</td>
+                      <td className="px-2 py-3">
+                        {getImageUrl(product) ? (
+                          <img src={getImageUrl(product)!} alt={product.name} className="w-10 h-10 object-cover rounded-lg border" />
+                        ) : (
+                          <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">📷</div>
+                        )}
+                      </td>
+                      <td className="px-2 py-3">
+                        <p className="font-medium text-charcoal">{product.name}</p>
+                      </td>
+                      <td className="px-2 py-3 text-sm font-semibold text-royal-blue">ETB {product.price}</td>
+                      <td className="px-2 py-3">
+                        <span className={`inline-block px-2 py-1 text-xs rounded-full ${getServiceTypeBadge(product.service_type)}`}>
+                          {product.service_type}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-600">{product.category}</td>
+                      <td className="px-4 py-3 text-sm text-gray-500">{product.sub_category || '—'}</td>
+                      <td className="px-2 py-3">
+                        {isActive ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-full bg-green-100 text-green-700">
+                            <span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
+                            Active
                           </span>
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-600">{product.category}</td>
-                        <td className="px-4 py-3">
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-full bg-red-100 text-red-700">
+                            <span className="w-1.5 h-1.5 bg-red-500 rounded-full"></span>
+                            Trashed
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-2 py-3">
+                        <div className="flex gap-2">
+                          <Link to={`/admin/products/edit/${product.id}`} className="text-blue-600 hover:text-blue-800 text-sm">Edit</Link>
                           {isActive ? (
-                            <span className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-full bg-green-100 text-green-700">
-                              <span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
-                              Active
-                            </span>
+                            <button onClick={() => handleSoftDelete(product.id)} className="text-orange-600 hover:text-orange-800 text-sm">Move to Trash</button>
                           ) : (
-                            <span className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-full bg-red-100 text-red-700">
-                              <span className="w-1.5 h-1.5 bg-red-500 rounded-full"></span>
-                              Trashed
-                            </span>
+                            <>
+                              <button onClick={() => handleRestore(product.id)} className="text-green-600 hover:text-green-800 text-sm">Restore</button>
+                              <button onClick={() => handlePermanentDelete(product.id)} className="text-red-600 hover:text-red-800 text-sm">Delete</button>
+                            </>
                           )}
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="flex gap-2">
-                            <Link to={`/admin/products/edit/${product.id}`} className="text-blue-600 hover:text-blue-800 text-sm">Edit</Link>
-                            {isActive ? (
-                              <button onClick={() => handleSoftDelete(product.id)} className="text-orange-600 hover:text-orange-800 text-sm">Move to Trash</button>
-                            ) : (
-                              <>
-                                <button onClick={() => handleRestore(product.id)} className="text-green-600 hover:text-green-800 text-sm">Restore</button>
-                                <button onClick={() => handlePermanentDelete(product.id)} className="text-red-600 hover:text-red-800 text-sm">Delete</button>
-                              </>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
 
-          {/* Pagination with showing info */}
+          {/* Pagination */}
           {pagination.total_pages > 0 && (
             <div className="flex justify-between items-center px-4 py-3 border-t bg-gray-50">
               <div className="text-sm text-gray-500">

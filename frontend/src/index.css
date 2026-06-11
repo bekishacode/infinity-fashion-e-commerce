@@ -118,7 +118,7 @@
   }
   
   .gradient-charcoal {
-    @apply bg-gradient-to-r from-charcoal to-gray-700;
+    @apply bg-gradient-to-r from-gray-700 to-charcoal;
   }
   
   /* Text gradients */
@@ -149,6 +149,7 @@
   .bg-royal-blue { background-color: #273B89 ; }
   .bg-royal-blue-dark { background-color: #1E2D6E; }
   .bg-orange { background-color: #ED5925; }
+  .bg-orange-light { background-color: #f7e6ed; }
   .bg-orange-dark { background-color: #D44A1A; }
   .bg-green { background-color: #0B9647; }
   .bg-green-light { background-color: #d6f3e3; }
