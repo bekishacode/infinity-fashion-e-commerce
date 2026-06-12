@@ -436,6 +436,38 @@ export const adminService = {
     });
     return response.json();
   },
+  //Manual Image clean-up
+  // Scan for orphaned images (no deletion)
+  async scanOrphanedImages() {
+    const response = await fetch(`${API_BASE_URL}/admin/cleanup-images.php?action=scan`, {
+      headers: getAuthHeaders()
+    });
+    return response.json();
+  },
+
+  // Delete orphaned images
+  async deleteOrphanedImages() {
+    const response = await fetch(`${API_BASE_URL}/admin/cleanup-images.php`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    });
+    return response.json();
+  },
+  // OTP Cleanup
+  async scanExpiredOtps(hours: number = 1) {
+    const response = await fetch(`${API_BASE_URL}/admin/cleanup-otp.php?action=scan&hours=${hours}`, {
+      headers: getAuthHeaders()
+    });
+    return response.json();
+  },
+
+  async deleteExpiredOtps(hours: number = 1) {
+    const response = await fetch(`${API_BASE_URL}/admin/cleanup-otp.php?hours=${hours}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    });
+    return response.json();
+  },
   async logout() {
     localStorage.removeItem('admin_token');
     localStorage.removeItem('admin_info');

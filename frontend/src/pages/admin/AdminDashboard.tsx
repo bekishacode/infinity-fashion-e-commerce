@@ -30,7 +30,8 @@ const AdminDashboard: React.FC = () => {
   const allNavItems = adminRole === 'super_admin' 
     ? [...navItems, { path: '/admin/admins', icon: '', label: 'Admin Management' }, 
       { path: '/admin/email-settings', icon: '', label: 'Email Settings' },
-    { path: '/admin/picklists', icon: '', label: 'Picklist Management' },]
+      { path: '/admin/picklists', icon: '', label: 'Picklist Management' },
+      { path: '/admin/system', icon: '', label: 'System Settings' },]
     : navItems;
 
   return (

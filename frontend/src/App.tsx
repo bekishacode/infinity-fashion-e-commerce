@@ -23,6 +23,7 @@ import AdminList from './pages/admin/AdminList';
 import EmailSettings from './pages/admin/EmailSettings';
 import EmailLayoutSettings from './pages/admin/EmailLayoutSettings';
 import PicklistManagement from './pages/admin/PicklistManagement';
+import SystemSettings from './pages/admin/SystemSettings';
 
 function App() {
   return (
@@ -66,6 +67,7 @@ function App() {
           <Route path="email-settings" element={<EmailSettings />} />
           <Route path="email-layout" element={<EmailLayoutSettings />} />
           <Route path="picklists" element={<PicklistManagement />} />
+          <Route path="system" element={<SystemSettings />} />
         </Route>
       </Routes>
     </Router>

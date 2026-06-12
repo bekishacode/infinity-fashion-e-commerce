@@ -150,7 +150,7 @@ const OrderDetails: React.FC = () => {
         {/* Main Order Info */}
         <div className="lg:col-span-2 space-y-6">
           {/* Status Update Card */}
-          <div className="bg-white rounded-lg shadow p-6 hover-lift">
+          <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-lg text-royal-blue font-semibold mb-4">Order Status</h2>
             <div className="flex items-center gap-4">
               <select
@@ -166,7 +166,7 @@ const OrderDetails: React.FC = () => {
               <button
                 onClick={handleStatusUpdate}
                 disabled={updating || selectedStatus === order.status}
-                className="px-4 py-2 bg-royal-blue text-white rounded-lg hover:bg-royal-blue-dark disabled:opacity-50"
+                className="px-4 py-2 text-gradient-secondary rounded-lg hover:text-gradient-secondary hover-lift disabled:opacity-50"
               >
                 {updating ? 'Updating...' : 'Update Status'}
               </button>

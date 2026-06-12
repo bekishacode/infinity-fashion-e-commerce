@@ -39,18 +39,28 @@ interface SubCategory {
   display_name: string;
 }
 
+// Local image file with preview URL
+interface LocalImage {
+  file: File;
+  previewUrl: string;
+  isUploading?: boolean;
+  uploadedUrl?: string;
+}
+
 const ProductForm: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
   
   // Picklist data
   const [serviceTypes, setServiceTypes] = useState<ServiceType[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [subCategories, setSubCategories] = useState<SubCategory[]>([]);
   const [loadingPicklists, setLoadingPicklists] = useState(true);
+  
+  // Local images state (files not yet uploaded)
+  const [localImages, setLocalImages] = useState<LocalImage[]>([]);
+  const [existingImages, setExistingImages] = useState<string[]>([]);
   
   const [product, setProduct] = useState<ProductFormData>({
     name: '',
@@ -92,24 +102,23 @@ const ProductForm: React.FC = () => {
     }
   }, [product.category]);
 
-  // Change this useEffect:
+  // Fetch product for edit mode
   useEffect(() => {
     if (id && serviceTypes.length > 0) {
       fetchProduct();
     }
-  }, [id, serviceTypes]);  // Add serviceTypes as dependency
+  }, [id, serviceTypes]);
 
-  // Set sub-category value after subCategories are loaded
+  // Cleanup preview URLs on unmount
   useEffect(() => {
-    if (subCategories.length > 0 && product.sub_category) {
-      // Verify the sub_category exists in the loaded list
-      const exists = subCategories.some(sub => sub.name === product.sub_category);
-      if (!exists && product.sub_category) {
-        // If the stored sub_category doesn't exist in current options, clear it
-        setProduct(prev => ({ ...prev, sub_category: null }));
-      }
-    }
-  }, [subCategories]);
+    return () => {
+      localImages.forEach(image => {
+        if (image.previewUrl) {
+          URL.revokeObjectURL(image.previewUrl);
+        }
+      });
+    };
+  }, [localImages]);
 
   const loadPicklists = async () => {
     setLoadingPicklists(true);
@@ -156,6 +165,7 @@ const ProductForm: React.FC = () => {
       if (result.success) {
         const productData = result.data;
         setProduct(productData);
+        setExistingImages(productData.images || []);
         
         // Load categories for the service type using current serviceTypes
         if (productData.service_type && serviceTypes.length > 0) {
@@ -190,15 +200,12 @@ const ProductForm: React.FC = () => {
     }
   };
 
-  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Handle image selection (stores files locally, no upload yet)
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    setUploading(true);
-    setUploadProgress(0);
-
-    const newImageUrls: string[] = [];
-    const token = localStorage.getItem('admin_token');
+    const newLocalImages: LocalImage[] = [];
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
@@ -213,9 +220,75 @@ const ProductForm: React.FC = () => {
         continue;
       }
 
+      // Create preview URL
+      const previewUrl = URL.createObjectURL(file);
+      
+      newLocalImages.push({
+        file,
+        previewUrl,
+        isUploading: false
+      });
+    }
+
+    setLocalImages(prev => [...prev, ...newLocalImages]);
+    e.target.value = ''; // Reset input
+  };
+
+  // Remove local image (not yet uploaded)
+  const removeLocalImage = (index: number) => {
+    const image = localImages[index];
+    if (image.previewUrl) {
+      URL.revokeObjectURL(image.previewUrl);
+    }
+    setLocalImages(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // Remove existing image (already in database)
+  const removeExistingImage = async (index: number) => {
+    const imageUrl = existingImages[index];
+    const confirm = window.confirm('Remove this image? The file will be permanently deleted.');
+    if (!confirm) return;
+    
+    // Delete the physical file
+    try {
+      const token = localStorage.getItem('admin_token');
+      const response = await fetch('http://localhost:8000/api/v1/admin/delete-image.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ image_url: imageUrl })
+      });
+      
+      const result = await response.json();
+      if (!result.success) {
+        console.error('Failed to delete image file:', result.message);
+      }
+    } catch (error) {
+      console.error('Error deleting image:', error);
+    }
+    
+    // Remove from state
+    setExistingImages(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // Upload all local images to server
+  const uploadAllImages = async (): Promise<string[]> => {
+    const uploadedUrls: string[] = [];
+    const token = localStorage.getItem('admin_token');
+
+    for (let i = 0; i < localImages.length; i++) {
+      const localImage = localImages[i];
+      
+      // Mark as uploading
+      setLocalImages(prev => prev.map((img, idx) => 
+        idx === i ? { ...img, isUploading: true } : img
+      ));
+
       try {
         const formData = new FormData();
-        formData.append('image', file);
+        formData.append('image', localImage.file);
         
         const response = await fetch('http://localhost:8000/api/v1/admin/upload-image.php', {
           method: 'POST',
@@ -228,31 +301,21 @@ const ProductForm: React.FC = () => {
         const result = await response.json();
         
         if (result.success) {
-          newImageUrls.push(result.data.image_url);
-          setProduct(prev => ({
-            ...prev,
-            images: [...prev.images, result.data.image_url]
-          }));
-          setUploadProgress(((i + 1) / files.length) * 100);
+          uploadedUrls.push(result.data.image_url);
+          // Mark as completed
+          setLocalImages(prev => prev.map((img, idx) => 
+            idx === i ? { ...img, isUploading: false, uploadedUrl: result.data.image_url } : img
+          ));
         } else {
-          alert(`Failed to upload ${file.name}: ${result.message}`);
+          throw new Error(result.message || 'Upload failed');
         }
       } catch (error) {
         console.error('Upload error:', error);
-        alert(`Failed to upload ${file.name}`);
+        throw new Error(`Failed to upload ${localImage.file.name}`);
       }
     }
-
-    setUploading(false);
-    setUploadProgress(0);
-    e.target.value = '';
-  };
-
-  const removeImage = (indexToRemove: number) => {
-    setProduct(prev => ({
-      ...prev,
-      images: prev.images.filter((_, index) => index !== indexToRemove)
-    }));
+    
+    return uploadedUrls;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -266,11 +329,33 @@ const ProductForm: React.FC = () => {
     setLoading(true);
     
     try {
+      let uploadedUrls: string[] = [];
+      
+      // Upload new images first (if any)
+      if (localImages.length > 0) {
+        try {
+          uploadedUrls = await uploadAllImages();
+        } catch (uploadError) {
+          alert(uploadError instanceof Error ? uploadError.message : 'Failed to upload images');
+          setLoading(false);
+          return;
+        }
+      }
+      
+      // Combine existing images with newly uploaded ones
+      const allImageUrls = [...existingImages, ...uploadedUrls];
+      
+      // Prepare product data with image URLs
+      const productData = {
+        ...product,
+        images: allImageUrls
+      };
+      
       let result;
       if (id) {
-        result = await adminService.updateProduct(parseInt(id), product);
+        result = await adminService.updateProduct(parseInt(id), productData);
       } else {
-        result = await adminService.createProduct(product);
+        result = await adminService.createProduct(productData);
       }
       
       if (result.success) {
@@ -293,6 +378,12 @@ const ProductForm: React.FC = () => {
 
   const selectedServiceType = serviceTypes.find(st => st.name === product.service_type);
   const selectedCategory = categories.find(cat => cat.name === product.category);
+  
+  // Combined images for preview (existing + local)
+  const allPreviewImages = [
+    ...existingImages.map(url => ({ type: 'existing' as const, url, isUploading: false })),
+    ...localImages.map(img => ({ type: 'local' as const, url: img.previewUrl, isUploading: img.isUploading }))
+  ];
 
   return (
     <div className="max-w-4xl mx-auto mt-14">
@@ -491,48 +582,66 @@ const ProductForm: React.FC = () => {
                 multiple
                 accept="image/jpeg,image/png,image/jpg,image/webp"
                 onChange={handleImageSelect}
-                disabled={uploading}
+                disabled={loading}
                 className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-royal-blue file:text-white hover:file:bg-royal-blue-dark"
               />
-              {uploading && (
-                <div className="mt-2">
-                  <div className="text-sm text-gray-600">Uploading... {Math.round(uploadProgress)}%</div>
-                  <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
-                    <div 
-                      className="bg-royal-blue h-2 rounded-full transition-all duration-300"
-                      style={{ width: `${uploadProgress}%` }}
-                    ></div>
-                  </div>
-                </div>
-              )}
               <p className="text-xs text-gray-400 mt-1">
-                Max file size: 5MB. Allowed formats: JPG, PNG, WEBP
+                Images will be uploaded only when you click "Create Product" or "Update Product"
               </p>
             </div>
 
+            {/* Image Gallery */}
+            {/* Image Gallery */}
             <div className="flex gap-3 flex-wrap mt-3">
-              {product.images.map((img, index) => (
-                <div key={index} className="relative group">
+              {/* Existing Images */}
+              {existingImages.map((img, index) => (
+                <div key={`existing-${index}`} className="relative group">
                   <img
                     src={`http://localhost:8000${img}`}
-                    alt={`Product ${index + 1}`}
+                    alt={`Existing product ${index + 1}`}
                     className="w-24 h-24 object-cover rounded border"
                     onError={(e) => {
-                      (e.target as HTMLImageElement).src = 'https://via.placeholder.com/100?text=No+Image';
+                      console.error('Failed to load image:', `http://localhost:8000${img}`);
+                      (e.target as HTMLImageElement).src = 'https://via.placeholder.com/100?text=Image+Error';
                     }}
                   />
                   <button
                     type="button"
-                    onClick={() => removeImage(index)}
+                    onClick={() => removeExistingImage(index)}
                     className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center hover:bg-red-600"
                   >
                     ×
                   </button>
                 </div>
               ))}
-              {product.images.length === 0 && !uploading && (
+              
+              {/* New Local Images */}
+              {localImages.map((img, index) => (
+                <div key={`local-${index}`} className="relative group">
+                  <img
+                    src={img.previewUrl}
+                    alt={`New product ${index + 1}`}
+                    className="w-24 h-24 object-cover rounded border"
+                  />
+                  {img.isUploading && (
+                    <div className="absolute inset-0 bg-black/50 rounded flex items-center justify-center">
+                      <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => removeLocalImage(index)}
+                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center hover:bg-red-600"
+                    disabled={img.isUploading}
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+              
+              {existingImages.length === 0 && localImages.length === 0 && (
                 <div className="text-sm text-gray-400 border-2 border-dashed rounded-lg p-8 text-center">
-                  No images uploaded. Click above to add product images.
+                  No images selected. Click above to add product images.
                 </div>
               )}
             </div>
@@ -549,10 +658,10 @@ const ProductForm: React.FC = () => {
           </button>
           <button
             type="submit"
-            disabled={loading || uploading}
+            disabled={loading}
             className="px-4 py-2 bg-royal-blue text-white rounded-lg hover:bg-royal-blue-dark disabled:opacity-50"
           >
-            {loading ? 'Saving...' : uploading ? 'Uploading Images...' : (id ? 'Update Product' : 'Create Product')}
+            {loading ? 'Saving...' : (id ? 'Update Product' : 'Create Product')}
           </button>
         </div>
       </form>

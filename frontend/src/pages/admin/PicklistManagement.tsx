@@ -222,7 +222,7 @@ const PicklistManagement: React.FC = () => {
   return (
     <div className="space-y-6 mt-14">
       <div>
-        <h1 className="text-2xl font-bold text-charcoal">Picklist <span className="text-royal-blue">Management</span></h1>
+        <h1 className="text-2xl font-bold text-green">Picklist <span className="text-orange">Management</span></h1>
         <p className="text-gray-500 text-sm">Manage service types, categories, and sub-categories</p>
       </div>
 
@@ -241,7 +241,7 @@ const PicklistManagement: React.FC = () => {
             onClick={() => setActiveTab('service-types')}
             className={`pb-3 px-1 text-sm font-medium transition-colors ${
               activeTab === 'service-types'
-                ? 'text-royal-blue border-b-2 border-royal-blue'
+                ? 'text-royal-blue font-semibold border-b-2 border-magenta'
                 : 'text-gray-500 hover:text-gray-700'
             }`}
           >
@@ -251,7 +251,7 @@ const PicklistManagement: React.FC = () => {
             onClick={() => setActiveTab('categories')}
             className={`pb-3 px-1 text-sm font-medium transition-colors ${
               activeTab === 'categories'
-                ? 'text-royal-blue border-b-2 border-royal-blue'
+                ? 'text-royal-blue font-semibold border-b-2 border-magenta'
                 : 'text-gray-500 hover:text-gray-700'
             }`}
           >
@@ -261,7 +261,7 @@ const PicklistManagement: React.FC = () => {
             onClick={() => setActiveTab('sub-categories')}
             className={`pb-3 px-1 text-sm font-medium transition-colors ${
               activeTab === 'sub-categories'
-                ? 'text-royal-blue border-b-2 border-royal-blue'
+                ? 'text-royal-blue font-semibold border-b-2 border-magenta'
                 : 'text-gray-500 hover:text-gray-700'
             }`}
           >
@@ -274,7 +274,7 @@ const PicklistManagement: React.FC = () => {
       <div className="flex justify-end">
         <button
           onClick={handleCreate}
-          className="flex items-center gap-2 bg-royal-blue text-white px-4 py-2 rounded-lg hover:bg-royal-blue-dark transition"
+          className="flex items-center gap-2 text-gradient-secondary hover-lift px-4 py-2 rounded-lg hover:bg-royal-blue-dark transition"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -287,7 +287,7 @@ const PicklistManagement: React.FC = () => {
       {activeTab === 'service-types' && (
         <div className="bg-white rounded-lg shadow overflow-hidden">
           <table className="w-full">
-            <thead className="bg-gray-50">
+            <thead className="bg-green-light">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
@@ -328,7 +328,7 @@ const PicklistManagement: React.FC = () => {
       {activeTab === 'categories' && (
         <div className="bg-white rounded-lg shadow overflow-hidden">
           <table className="w-full">
-            <thead className="bg-gray-50">
+            <thead className="bg-orange-light">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Service Type</th>
@@ -371,7 +371,7 @@ const PicklistManagement: React.FC = () => {
       {activeTab === 'sub-categories' && (
         <div className="bg-white rounded-lg shadow overflow-hidden">
           <table className="w-full">
-            <thead className="bg-gray-50">
+            <thead className="bg-magenta-light">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>

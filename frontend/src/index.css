@@ -125,6 +125,10 @@
   .text-gradient-primary {
     @apply bg-gradient-to-r from-green to-magenta ;
   }
+  /* Text gradients */
+  .text-gradient-secondary {
+    @apply bg-gradient-to-r from-green to-orange ;
+  }
   
   /* Hover effects */
   .hover-lift {
@@ -149,7 +153,7 @@
   .bg-royal-blue { background-color: #273B89 ; }
   .bg-royal-blue-dark { background-color: #1E2D6E; }
   .bg-orange { background-color: #ED5925; }
-  .bg-orange-light { background-color: #f7e6ed; }
+  .bg-orange-light { background-color: #f8cbbb; }
   .bg-orange-dark { background-color: #D44A1A; }
   .bg-green { background-color: #0B9647; }
   .bg-green-light { background-color: #d6f3e3; }
@@ -157,6 +161,7 @@
   .bg-magenta { background-color: #EC2D7B; }
   .bg-magenta-dark { background-color: #CC1D65; }
   .bg-charcoal { background-color: #010101; }
+  .bg-magenta-light { background-color: #fccde0; }
   
   /* Border colors */
   .border-royal-blue { border-color: #273B89; }
