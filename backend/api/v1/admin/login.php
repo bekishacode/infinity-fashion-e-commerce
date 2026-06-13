@@ -19,8 +19,8 @@ if (empty($username) || empty($password)) {
     sendResponse(false, 'Username and password required', null, 400);
 }
 
-// Query admin user (PDO version with named parameters)
-$sql = "SELECT id, username, email, full_name, password, role FROM admin_users 
+// Query admin user - ADDED profile_image
+$sql = "SELECT id, username, email, full_name, password, role, profile_image FROM admin_users 
         WHERE (username = :username OR email = :username) AND is_active = 1";
 $stmt = $db->prepare($sql);
 $stmt->execute([':username' => $username]);
