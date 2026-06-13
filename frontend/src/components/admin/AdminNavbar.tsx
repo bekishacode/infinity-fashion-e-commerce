@@ -7,11 +7,15 @@ interface AdminInfo {
   email: string;
   full_name: string;
   role: string;
+  profile_image?: string | null;
 }
+
+const ASSET_BASE_URL = process.env.REACT_APP_ASSET_URL || 'http://localhost:8000';
 
 const AdminNavbar: React.FC = () => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [adminInfo, setAdminInfo] = useState<AdminInfo | null>(null);
+  const [imageError, setImageError] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
@@ -20,6 +24,20 @@ const AdminNavbar: React.FC = () => {
     if (storedAdmin) {
       setAdminInfo(JSON.parse(storedAdmin));
     }
+  }, []);
+
+  // Listen for storage changes (when profile image is updated)
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const storedAdmin = localStorage.getItem('admin_info');
+      if (storedAdmin) {
+        setAdminInfo(JSON.parse(storedAdmin));
+        setImageError(false); // Reset error on update
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   useEffect(() => {
@@ -47,17 +65,36 @@ const AdminNavbar: React.FC = () => {
       .slice(0, 2);
   };
 
+  const getProfileImageUrl = () => {
+    if (adminInfo?.profile_image && !imageError) {
+      return `${ASSET_BASE_URL}${adminInfo.profile_image}`;
+    }
+    return null;
+  };
+
+  const profileImage = getProfileImageUrl();
+
   return (
     <nav className="bg-royal-blue fixed top-0 right-0 left-64 z-30 h-16">
       <div className="flex justify-end items-center h-full px-6">
         <div className="relative" ref={dropdownRef}>
           <button
             onClick={() => setIsProfileOpen(!isProfileOpen)}
-            className="flex items-center gap-3 hover-lift px-3 py-2 rounded-lg transition-all duration-200"
+            className="flex items-center gap-3 hover:bg-white/10 px-3 py-2 rounded-lg transition-all duration-200"
           >
-            <div className="w-9 h-9 bg-gradient-to-r from-green to-magenta rounded-full flex items-center justify-center text-white font-semibold text-sm shadow-md">
-              {adminInfo?.full_name ? getInitials(adminInfo.full_name) : 'A'}
-            </div>
+            {/* Profile Avatar with Image Support */}
+            {profileImage ? (
+              <img
+                src={profileImage}
+                alt={adminInfo?.full_name || 'Admin'}
+                className="w-9 h-9 rounded-full object-cover border-2 border-white shadow-md"
+                onError={() => setImageError(true)}
+              />
+            ) : (
+              <div className="w-9 h-9 bg-gradient-to-r from-green to-magenta rounded-full flex items-center justify-center text-white font-semibold text-sm shadow-md">
+                {adminInfo?.full_name ? getInitials(adminInfo.full_name) : 'A'}
+              </div>
+            )}
             <div className="text-left hidden md:block">
               <p className="text-sm font-medium text-white">
                 {adminInfo?.full_name || 'Admin'}
@@ -78,12 +115,22 @@ const AdminNavbar: React.FC = () => {
 
           {isProfileOpen && (
             <div className="absolute right-0 mt-2 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden z-50" style={{ right: 'auto', left: 'auto', transform: 'translateX(calc(-35%))', minWidth: '300px' }}>
-              {/* Profile Header */}
+              {/* Profile Header with Image */}
               <div className="p-5 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
                 <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 bg-gradient-to-r from-royal-blue to-magenta rounded-xl flex items-center justify-center text-white text-2xl font-bold shadow-md flex-shrink-0">
-                    {adminInfo?.full_name ? getInitials(adminInfo.full_name) : 'A'}
-                  </div>
+                  {/* Profile Image in Dropdown */}
+                  {profileImage ? (
+                    <img
+                      src={profileImage}
+                      alt={adminInfo?.full_name || 'Admin User'}
+                      className="w-14 h-14 rounded-full object-cover border-2 border-royal-blue shadow-md"
+                      onError={() => setImageError(true)}
+                    />
+                  ) : (
+                    <div className="w-14 h-14 bg-gradient-to-r from-royal-blue to-magenta rounded-xl flex items-center justify-center text-white text-2xl font-bold shadow-md flex-shrink-0">
+                      {adminInfo?.full_name ? getInitials(adminInfo.full_name) : 'A'}
+                    </div>
+                  )}
                   <div className="flex-1">
                     <p className="font-semibold text-gray-900 text-base">
                       {adminInfo?.full_name || 'Admin User'}

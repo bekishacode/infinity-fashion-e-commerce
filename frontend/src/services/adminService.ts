@@ -1,4 +1,6 @@
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000/api/v1';
+const ASSET_BASE_URL = process.env.REACT_APP_ASSET_URL || 'http://localhost:8000';
+
 
 const getAuthHeaders = () => {
   const token = localStorage.getItem('admin_token');
@@ -16,6 +18,13 @@ export const adminService = {
       body: JSON.stringify({ username, password })
     });
     return response.json();
+  },
+
+  // Helper to get full image URL
+  getImageUrl: (path: string) => {
+    if (!path) return null;
+    if (path.startsWith('http')) return path;
+    return `${ASSET_BASE_URL}${path}`;
   },
 
   async getProducts(params?: { 
@@ -465,6 +474,31 @@ export const adminService = {
     const response = await fetch(`${API_BASE_URL}/admin/cleanup-otp.php?hours=${hours}`, {
       method: 'DELETE',
       headers: getAuthHeaders()
+    });
+    return response.json();
+  },
+  // Upload profile image
+  async uploadProfileImage(file: File) {
+    const formData = new FormData();
+    formData.append('image', file);
+    
+    const token = localStorage.getItem('admin_token');
+    const response = await fetch(`${API_BASE_URL}/admin/upload-profile-image.php`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      body: formData
+    });
+    return response.json();
+  },
+
+  // Update admin profile (for own profile)
+  async updateMyProfile(data: { full_name: string; current_password?: string; new_password?: string }) {
+    const response = await fetch(`${API_BASE_URL}/admin/profile.php`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data)
     });
     return response.json();
   },

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { adminService } from '../../../services/adminService';
-
+import { getProductImageUrl } from '../../../utils/imageHelper';
 interface Product {
   id: number;
   name: string;
@@ -158,10 +158,10 @@ const ProductList: React.FC = () => {
 
   const getImageUrl = (product: Product) => {
     if (product.images && product.images.length > 0) {
-      return `http://localhost:8000${product.images[0]}`;
+      return getProductImageUrl(product.images[0]);
     }
     if (product.primary_image) {
-      return `http://localhost:8000${product.primary_image}`;
+      return getProductImageUrl(product.primary_image);
     }
     return null;
   };

@@ -49,13 +49,13 @@ function App() {
         {/* Admin Routes - No Navbar/Footer */}
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin/forgot-password" element={<ForgotPassword />} />
-        <Route path="profile" element={<AdminProfile />} />
         <Route path="/admin" element={
           <ProtectedRoute>
             <AdminDashboard />
           </ProtectedRoute>
         }>
           <Route path="dashboard" element={<Dashboard />} />
+          <Route path="profile" element={<AdminProfile />} />
           <Route path="products" element={<ProductList />} />
           <Route path="products/create" element={<ProductForm />} />
           <Route path="products/edit/:id" element={<ProductForm />} />

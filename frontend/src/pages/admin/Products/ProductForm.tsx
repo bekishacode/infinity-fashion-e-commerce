@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { adminService } from '../../../services/adminService';
+import { getProductImageUrl } from '../../../utils/imageHelper';
 
 interface ProductFormData {
   name: string;
@@ -591,18 +592,16 @@ const ProductForm: React.FC = () => {
             </div>
 
             {/* Image Gallery */}
-            {/* Image Gallery */}
             <div className="flex gap-3 flex-wrap mt-3">
               {/* Existing Images */}
               {existingImages.map((img, index) => (
                 <div key={`existing-${index}`} className="relative group">
                   <img
-                    src={`http://localhost:8000${img}`}
-                    alt={`Existing product ${index + 1}`}
+                    src={getProductImageUrl(img)}
+                    alt={`Product ${index + 1}`}
                     className="w-24 h-24 object-cover rounded border"
                     onError={(e) => {
-                      console.error('Failed to load image:', `http://localhost:8000${img}`);
-                      (e.target as HTMLImageElement).src = 'https://via.placeholder.com/100?text=Image+Error';
+                      (e.target as HTMLImageElement).src = 'https://via.placeholder.com/100?text=No+Image';
                     }}
                   />
                   <button
