@@ -1,109 +1,71 @@
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000/api/v1';
-const ASSET_BASE_URL = process.env.REACT_APP_ASSET_URL || 'http://localhost:8000';
+// src/services/adminService.ts
 
+import { apiClient, getImageUrl } from '../utils/apiClient';
+import { 
+  ApiResponse, 
+  ServiceType, 
+  Category, 
+  SubCategory, 
+  Product, 
+  ProductFormData,
+  UploadResponse 
+} from '../types/api.types';
 
-const getAuthHeaders = () => {
-  const token = localStorage.getItem('admin_token');
-  return {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${token}`
-  };
-};
+// Re-export getImageUrl for convenience
+export { getImageUrl };
 
 export const adminService = {
-  async login(username: string, password: string) {
-    const response = await fetch(`${API_BASE_URL}/admin/login.php`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password })
-    });
-    return response.json();
+  // Auth
+  async login(username: string, password: string): Promise<ApiResponse<{ admin: any; token: string }>> {
+    return apiClient.post('/admin/login.php', { username, password });
   },
 
-  // Helper to get full image URL
-  getImageUrl: (path: string) => {
-    if (!path) return null;
-    if (path.startsWith('http')) return path;
-    return `${ASSET_BASE_URL}${path}`;
+  // Products
+  async getProducts(params?: { page?: number; limit?: number; search?: string; show_inactive?: boolean }): Promise<ApiResponse<{ products: Product[]; pagination: any }>> {
+    return apiClient.get('/admin/products.php', params);
   },
 
-  async getProducts(params?: { 
-    page?: number; 
-    limit?: number; 
-    search?: string; 
-    show_inactive?: boolean;  // Changed from 'status' to 'show_inactive'
-  }) {
-    const urlParams = new URLSearchParams();
-    if (params?.page) urlParams.append('page', params.page.toString());
-    if (params?.limit) urlParams.append('limit', params.limit.toString());
-    if (params?.search) urlParams.append('search', params.search);
-    
-    // Handle show_inactive parameter
-    if (params?.show_inactive !== undefined) {
-      urlParams.append('show_inactive', params.show_inactive ? 'true' : 'false');
-    }
-    
-    const response = await fetch(`${API_BASE_URL}/admin/products.php?${urlParams}`, {
-      headers: getAuthHeaders()
-    });
-    return response.json();
+  async getProduct(id: number): Promise<ApiResponse<Product>> {
+    return apiClient.get(`/admin/products.php?id=${id}`);
   },
 
-  async getProduct(id: number) {
-    const response = await fetch(`${API_BASE_URL}/admin/products.php?id=${id}`, {
-      headers: getAuthHeaders()
-    });
-    return response.json();
+  async createProduct(product: ProductFormData): Promise<ApiResponse<{ id: number; slug: string }>> {
+    return apiClient.post('/admin/products.php', product);
   },
 
-  async createProduct(product: any): Promise<any> {
-    const response = await fetch(`${API_BASE_URL}/admin/products.php`, {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(product)
-    });
-    return response.json();
+  async updateProduct(id: number, product: ProductFormData): Promise<ApiResponse<null>> {
+    return apiClient.put(`/admin/products.php?id=${id}`, product);
   },
 
-  async updateProduct(id: number, product: any) {
-    const response = await fetch(`${API_BASE_URL}/admin/products.php?id=${id}`, {
-      method: 'PUT',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(product)
-    });
-    return response.json();
+  async deleteProduct(id: number, permanent: boolean = false): Promise<ApiResponse<null>> {
+    return apiClient.delete(`/admin/products.php?id=${id}&permanent=${permanent}`);
   },
 
-  async deleteProduct(id: number, permanent: boolean = false) {
-    const response = await fetch(`${API_BASE_URL}/admin/products.php?id=${id}&permanent=${permanent}`, {
-      method: 'DELETE',
-      headers: getAuthHeaders()
-    });
-    return response.json();
+  async restoreProduct(id: number): Promise<ApiResponse<null>> {
+    return apiClient.post(`/admin/products.php?id=${id}`, { action: 'restore' });
   },
 
-  async restoreProduct(id: number): Promise<any> {
-    const response = await fetch(`${API_BASE_URL}/admin/products.php?id=${id}`, {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify({ action: 'restore' })
-    });
-    return response.json();
+  async uploadImage(file: File): Promise<ApiResponse<UploadResponse>> {
+    return apiClient.upload('/admin/upload-image.php', file);
   },
 
-  async uploadImage(file: File) {
-    const formData = new FormData();
-    formData.append('image', file);
-    
-    const token = localStorage.getItem('admin_token');
-    const response = await fetch(`${API_BASE_URL}/admin/upload-image.php`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`
-      },
-      body: formData
-    });
-    return response.json();
+  // Picklist Management
+  async getServiceTypes(): Promise<ApiResponse<ServiceType[]>> {
+    return apiClient.get('/admin/picklists.php?type=service-types');
+  },
+
+  async getCategories(serviceTypeId?: number): Promise<ApiResponse<Category[]>> {
+    const url = serviceTypeId 
+      ? `/admin/picklists.php?type=categories&service_type_id=${serviceTypeId}`
+      : '/admin/picklists.php?type=categories';
+    return apiClient.get(url);
+  },
+
+  async getSubCategories(categoryId?: number): Promise<ApiResponse<SubCategory[]>> {
+    const url = categoryId 
+      ? `/admin/picklists.php?type=sub-categories&category_id=${categoryId}`
+      : '/admin/picklists.php?type=sub-categories';
+    return apiClient.get(url);
   },
 
   // Orders Related
@@ -113,35 +75,18 @@ export const adminService = {
     search?: string; 
     status?: string;
   }) {
-    const urlParams = new URLSearchParams();
-    if (params?.page) urlParams.append('page', params.page.toString());
-    if (params?.limit) urlParams.append('limit', params.limit.toString());
-    if (params?.search) urlParams.append('search', params.search);
-    if (params?.status) urlParams.append('status', params.status);
-    
-    const response = await fetch(`${API_BASE_URL}/admin/orders.php?${urlParams}`, {
-      headers: getAuthHeaders()
-    });
-    return response.json();
+    return apiClient.get('/admin/orders.php', params);
   },
 
   async getOrder(id: number) {
-    const response = await fetch(`${API_BASE_URL}/admin/orders.php?id=${id}`, {
-      headers: getAuthHeaders()
-    });
-    return response.json();
+    return apiClient.get(`/admin/orders.php?id=${id}`);
   },
 
   async updateOrderStatus(orderId: number, status: string) {
-    const response = await fetch(`${API_BASE_URL}/orders/update.php`, {
-      method: 'PUT',
-      headers: getAuthHeaders(),
-      body: JSON.stringify({ order_id: orderId, status })
-    });
-    return response.json();
+    return apiClient.put('/orders/update.php', { order_id: orderId, status });
   },
 
-  //Customer
+  // Customer
   async getCustomers(params?: { 
     page?: number; 
     limit?: number; 
@@ -149,359 +94,161 @@ export const adminService = {
     sort_by?: string;
     sort_order?: string;
   }) {
-    const urlParams = new URLSearchParams();
-    if (params?.page) urlParams.append('page', params.page.toString());
-    if (params?.limit) urlParams.append('limit', params.limit.toString());
-    if (params?.search) urlParams.append('search', params.search);
-    if (params?.sort_by) urlParams.append('sort_by', params.sort_by);
-    if (params?.sort_order) urlParams.append('sort_order', params.sort_order);
-    
-    const response = await fetch(`${API_BASE_URL}/admin/customers.php?${urlParams}`, {
-      headers: getAuthHeaders()
-    });
-    return response.json();
+    return apiClient.get('/admin/customers.php', params);
   },
 
   async getCustomer(id: number) {
-    const response = await fetch(`${API_BASE_URL}/admin/customers.php?id=${id}`, {
-      headers: getAuthHeaders()
-    });
-    return response.json();
+    return apiClient.get(`/admin/customers.php?id=${id}`);
   },
 
   async updateCustomer(id: number, data: { name?: string; phone?: string; email?: string; address?: string }) {
-    const response = await fetch(`${API_BASE_URL}/admin/customers.php?id=${id}`, {
-      method: 'PUT',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(data)
-    });
-    return response.json();
+    return apiClient.put(`/admin/customers.php?id=${id}`, data);
   },
   
   // Admin Management (Super Admin only)
   async getAdmins(params?: { page?: number; limit?: number; search?: string }) {
-    const urlParams = new URLSearchParams();
-    if (params?.page) urlParams.append('page', params.page.toString());
-    if (params?.limit) urlParams.append('limit', params.limit.toString());
-    if (params?.search) urlParams.append('search', params.search);
-    
-    const response = await fetch(`${API_BASE_URL}/admin/manage.php?${urlParams}`, {
-      headers: getAuthHeaders()
-    });
-    return response.json();
+    return apiClient.get('/admin/manage.php', params);
   },
 
   async getAdmin(id: number) {
-    const response = await fetch(`${API_BASE_URL}/admin/manage.php?id=${id}`, {
-      headers: getAuthHeaders()
-    });
-    return response.json();
+    return apiClient.get(`/admin/manage.php?id=${id}`);
   },
 
   async createAdmin(data: { username: string; email: string; password: string; full_name?: string; role?: string }) {
-    const response = await fetch(`${API_BASE_URL}/admin/manage.php`, {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(data)
-    });
-    return response.json();
+    return apiClient.post('/admin/manage.php', data);
   },
 
   async updateAdmin(id: number, data: { full_name?: string; role?: string; is_active?: boolean; password?: string }) {
-    const response = await fetch(`${API_BASE_URL}/admin/manage.php?id=${id}`, {
-      method: 'PUT',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(data)
-    });
-    return response.json();
+    return apiClient.put(`/admin/manage.php?id=${id}`, data);
   },
 
   async deleteAdmin(id: number) {
-    const response = await fetch(`${API_BASE_URL}/admin/manage.php?id=${id}`, {
-      method: 'DELETE',
-      headers: getAuthHeaders()
-    });
-    return response.json();
+    return apiClient.delete(`/admin/manage.php?id=${id}`);
   },
 
   // Forgot Password
   async forgotPassword(email: string) {
-    const response = await fetch(`${API_BASE_URL}/admin/forgot-password.php`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email })
-    });
-    return response.json();
+    return apiClient.post('/admin/forgot-password.php', { email });
   },
 
   async verifyOtp(email: string, otp: string) {
-    const response = await fetch(`${API_BASE_URL}/admin/verify-otp.php`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, otp })
-    });
-    return response.json();
+    return apiClient.post('/admin/verify-otp.php', { email, otp });
   },
 
   async resetPassword(email: string, resetToken: string, newPassword: string) {
-    const response = await fetch(`${API_BASE_URL}/admin/reset-password.php`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, reset_token: resetToken, new_password: newPassword })
-    });
-    return response.json();
+    return apiClient.post('/admin/reset-password.php', { email, reset_token: resetToken, new_password: newPassword });
   },
 
   // Email Configuration
   async getEmailConfig() {
-    const response = await fetch(`${API_BASE_URL}/admin/email-config.php`, {
-      headers: getAuthHeaders()
-    });
-    return response.json();
+    return apiClient.get('/admin/email-config.php');
   },
 
   async updateEmailConfig(config: any) {
-    const response = await fetch(`${API_BASE_URL}/admin/email-config.php`, {
-      method: 'PUT',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(config)
-    });
-    return response.json();
+    return apiClient.put('/admin/email-config.php', config);
   },
 
   // Email Templates
   async getEmailTemplates() {
-    const response = await fetch(`${API_BASE_URL}/admin/email-templates.php`, {
-      headers: getAuthHeaders()
-    });
-    return response.json();
+    return apiClient.get('/admin/email-templates.php');
   },
 
   async getEmailTemplate(id: number) {
-    const response = await fetch(`${API_BASE_URL}/admin/email-templates.php?id=${id}`, {
-      headers: getAuthHeaders()
-    });
-    return response.json();
+    return apiClient.get(`/admin/email-templates.php?id=${id}`);
   },
 
   async updateEmailTemplate(id: number, data: { subject: string; body: string; is_active: boolean }) {
-    const response = await fetch(`${API_BASE_URL}/admin/email-templates.php`, {
-      method: 'PUT',
-      headers: getAuthHeaders(),
-      body: JSON.stringify({ id, ...data })
-    });
-    return response.json();
+    return apiClient.put('/admin/email-templates.php', { id, ...data });
   },
 
   async testEmail(email: string) {
-    const response = await fetch(`${API_BASE_URL}/admin/email-templates.php?action=test`, {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify({ email })
-    });
-    return response.json();
+    return apiClient.post('/admin/email-templates.php?action=test', { email });
   },
 
-  // Get single template with full details
   async getEmailTemplateFull(id: number) {
-    const response = await fetch(`${API_BASE_URL}/admin/email-templates.php?id=${id}`, {
-      headers: getAuthHeaders()
-    });
-    return response.json();
+    return apiClient.get(`/admin/email-templates.php?id=${id}`);
   },
 
   async updateEmailTemplateFull(id: number, data: { subject: string; header: string; body: string; footer: string; is_active: boolean }) {
-    const response = await fetch(`${API_BASE_URL}/admin/email-templates.php`, {
-      method: 'PUT',
-      headers: getAuthHeaders(),
-      body: JSON.stringify({ id, ...data })
-    });
-    return response.json();
+    return apiClient.put('/admin/email-templates.php', { id, ...data });
   },
 
   async getEmailLayoutSettings() {
-    const response = await fetch(`${API_BASE_URL}/admin/email-templates.php?action=layout`, {
-      headers: getAuthHeaders()
-    });
-    return response.json();
+    return apiClient.get('/admin/email-templates.php?action=layout');
   },
 
   async updateEmailLayoutSettings(data: any) {
-    const response = await fetch(`${API_BASE_URL}/admin/email-templates.php?action=layout`, {
-      method: 'PUT',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(data)
-    });
-    return response.json();
+    return apiClient.put('/admin/email-templates.php?action=layout', data);
   },
 
   async previewEmail(header: string, body: string, footer: string) {
-    const response = await fetch(`${API_BASE_URL}/admin/email-templates.php?action=preview`, {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify({ header, body, footer })
-    });
-    return response.json();
-  },
-
-  // Picklist Management
-  async getServiceTypes() {
-    const response = await fetch(`${API_BASE_URL}/admin/picklists.php?type=service-types`, {
-      headers: getAuthHeaders()
-    });
-    return response.json();
-  },
-
-  async getCategories(serviceTypeId?: number) {
-    const url = serviceTypeId 
-      ? `${API_BASE_URL}/admin/picklists.php?type=categories&service_type_id=${serviceTypeId}`
-      : `${API_BASE_URL}/admin/picklists.php?type=categories`;
-    const response = await fetch(url, { headers: getAuthHeaders() });
-    return response.json();
-  },
-
-  async getSubCategories(categoryId?: number) {
-    const url = categoryId 
-      ? `${API_BASE_URL}/admin/picklists.php?type=sub-categories&category_id=${categoryId}`
-      : `${API_BASE_URL}/admin/picklists.php?type=sub-categories`;
-    const response = await fetch(url, { headers: getAuthHeaders() });
-    return response.json();
+    return apiClient.post('/admin/email-templates.php?action=preview', { header, body, footer });
   },
 
   async createServiceType(data: { name: string; display_name: string; icon?: string; sort_order?: number }) {
-    const response = await fetch(`${API_BASE_URL}/admin/picklists.php?type=service-types`, {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(data)
-    });
-    return response.json();
+    return apiClient.post('/admin/picklists.php?type=service-types', data);
   },
 
   async createCategory(data: { service_type_id: number; name: string; display_name: string; icon?: string; sort_order?: number }) {
-    const response = await fetch(`${API_BASE_URL}/admin/picklists.php?type=categories`, {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(data)
-    });
-    return response.json();
+    return apiClient.post('/admin/picklists.php?type=categories', data);
   },
 
   async createSubCategory(data: { category_id: number; name: string; display_name: string; sort_order?: number }) {
-    const response = await fetch(`${API_BASE_URL}/admin/picklists.php?type=sub-categories`, {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(data)
-    });
-    return response.json();
+    return apiClient.post('/admin/picklists.php?type=sub-categories', data);
   },
 
   async updateServiceType(id: number, data: { display_name: string; icon?: string; sort_order?: number; is_active?: boolean }) {
-    const response = await fetch(`${API_BASE_URL}/admin/picklists.php?type=service-types&id=${id}`, {
-      method: 'PUT',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(data)
-    });
-    return response.json();
+    return apiClient.put(`/admin/picklists.php?type=service-types&id=${id}`, data);
   },
 
   async updateCategory(id: number, data: { display_name: string; icon?: string; sort_order?: number; is_active?: boolean }) {
-    const response = await fetch(`${API_BASE_URL}/admin/picklists.php?type=categories&id=${id}`, {
-      method: 'PUT',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(data)
-    });
-    return response.json();
+    return apiClient.put(`/admin/picklists.php?type=categories&id=${id}`, data);
   },
 
   async updateSubCategory(id: number, data: { display_name: string; sort_order?: number; is_active?: boolean }) {
-    const response = await fetch(`${API_BASE_URL}/admin/picklists.php?type=sub-categories&id=${id}`, {
-      method: 'PUT',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(data)
-    });
-    return response.json();
+    return apiClient.put(`/admin/picklists.php?type=sub-categories&id=${id}`, data);
   },
 
   async deleteServiceType(id: number) {
-    const response = await fetch(`${API_BASE_URL}/admin/picklists.php?type=service-types&id=${id}`, {
-      method: 'DELETE',
-      headers: getAuthHeaders()
-    });
-    return response.json();
+    return apiClient.delete(`/admin/picklists.php?type=service-types&id=${id}`);
   },
 
   async deleteCategory(id: number) {
-    const response = await fetch(`${API_BASE_URL}/admin/picklists.php?type=categories&id=${id}`, {
-      method: 'DELETE',
-      headers: getAuthHeaders()
-    });
-    return response.json();
+    return apiClient.delete(`/admin/picklists.php?type=categories&id=${id}`);
   },
 
   async deleteSubCategory(id: number) {
-    const response = await fetch(`${API_BASE_URL}/admin/picklists.php?type=sub-categories&id=${id}`, {
-      method: 'DELETE',
-      headers: getAuthHeaders()
-    });
-    return response.json();
-  },
-  //Manual Image clean-up
-  // Scan for orphaned images (no deletion)
-  async scanOrphanedImages() {
-    const response = await fetch(`${API_BASE_URL}/admin/cleanup-images.php?action=scan`, {
-      headers: getAuthHeaders()
-    });
-    return response.json();
+    return apiClient.delete(`/admin/picklists.php?type=sub-categories&id=${id}`);
   },
 
-  // Delete orphaned images
-  async deleteOrphanedImages() {
-    const response = await fetch(`${API_BASE_URL}/admin/cleanup-images.php`, {
-      method: 'DELETE',
-      headers: getAuthHeaders()
-    });
-    return response.json();
+  // Manual Image clean-up
+  async scanOrphanedImages() {
+    return apiClient.get('/admin/cleanup-images.php?action=scan');
   },
+
+  async deleteOrphanedImages() {
+    return apiClient.delete('/admin/cleanup-images.php');
+  },
+
   // OTP Cleanup
   async scanExpiredOtps(hours: number = 1) {
-    const response = await fetch(`${API_BASE_URL}/admin/cleanup-otp.php?action=scan&hours=${hours}`, {
-      headers: getAuthHeaders()
-    });
-    return response.json();
+    return apiClient.get(`/admin/cleanup-otp.php?action=scan&hours=${hours}`);
   },
 
   async deleteExpiredOtps(hours: number = 1) {
-    const response = await fetch(`${API_BASE_URL}/admin/cleanup-otp.php?hours=${hours}`, {
-      method: 'DELETE',
-      headers: getAuthHeaders()
-    });
-    return response.json();
+    return apiClient.delete(`/admin/cleanup-otp.php?hours=${hours}`);
   },
+
   // Upload profile image
   async uploadProfileImage(file: File) {
-    const formData = new FormData();
-    formData.append('image', file);
-    
-    const token = localStorage.getItem('admin_token');
-    const response = await fetch(`${API_BASE_URL}/admin/upload-profile-image.php`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`
-      },
-      body: formData
-    });
-    return response.json();
+    return apiClient.upload('/admin/upload-profile-image.php', file);
   },
 
   // Update admin profile (for own profile)
   async updateMyProfile(data: { full_name: string; current_password?: string; new_password?: string }) {
-    const response = await fetch(`${API_BASE_URL}/admin/profile.php`, {
-      method: 'PUT',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(data)
-    });
-    return response.json();
+    return apiClient.put('/admin/profile.php', data);
   },
+
   async logout() {
     localStorage.removeItem('admin_token');
     localStorage.removeItem('admin_info');

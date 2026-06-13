@@ -39,6 +39,12 @@ interface Order {
   }>;
 }
 
+interface ApiResponse<T = any> {
+  success: boolean;
+  message: string;
+  data: T;
+}
+
 const OrderDetails: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -63,8 +69,8 @@ const OrderDetails: React.FC = () => {
   const fetchOrder = async () => {
     setLoading(true);
     try {
-      const result = await adminService.getOrder(parseInt(id!));
-      if (result.success) {
+      const result = await adminService.getOrder(parseInt(id!)) as ApiResponse<Order>;
+      if (result.success && result.data) {
         setOrder(result.data);
         setSelectedStatus(result.data.status);
       } else {
@@ -87,13 +93,13 @@ const OrderDetails: React.FC = () => {
     
     setUpdating(true);
     try {
-      const result = await adminService.updateOrderStatus(order.id, selectedStatus);
+      const result = await adminService.updateOrderStatus(order.id, selectedStatus) as ApiResponse<any>;
       if (result.success) {
         alert(`Order status updated to ${selectedStatus}`);
-        fetchOrder(); // Refresh order details
+        fetchOrder();
       } else {
         alert(result.message || 'Failed to update status');
-        setSelectedStatus(order.status); // Reset on error
+        setSelectedStatus(order.status);
       }
     } catch (error) {
       console.error('Error updating status:', error);

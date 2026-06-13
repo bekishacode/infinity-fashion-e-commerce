@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { adminService } from '../../services/adminService';
+import { adminService, getImageUrl } from '../../services/adminService';
 
 interface AdminInfo {
   id: number;
@@ -9,6 +9,13 @@ interface AdminInfo {
   full_name: string;
   role: string;
   profile_image?: string | null;
+}
+
+// API interface
+interface ApiResponse<T = any> {
+  success: boolean;
+  message: string;
+  data: T;
 }
 
 const AdminProfile: React.FC = () => {
@@ -65,8 +72,8 @@ const AdminProfile: React.FC = () => {
     setMessage(null);
 
     try {
-      const result = await adminService.uploadProfileImage(file);
-      if (result.success) {
+      const result = await adminService.uploadProfileImage(file) as ApiResponse<{ image_url: string }>;
+      if (result.success && result.data) {
         const updatedAdmin = { ...adminInfo!, profile_image: result.data.image_url };
         localStorage.setItem('admin_info', JSON.stringify(updatedAdmin));
         setAdminInfo(updatedAdmin);
@@ -87,7 +94,6 @@ const AdminProfile: React.FC = () => {
     setLoading(true);
     setMessage(null);
 
-    // Validate passwords if changing
     if (formData.new_password && formData.new_password !== formData.confirm_password) {
       setMessage({ type: 'error', text: 'New passwords do not match' });
       setLoading(false);
@@ -107,7 +113,7 @@ const AdminProfile: React.FC = () => {
         updateData.new_password = formData.new_password;
       }
 
-      const result = await adminService.updateMyProfile(updateData);
+      const result = await adminService.updateMyProfile(updateData) as ApiResponse<any>;
       if (result.success) {
         const updatedAdmin = { ...adminInfo!, full_name: formData.full_name };
         localStorage.setItem('admin_info', JSON.stringify(updatedAdmin));
@@ -134,11 +140,9 @@ const AdminProfile: React.FC = () => {
       .slice(0, 2);
   };
 
+  // Use getImageUrl helper instead of hardcoded URL
   const getProfileImageUrl = () => {
-    if (adminInfo?.profile_image) {
-      return `http://localhost:8000${adminInfo.profile_image}`;
-    }
-    return null;
+    return getImageUrl(adminInfo?.profile_image);
   };
 
   const getRoleBadgeColor = (role: string) => {
@@ -190,6 +194,9 @@ const AdminProfile: React.FC = () => {
                   src={profileImage}
                   alt={adminInfo.full_name || adminInfo.username}
                   className="w-24 h-24 rounded-full object-cover border-4 border-royal-blue"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = 'https://via.placeholder.com/100?text=No+Image';
+                  }}
                 />
               ) : (
                 <div className="w-24 h-24 bg-gradient-to-r from-royal-blue to-magenta rounded-full flex items-center justify-center text-white text-3xl font-bold">

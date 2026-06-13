@@ -13,6 +13,12 @@ interface Customer {
   last_order_at: string | null;
   created_at: string;
 }
+// API interface
+interface ApiResponse<T = any> {
+  success: boolean;
+  message: string;
+  data: T;
+}
 
 const CustomerList: React.FC = () => {
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -35,7 +41,7 @@ const CustomerList: React.FC = () => {
         search: search || undefined,
         sort_by: sortBy,
         sort_order: sortOrder.toLowerCase()
-      });
+      }) as ApiResponse<{ customers: Customer[]; pagination: any }>;
       
       if (result.success) {
         setCustomers(result.data.customers);

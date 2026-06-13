@@ -13,6 +13,13 @@ interface AdminUser {
   created_at: string;
 }
 
+// Add this interface
+interface ApiResponse<T = any> {
+  success: boolean;
+  message: string;
+  data: T;
+}
+
 const AdminList: React.FC = () => {
   const [admins, setAdmins] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
@@ -46,7 +53,7 @@ const AdminList: React.FC = () => {
   const fetchAdmins = async (page = 1) => {
     setLoading(true);
     try {
-      const result = await adminService.getAdmins({ page, search: search || undefined });
+      const result = await adminService.getAdmins({ page, search: search || undefined }) as ApiResponse<{ admins: AdminUser[]; pagination: any }>;
       if (result.success) {
         setAdmins(result.data.admins);
         setPagination(result.data.pagination);
@@ -163,7 +170,7 @@ const AdminList: React.FC = () => {
           </div>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-2 bg-royal-blue text-white px-4 py-2 rounded-lg hover:bg-royal-blue-dark transition"
+            className="flex items-center gap-2 text-gradient-secondary hover-lift px-4 py-2 rounded-lg hover:bg-royal-blue-dark transition"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />

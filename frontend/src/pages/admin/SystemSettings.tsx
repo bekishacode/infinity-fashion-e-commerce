@@ -19,6 +19,12 @@ interface ExpiredOtp {
   minutes_old: number;
 }
 
+interface ApiResponse<T = any> {
+  success: boolean;
+  message: string;
+  data: T;
+}
+
 const SystemSettings: React.FC = () => {
   // Image cleanup states
   const [scanning, setScanning] = useState(false);
@@ -51,8 +57,8 @@ const SystemSettings: React.FC = () => {
     setScanResult(null);
     
     try {
-      const result = await adminService.scanOrphanedImages();
-      if (result.success) {
+      const result = await adminService.scanOrphanedImages() as ApiResponse<any>;
+      if (result.success && result.data) {
         setScanResult(result.data);
         if (result.data.has_orphaned_files) {
           setMessage({ 
@@ -84,8 +90,8 @@ const SystemSettings: React.FC = () => {
     setMessage(null);
     
     try {
-      const result = await adminService.deleteOrphanedImages();
-      if (result.success) {
+      const result = await adminService.deleteOrphanedImages() as ApiResponse<any>;
+      if (result.success && result.data) {
         setMessage({ 
           type: 'success', 
           text: `Cleanup completed! Deleted ${result.data.orphaned_files_deleted} orphaned files. Freed ${result.data.freed_space_mb} MB of disk space.` 
@@ -108,8 +114,8 @@ const SystemSettings: React.FC = () => {
     setOtpScanResult(null);
     
     try {
-      const result = await adminService.scanExpiredOtps(otpHoursThreshold);
-      if (result.success) {
+      const result = await adminService.scanExpiredOtps(otpHoursThreshold) as ApiResponse<any>;
+      if (result.success && result.data) {
         setOtpScanResult(result.data);
         if (result.data.has_expired) {
           setMessage({ 
@@ -141,8 +147,8 @@ const SystemSettings: React.FC = () => {
     setMessage(null);
     
     try {
-      const result = await adminService.deleteExpiredOtps(otpHoursThreshold);
-      if (result.success) {
+      const result = await adminService.deleteExpiredOtps(otpHoursThreshold) as ApiResponse<any>;
+      if (result.success && result.data) {
         setMessage({ 
           type: 'success', 
           text: `OTP cleanup completed! Deleted ${result.data.deleted_count} expired OTP records.` 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { productService, Product } from '../services/productService';
-import ProductCarousel from '../components/common/ProductCarousel';
+import { productService, Product } from '../../services/productService';
+import ProductCarousel from '../../components/common/ProductCarousel';
 
 const Products: React.FC = () => {
   const [allProducts, setAllProducts] = useState<Product[]>([]);

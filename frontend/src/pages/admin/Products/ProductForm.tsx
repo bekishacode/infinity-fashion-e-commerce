@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { adminService } from '../../../services/adminService';
-import { getProductImageUrl } from '../../../utils/imageHelper';
+import { adminService, getImageUrl } from '../../../services/adminService';
 
 interface ProductFormData {
   name: string;
@@ -18,6 +17,12 @@ interface ProductFormData {
   in_stock: boolean;
   is_featured: boolean;
   images: string[];
+}
+
+interface ApiResponse<T = any> {
+  success: boolean;
+  message: string;
+  data: T;
 }
 
 interface ServiceType {
@@ -124,7 +129,7 @@ const ProductForm: React.FC = () => {
   const loadPicklists = async () => {
     setLoadingPicklists(true);
     try {
-      const serviceTypesRes = await adminService.getServiceTypes();
+      const serviceTypesRes = await adminService.getServiceTypes() as ApiResponse<ServiceType[]>;
       if (serviceTypesRes.success) {
         setServiceTypes(serviceTypesRes.data);
       }
@@ -139,7 +144,7 @@ const ProductForm: React.FC = () => {
     try {
       const selectedType = serviceTypes.find(st => st.name === product.service_type);
       if (selectedType) {
-        const result = await adminService.getCategories(selectedType.id);
+        const result = await adminService.getCategories(selectedType.id) as ApiResponse<Category[]>;
         if (result.success) setCategories(result.data);
       }
     } catch (error) {
@@ -151,7 +156,7 @@ const ProductForm: React.FC = () => {
     try {
       const selectedCategory = categories.find(cat => cat.name === product.category);
       if (selectedCategory) {
-        const result = await adminService.getSubCategories(selectedCategory.id);
+        const result = await adminService.getSubCategories(selectedCategory.id) as ApiResponse<SubCategory[]>;
         if (result.success) setSubCategories(result.data);
       }
     } catch (error) {
@@ -162,7 +167,7 @@ const ProductForm: React.FC = () => {
   const fetchProduct = async () => {
     setLoading(true);
     try {
-      const result = await adminService.getProduct(parseInt(id!));
+      const result = await adminService.getProduct(parseInt(id!)) as ApiResponse<any>;
       if (result.success) {
         const productData = result.data;
         setProduct(productData);
@@ -172,7 +177,7 @@ const ProductForm: React.FC = () => {
         if (productData.service_type && serviceTypes.length > 0) {
           const selectedType = serviceTypes.find(st => st.name === productData.service_type);
           if (selectedType) {
-            const categoriesResult = await adminService.getCategories(selectedType.id);
+            const categoriesResult = await adminService.getCategories(selectedType.id) as ApiResponse<Category[]>;
             if (categoriesResult.success) {
               setCategories(categoriesResult.data);
               
@@ -180,7 +185,7 @@ const ProductForm: React.FC = () => {
               if (productData.category) {
                 const selectedCategory = categoriesResult.data.find((cat: Category) => cat.name === productData.category);
                 if (selectedCategory) {
-                  const subResult = await adminService.getSubCategories(selectedCategory.id);
+                  const subResult = await adminService.getSubCategories(selectedCategory.id) as ApiResponse<SubCategory[]>;
                   if (subResult.success) {
                     setSubCategories(subResult.data);
                   }
@@ -250,10 +255,10 @@ const ProductForm: React.FC = () => {
     const confirm = window.confirm('Remove this image? The file will be permanently deleted.');
     if (!confirm) return;
     
-    // Delete the physical file
+    // Delete the physical file using adminService
     try {
       const token = localStorage.getItem('admin_token');
-      const response = await fetch('http://localhost:8000/api/v1/admin/delete-image.php', {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8000/api/v1'}/admin/delete-image.php`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -277,7 +282,6 @@ const ProductForm: React.FC = () => {
   // Upload all local images to server
   const uploadAllImages = async (): Promise<string[]> => {
     const uploadedUrls: string[] = [];
-    const token = localStorage.getItem('admin_token');
 
     for (let i = 0; i < localImages.length; i++) {
       const localImage = localImages[i];
@@ -288,18 +292,7 @@ const ProductForm: React.FC = () => {
       ));
 
       try {
-        const formData = new FormData();
-        formData.append('image', localImage.file);
-        
-        const response = await fetch('http://localhost:8000/api/v1/admin/upload-image.php', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`
-          },
-          body: formData
-        });
-        
-        const result = await response.json();
+        const result = await adminService.uploadImage(localImage.file) as ApiResponse<{ image_url: string }>;
         
         if (result.success) {
           uploadedUrls.push(result.data.image_url);
@@ -352,11 +345,11 @@ const ProductForm: React.FC = () => {
         images: allImageUrls
       };
       
-      let result;
+      let result: ApiResponse<any>;
       if (id) {
-        result = await adminService.updateProduct(parseInt(id), productData);
+        result = await adminService.updateProduct(parseInt(id), productData) as ApiResponse<any>;
       } else {
-        result = await adminService.createProduct(productData);
+        result = await adminService.createProduct(productData) as ApiResponse<any>;
       }
       
       if (result.success) {
@@ -379,12 +372,6 @@ const ProductForm: React.FC = () => {
 
   const selectedServiceType = serviceTypes.find(st => st.name === product.service_type);
   const selectedCategory = categories.find(cat => cat.name === product.category);
-  
-  // Combined images for preview (existing + local)
-  const allPreviewImages = [
-    ...existingImages.map(url => ({ type: 'existing' as const, url, isUploading: false })),
-    ...localImages.map(img => ({ type: 'local' as const, url: img.previewUrl, isUploading: img.isUploading }))
-  ];
 
   return (
     <div className="max-w-4xl mx-auto mt-14">
@@ -597,7 +584,7 @@ const ProductForm: React.FC = () => {
               {existingImages.map((img, index) => (
                 <div key={`existing-${index}`} className="relative group">
                   <img
-                    src={getProductImageUrl(img)}
+                    src={getImageUrl(img) || 'https://via.placeholder.com/100?text=No+Image'}
                     alt={`Product ${index + 1}`}
                     className="w-24 h-24 object-cover rounded border"
                     onError={(e) => {

@@ -14,6 +14,13 @@ interface Order {
   created_at: string;
 }
 
+// API interface
+interface ApiResponse<T = any> {
+  success: boolean;
+  message: string;
+  data: T;
+} 
+
 const OrderList: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -33,9 +40,9 @@ const OrderList: React.FC = () => {
         page, 
         search: search || undefined,
         status: statusFilter || undefined
-      });
+      }) as ApiResponse<{ orders: Order[]; pagination: any }>;
       
-      if (result.success) {
+      if (result.success && result.data) {
         setOrders(result.data.orders);
         setPagination(result.data.pagination);
       }

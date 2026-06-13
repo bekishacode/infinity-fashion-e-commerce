@@ -2,6 +2,27 @@ import React, { useState, useEffect } from 'react';
 import { adminService } from '../../services/adminService';
 import EmailTemplateEditor from '../../components/admin/EmailTemplateEditor';
 
+// API interface
+interface ApiResponse<T = any> {
+  success: boolean;
+  message: string;
+  data: T;
+}
+
+// Also add interface for email config
+interface EmailConfigData {
+  config: {
+    provider?: string;
+    smtp_host?: string;
+    smtp_port?: number;
+    smtp_username?: string;
+    smtp_encryption?: string;
+    from_email?: string;
+    from_name?: string;
+  };
+  templates?: any[];
+}
+
 const EmailSettings: React.FC = () => {
   const [config, setConfig] = useState({
     provider: 'smtp',
@@ -40,8 +61,8 @@ const EmailSettings: React.FC = () => {
   const fetchEmailConfig = async () => {
     setLoading(true);
     try {
-      const result = await adminService.getEmailConfig();
-      if (result.success) {
+      const result = await adminService.getEmailConfig() as ApiResponse<EmailConfigData>;
+      if (result.success && result.data) {
         if (result.data.config) {
           setConfig({
             provider: result.data.config.provider || 'smtp',
@@ -141,19 +162,18 @@ const EmailSettings: React.FC = () => {
   };
 
   const editTemplate = async (template: any) => {
-    // Fetch full template details
     try {
-        const result = await adminService.getEmailTemplateFull(template.id);
-        if (result.success) {
+      const result = await adminService.getEmailTemplateFull(template.id) as ApiResponse<any>;
+      if (result.success && result.data) {
         setSelectedTemplate(result.data);
         setShowTemplateEditor(true);
-        } else {
+      } else {
         showMessage('error', 'Failed to load template details');
-        }
+      }
     } catch (error) {
-        showMessage('error', 'Something went wrong');
+      showMessage('error', 'Something went wrong');
     }
-    };
+  };
 
   if (loading) {
     return (

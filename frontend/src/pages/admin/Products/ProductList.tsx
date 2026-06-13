@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { adminService } from '../../../services/adminService';
-import { getProductImageUrl } from '../../../utils/imageHelper';
+import { adminService, getImageUrl } from '../../../services/adminService';
+
 interface Product {
   id: number;
   name: string;
-  price: string;
+  price: number;
   service_type: string;
   category: string;
   sub_category: string | null;
@@ -15,6 +15,12 @@ interface Product {
 }
 
 type FilterStatus = 'all' | 'active' | 'trash';
+
+interface ApiResponse<T = any> {
+  success: boolean;
+  message: string;
+  data: T;
+}
 
 const ProductList: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -36,10 +42,10 @@ const ProductList: React.FC = () => {
 
   const updateCounts = async () => {
     try {
-      const result = await adminService.getProducts({ limit: 100, show_inactive: true });
-      if (result.success) {
+      const result = await adminService.getProducts({ limit: 100, show_inactive: true }) as ApiResponse<{ products: Product[] }>;
+      if (result.success && result.data) {
         const allProds = result.data.products;
-        const activeCount = allProds.filter((p: Product) => isProductActive(p)).length;
+        const activeCount = allProds.filter((p) => isProductActive(p)).length;
         const trashCount = allProds.length - activeCount;
         setCounts({ all: allProds.length, active: activeCount, trash: trashCount });
       }
@@ -51,11 +57,11 @@ const ProductList: React.FC = () => {
   useEffect(() => {
     const loadAllProducts = async () => {
       try {
-        const result = await adminService.getProducts({ limit: 100, show_inactive: true });
-        if (result.success) {
+        const result = await adminService.getProducts({ limit: 100, show_inactive: true }) as ApiResponse<{ products: Product[] }>;
+        if (result.success && result.data) {
           const allProds = result.data.products;
           setAllProductsCache(allProds);
-          const activeCount = allProds.filter((p: Product) => isProductActive(p)).length;
+          const activeCount = allProds.filter((p) => isProductActive(p)).length;
           const trashCount = allProds.length - activeCount;
           setCounts({ all: allProds.length, active: activeCount, trash: trashCount });
         }
@@ -70,7 +76,7 @@ const ProductList: React.FC = () => {
     setLoading(true);
     try {
       if (filterStatus === 'trash') {
-        const inactiveProducts = allProductsCache.filter((p: Product) => !isProductActive(p));
+        const inactiveProducts = allProductsCache.filter((p) => !isProductActive(p));
         let filteredProducts = inactiveProducts;
         if (search) {
           filteredProducts = inactiveProducts.filter(p => p.name.toLowerCase().includes(search.toLowerCase()));
@@ -87,11 +93,11 @@ const ProductList: React.FC = () => {
         });
       } else {
         const showInactive = filterStatus === 'all' ? true : false;
-        const result = await adminService.getProducts({ page, search: search || undefined, show_inactive: showInactive });
-        if (result.success) {
+        const result = await adminService.getProducts({ page, search: search || undefined, show_inactive: showInactive }) as ApiResponse<{ products: Product[]; pagination: any }>;
+        if (result.success && result.data) {
           let productsData = result.data.products;
           if (filterStatus === 'active') {
-            productsData = productsData.filter((p: Product) => isProductActive(p));
+            productsData = productsData.filter((p) => isProductActive(p));
           }
           setProducts(productsData);
           setPagination(result.data.pagination);
@@ -112,8 +118,8 @@ const ProductList: React.FC = () => {
     if (window.confirm('Move this product to trash?')) {
       const result = await adminService.deleteProduct(id, false);
       if (result.success) {
-        const refreshResult = await adminService.getProducts({ limit: 100, show_inactive: true });
-        if (refreshResult.success) {
+        const refreshResult = await adminService.getProducts({ limit: 100, show_inactive: true }) as ApiResponse<{ products: Product[] }>;
+        if (refreshResult.success && refreshResult.data) {
           setAllProductsCache(refreshResult.data.products);
           fetchProducts(pagination.current_page);
           await updateCounts();
@@ -128,8 +134,8 @@ const ProductList: React.FC = () => {
     if (window.confirm('Restore this product from trash?')) {
       const result = await adminService.restoreProduct(id);
       if (result.success) {
-        const refreshResult = await adminService.getProducts({ limit: 100, show_inactive: true });
-        if (refreshResult.success) {
+        const refreshResult = await adminService.getProducts({ limit: 100, show_inactive: true }) as ApiResponse<{ products: Product[] }>;
+        if (refreshResult.success && refreshResult.data) {
           setAllProductsCache(refreshResult.data.products);
           fetchProducts(pagination.current_page);
           await updateCounts();
@@ -144,8 +150,8 @@ const ProductList: React.FC = () => {
     if (window.confirm('⚠️ Permanently delete this product? This action cannot be undone!')) {
       const result = await adminService.deleteProduct(id, true);
       if (result.success) {
-        const refreshResult = await adminService.getProducts({ limit: 100, show_inactive: true });
-        if (refreshResult.success) {
+        const refreshResult = await adminService.getProducts({ limit: 100, show_inactive: true }) as ApiResponse<{ products: Product[] }>;
+        if (refreshResult.success && refreshResult.data) {
           setAllProductsCache(refreshResult.data.products);
           fetchProducts(pagination.current_page);
           await updateCounts();
@@ -156,12 +162,12 @@ const ProductList: React.FC = () => {
     }
   };
 
-  const getImageUrl = (product: Product) => {
+  const getImageUrlForProduct = (product: Product) => {
     if (product.images && product.images.length > 0) {
-      return getProductImageUrl(product.images[0]);
+      return getImageUrl(product.images[0]);
     }
     if (product.primary_image) {
-      return getProductImageUrl(product.primary_image);
+      return getImageUrl(product.primary_image);
     }
     return null;
   };
@@ -286,11 +292,10 @@ const ProductList: React.FC = () => {
         </div>
       </div>
 
-      {/* Scrollable Table Container - exactly like OrderList */}
+      {/* Scrollable Table Container */}
       <div className="flex-1 overflow-auto mt-5 rounded-xl">
         <div className="bg-white shadow-sm rounded-xl border">
           <table className="w-full">
-            {/* Fixed Table Header - stays when scrolling */}
             <thead className="bg-green-light sticky top-0 z-10 rounded-xl">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase">ID</th>
@@ -319,8 +324,8 @@ const ProductList: React.FC = () => {
                     <tr key={product.id} className={`${bgColor} border-b hover:bg-blue-50 transition`}>
                       <td className="px-2 py-3 text-sm text-gray-500">#{product.id}</td>
                       <td className="px-2 py-3">
-                        {getImageUrl(product) ? (
-                          <img src={getImageUrl(product)!} alt={product.name} className="w-10 h-10 object-cover rounded-lg border" />
+                        {getImageUrlForProduct(product) ? (
+                          <img src={getImageUrlForProduct(product)!} alt={product.name} className="w-10 h-10 object-cover rounded-lg border" />
                         ) : (
                           <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">📷</div>
                         )}

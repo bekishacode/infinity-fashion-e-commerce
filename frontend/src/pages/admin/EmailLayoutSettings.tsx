@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { adminService } from '../../services/adminService';
 
+interface ApiResponse<T = any> {
+  success: boolean;
+  message: string;
+  data: T;
+}
+
 const EmailLayoutSettings: React.FC = () => {
   const [layout, setLayout] = useState({
     logo_url: '',
@@ -26,9 +32,22 @@ const EmailLayoutSettings: React.FC = () => {
 
   const fetchLayoutSettings = async () => {
     try {
-      const result = await adminService.getEmailLayoutSettings();
+      const result = await adminService.getEmailLayoutSettings() as ApiResponse<any>;
       if (result.success && result.data) {
-        setLayout(result.data);
+        setLayout({
+          logo_url: result.data.logo_url || '',
+          primary_color: result.data.primary_color || '#273B89',
+          secondary_color: result.data.secondary_color || '#EC2D7B',
+          font_family: result.data.font_family || 'Arial, sans-serif',
+          company_name: result.data.company_name || 'Style Badge',
+          company_address: result.data.company_address || '',
+          company_phone: result.data.company_phone || '',
+          company_email: result.data.company_email || '',
+          website_url: result.data.website_url || '',
+          social_facebook: result.data.social_facebook || '',
+          social_instagram: result.data.social_instagram || '',
+          social_twitter: result.data.social_twitter || ''
+        });
       }
     } catch (error) {
       console.error('Error fetching layout settings:', error);
@@ -41,7 +60,7 @@ const EmailLayoutSettings: React.FC = () => {
     e.preventDefault();
     setSaving(true);
     try {
-      const result = await adminService.updateEmailLayoutSettings(layout);
+      const result = await adminService.updateEmailLayoutSettings(layout) as ApiResponse<any>;
       if (result.success) {
         setMessage({ type: 'success', text: 'Layout settings saved successfully!' });
         setTimeout(() => setMessage(null), 5000);

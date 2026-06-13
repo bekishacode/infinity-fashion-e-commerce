@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import HeroSection from '../components/home/HeroSection';
+import HeroSection from '../../components/home/HeroSection';
 import { Link } from 'react-router-dom';
-import ScrollReveal from '../components/common/ScrollReveal';
-import CountUp from '../components/common/CountUp';
+import ScrollReveal from '../../components/common/ScrollReveal';
+import CountUp from '../../components/common/CountUp';
 
 const Home: React.FC = () => {
   const [activeService, setActiveService] = useState('all');

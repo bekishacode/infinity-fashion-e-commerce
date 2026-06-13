@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { adminService } from '../../services/adminService';
+import { apiClient } from '../../utils/apiClient';
+import { VerifyOtpResponse } from '../../types/api.types';
 
 const ForgotPassword: React.FC = () => {
   const [step, setStep] = useState<'email' | 'otp' | 'reset'>('email');
@@ -15,7 +16,6 @@ const ForgotPassword: React.FC = () => {
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const navigate = useNavigate();
 
-  // Resend timer countdown
   useEffect(() => {
     if (resendTimer > 0) {
       const timer = setTimeout(() => setResendTimer(resendTimer - 1), 1000);
@@ -29,11 +29,11 @@ const ForgotPassword: React.FC = () => {
     setMessage(null);
 
     try {
-      const result = await adminService.forgotPassword(email);
+      const result = await apiClient.post('/admin/forgot-password.php', { email });
       if (result.success) {
         setMessage({ type: 'success', text: 'OTP sent to your email. Please check your inbox.' });
         setStep('otp');
-        setResendTimer(60); // Start 60 second countdown
+        setResendTimer(60);
       } else {
         setMessage({ type: 'error', text: result.message || 'Failed to send OTP' });
       }
@@ -51,7 +51,7 @@ const ForgotPassword: React.FC = () => {
     setMessage(null);
 
     try {
-      const result = await adminService.forgotPassword(email);
+      const result = await apiClient.post('/admin/forgot-password.php', { email });
       if (result.success) {
         setMessage({ type: 'success', text: 'OTP resent to your email!' });
         setResendTimer(60);
@@ -71,8 +71,8 @@ const ForgotPassword: React.FC = () => {
     setMessage(null);
 
     try {
-      const result = await adminService.verifyOtp(email, otp);
-      if (result.success) {
+      const result = await apiClient.post<VerifyOtpResponse>('/admin/verify-otp.php', { email, otp });
+      if (result.success && result.data) {
         setMessage({ type: 'success', text: 'OTP verified successfully!' });
         setResetToken(result.data.reset_token);
         setStep('reset');
@@ -103,7 +103,11 @@ const ForgotPassword: React.FC = () => {
     setMessage(null);
 
     try {
-      const result = await adminService.resetPassword(email, resetToken, newPassword);
+      const result = await apiClient.post('/admin/reset-password.php', { 
+        email, 
+        reset_token: resetToken, 
+        new_password: newPassword 
+      });
       if (result.success) {
         setMessage({ type: 'success', text: 'Password reset successfully! Redirecting to login...' });
         setTimeout(() => navigate('/admin/login'), 2000);
@@ -156,7 +160,7 @@ const ForgotPassword: React.FC = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-royal-blue text-white py-2 rounded-lg hover:bg-royal-blue-dark disabled:opacity-50 transition"
+              className="w-full bg-royal-blue text-white py-2 rounded-lg hover:bg-royal-blue-dark disabled:opacity-50"
             >
               {loading ? 'Sending...' : 'Send OTP'}
             </button>
@@ -188,12 +192,11 @@ const ForgotPassword: React.FC = () => {
               <p className="text-xs text-gray-400 mt-1">OTP expires in 15 minutes</p>
             </div>
             
-            {/* Resend Button with Timer */}
             <div className="flex gap-3 mb-6">
               <button
                 type="submit"
                 disabled={loading}
-                className="flex-1 bg-royal-blue text-white py-2 rounded-lg hover:bg-royal-blue-dark disabled:opacity-50 transition"
+                className="flex-1 bg-royal-blue text-white py-2 rounded-lg hover:bg-royal-blue-dark disabled:opacity-50"
               >
                 {loading ? 'Verifying...' : 'Verify OTP'}
               </button>
@@ -236,7 +239,7 @@ const ForgotPassword: React.FC = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-royal-blue text-white py-2 rounded-lg hover:bg-royal-blue-dark disabled:opacity-50 transition"
+              className="w-full bg-royal-blue text-white py-2 rounded-lg hover:bg-royal-blue-dark disabled:opacity-50"
             >
               {loading ? 'Resetting...' : 'Reset Password'}
             </button>

@@ -24,6 +24,13 @@ interface Customer {
   orders: Order[];
 }
 
+// API interface
+interface ApiResponse<T = any> {
+  success: boolean;
+  message: string;
+  data: T;
+}
+
 const CustomerDetails: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -50,7 +57,7 @@ const CustomerDetails: React.FC = () => {
   const fetchCustomer = async () => {
     setLoading(true);
     try {
-      const result = await adminService.getCustomer(parseInt(id!));
+      const result = await adminService.getCustomer(parseInt(id!)) as ApiResponse<Customer>;
       if (result.success) {
         setCustomer(result.data);
         setEditForm({
@@ -74,7 +81,7 @@ const CustomerDetails: React.FC = () => {
   const handleUpdate = async () => {
     setUpdating(true);
     try {
-      const result = await adminService.updateCustomer(parseInt(id!), editForm);
+      const result = await adminService.updateCustomer(parseInt(id!), editForm) as ApiResponse<any>;
       if (result.success) {
         alert('Customer updated successfully');
         setEditing(false);

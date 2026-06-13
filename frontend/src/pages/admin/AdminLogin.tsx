@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { apiClient } from '../../utils/apiClient';
+import { LoginResponse } from '../../types/api.types';
 
 const AdminLogin: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -14,20 +16,14 @@ const AdminLogin: React.FC = () => {
     setError('');
 
     try {
-      const response = await fetch('http://localhost:8000/api/v1/admin/login.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
+      const result = await apiClient.post<LoginResponse>('/admin/login.php', { username, password });
+      
+      if (result.success && result.data) {
         localStorage.setItem('admin_token', result.data.token);
         localStorage.setItem('admin_info', JSON.stringify(result.data.admin));
         navigate('/admin/dashboard');
       } else {
-        setError(result.message);
+        setError(result.message || 'Login failed');
       }
     } catch (err) {
       setError('Login failed. Please try again.');

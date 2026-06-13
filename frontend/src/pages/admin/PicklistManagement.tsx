@@ -328,7 +328,7 @@ const PicklistManagement: React.FC = () => {
       {activeTab === 'categories' && (
         <div className="bg-white rounded-lg shadow overflow-hidden">
           <table className="w-full">
-            <thead className="bg-orange-light">
+            <thead className="bg-green-light">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Service Type</th>
@@ -371,7 +371,7 @@ const PicklistManagement: React.FC = () => {
       {activeTab === 'sub-categories' && (
         <div className="bg-white rounded-lg shadow overflow-hidden">
           <table className="w-full">
-            <thead className="bg-magenta-light">
+            <thead className="bg-green-light">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
