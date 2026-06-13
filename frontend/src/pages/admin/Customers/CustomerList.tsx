@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { adminService } from '../../../services/adminService';
+import SkeletonLoader from '../../../components/common/SkeletonLoader';
 
 interface Customer {
   id: number;
@@ -58,6 +59,10 @@ const CustomerList: React.FC = () => {
     fetchCustomers(1);
   }, [search, sortBy, sortOrder]);
 
+  if (loading && customers.length === 0) {
+    return <SkeletonLoader type="table" rows={16} columns={8} />;
+  }
+
   const toggleSort = (column: string) => {
     if (sortBy === column) {
       setSortOrder(sortOrder === 'ASC' ? 'DESC' : 'ASC');
@@ -71,14 +76,6 @@ const CustomerList: React.FC = () => {
     if (sortBy !== column) return '↕️';
     return sortOrder === 'ASC' ? '↑' : '↓';
   };
-
-  if (loading && customers.length === 0) {
-    return (
-      <div className="flex justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-royal-blue"></div>
-      </div>
-    );
-  }
 
   return (
     <div className="h-full flex flex-col">

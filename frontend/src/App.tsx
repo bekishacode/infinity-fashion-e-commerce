@@ -1,5 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Outlet } from 'react-router-dom';
+import { LoadingProvider } from './context/LoadingContext';
+import GlobalLoading from './components/common/GlobalLoading';
 import Navbar from './components/common/Navbar';
 import Footer from './components/common/Footer';
 import Home from './pages/client/Home';
@@ -27,50 +29,53 @@ import SystemSettings from './pages/admin/SystemSettings';
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        {/* Public Routes with Navbar & Footer */}
-        <Route path="/" element={
-          <div className="min-h-screen flex flex-col bg-white">
-            <Navbar />
-            <main className="flex-grow">
-              <Outlet />
-            </main>
-            <Footer />
-          </div>
-        }>
-          <Route index element={<Home />} />
-          <Route path="products" element={<Products />} />
-          <Route path="cart" element={<Cart />} />
-          <Route path="checkout" element={<Checkout />} />
-          <Route path="track-order" element={<TrackOrder />} />
-        </Route>
+    <LoadingProvider>
+      <Router>
+        <GlobalLoading />
+        <Routes>
+          {/* Public Routes with Navbar & Footer */}
+          <Route path="/" element={
+            <div className="min-h-screen flex flex-col bg-white">
+              <Navbar />
+              <main className="flex-grow">
+                <Outlet />
+              </main>
+              <Footer />
+            </div>
+          }>
+            <Route index element={<Home />} />
+            <Route path="products" element={<Products />} />
+            <Route path="cart" element={<Cart />} />
+            <Route path="checkout" element={<Checkout />} />
+            <Route path="track-order" element={<TrackOrder />} />
+          </Route>
 
-        {/* Admin Routes - No Navbar/Footer */}
-        <Route path="/admin/login" element={<AdminLogin />} />
-        <Route path="/admin/forgot-password" element={<ForgotPassword />} />
-        <Route path="/admin" element={
-          <ProtectedRoute>
-            <AdminDashboard />
-          </ProtectedRoute>
-        }>
-          <Route path="dashboard" element={<Dashboard />} />
-          <Route path="profile" element={<AdminProfile />} />
-          <Route path="products" element={<ProductList />} />
-          <Route path="products/create" element={<ProductForm />} />
-          <Route path="products/edit/:id" element={<ProductForm />} />
-          <Route path="orders" element={<OrderList />} />
-          <Route path="orders/:id" element={<OrderDetails />} />
-          <Route path="customers" element={<CustomerList />} />
-          <Route path="customers/:id" element={<CustomerDetails />} />
-          <Route path="admins" element={<AdminList />} />
-          <Route path="email-settings" element={<EmailSettings />} />
-          <Route path="email-layout" element={<EmailLayoutSettings />} />
-          <Route path="picklists" element={<PicklistManagement />} />
-          <Route path="system" element={<SystemSettings />} />
-        </Route>
-      </Routes>
-    </Router>
+          {/* Admin Routes - No Navbar/Footer */}
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/admin/forgot-password" element={<ForgotPassword />} />
+          <Route path="/admin" element={
+            <ProtectedRoute>
+              <AdminDashboard />
+            </ProtectedRoute>
+          }>
+            <Route path="dashboard" element={<Dashboard />} />
+            <Route path="profile" element={<AdminProfile />} />
+            <Route path="products" element={<ProductList />} />
+            <Route path="products/create" element={<ProductForm />} />
+            <Route path="products/edit/:id" element={<ProductForm />} />
+            <Route path="orders" element={<OrderList />} />
+            <Route path="orders/:id" element={<OrderDetails />} />
+            <Route path="customers" element={<CustomerList />} />
+            <Route path="customers/:id" element={<CustomerDetails />} />
+            <Route path="admins" element={<AdminList />} />
+            <Route path="email-settings" element={<EmailSettings />} />
+            <Route path="email-layout" element={<EmailLayoutSettings />} />
+            <Route path="picklists" element={<PicklistManagement />} />
+            <Route path="system" element={<SystemSettings />} />
+          </Route>
+        </Routes>
+      </Router>
+    </LoadingProvider>
   );
 }
 

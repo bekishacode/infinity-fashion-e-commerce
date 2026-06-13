@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { adminService } from '../../services/adminService';
 import EmailTemplateEditor from '../../components/admin/EmailTemplateEditor';
+import SkeletonLoader from '../../components/common/SkeletonLoader';
 
 // API interface
 interface ApiResponse<T = any> {
@@ -83,6 +84,10 @@ const EmailSettings: React.FC = () => {
       setLoading(false);
     }
   };
+
+  if (loading && EmailSettings.length === 0) {
+    return <SkeletonLoader type="card" rows={16} columns={8} />;
+  }
 
   const showMessage = (type: 'success' | 'error', text: string) => {
     setMessage({ type, text });
@@ -174,14 +179,6 @@ const EmailSettings: React.FC = () => {
       showMessage('error', 'Something went wrong');
     }
   };
-
-  if (loading) {
-    return (
-      <div className="flex justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-royal-blue"></div>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6 mt-16">

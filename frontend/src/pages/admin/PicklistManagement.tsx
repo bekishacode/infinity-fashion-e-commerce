@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { adminService } from '../../services/adminService';
+import SkeletonLoader from '../../components/common/SkeletonLoader';
 
 interface ServiceType {
   id: number;
@@ -77,6 +78,10 @@ const PicklistManagement: React.FC = () => {
       setLoading(false);
     }
   };
+
+  if (loading && serviceTypes.length === 0 && categories.length === 0 && subCategories.length === 0) {
+    return <SkeletonLoader type="table" rows={16} columns={8} />;
+  }
 
   const showMessage = (type: 'success' | 'error', text: string) => {
     setMessage({ type, text });
@@ -210,14 +215,6 @@ const PicklistManagement: React.FC = () => {
       setLoading(false);
     }
   };
-
-  if (loading && (serviceTypes.length === 0 && categories.length === 0 && subCategories.length === 0)) {
-    return (
-      <div className="flex justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-royal-blue"></div>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6 mt-14">

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { adminService, getImageUrl } from '../../../services/adminService';
+import SkeletonLoader from '../../../components/common/SkeletonLoader';
+
 
 interface Product {
   id: number;
@@ -109,10 +111,15 @@ const ProductList: React.FC = () => {
       setLoading(false);
     }
   };
-
+  
   useEffect(() => {
     fetchProducts(1);
   }, [search, filterStatus, allProductsCache]);
+
+  // Show skeleton while loading
+  if (loading && products.length === 0) {
+    return <SkeletonLoader type="table" rows={16} columns={9} />;
+  }
 
   const handleSoftDelete = async (id: number) => {
     if (window.confirm('Move this product to trash?')) {
@@ -184,14 +191,6 @@ const ProductList: React.FC = () => {
   const startItem = (pagination.current_page - 1) * pagination.per_page + 1;
   const endItem = Math.min(pagination.current_page * pagination.per_page, pagination.total);
   const showingText = `Showing ${startItem} to ${endItem} of ${pagination.total} products`;
-
-  if (loading && products.length === 0 && filterStatus !== 'trash') {
-    return (
-      <div className="flex justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-royal-blue"></div>
-      </div>
-    );
-  }
 
   return (
     <div className="h-full flex flex-col">

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { adminService } from '../../../services/adminService';
+import SkeletonLoader from '../../../components/common/SkeletonLoader';
 
 interface Order {
   id: number;
@@ -57,6 +58,10 @@ const OrderList: React.FC = () => {
     fetchOrders(1);
   }, [search, statusFilter]);
 
+  if (loading && orders.length === 0) {
+    return <SkeletonLoader type="table" rows={16} columns={8} />;
+  }
+
   const getStatusBadge = (status: string) => {
     const styles: Record<string, string> = {
       pending: 'bg-yellow-100 text-yellow-800',
@@ -89,14 +94,6 @@ const OrderList: React.FC = () => {
     };
     return styles[type] || 'bg-gray-100 text-gray-800';
   };
-
-  if (loading && orders.length === 0) {
-    return (
-      <div className="flex justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-royal-blue"></div>
-      </div>
-    );
-  }
 
   return (
     <div className="h-full flex flex-col">

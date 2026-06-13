@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { adminService } from '../../services/adminService';
+import SkeletonLoader from '../../components/common/SkeletonLoader';
 
 interface AdminUser {
   id: number;
@@ -68,6 +69,10 @@ const AdminList: React.FC = () => {
   useEffect(() => {
     fetchAdmins(1);
   }, [search]);
+
+  if (loading && admins.length === 0) {
+    return <SkeletonLoader type="table" rows={16} columns={8} />;
+  }
 
   const handleCreateAdmin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -150,14 +155,6 @@ const AdminList: React.FC = () => {
     if (role === 'admin') return 'bg-blue-100 text-blue-800';
     return 'bg-gray-100 text-gray-800';
   };
-
-  if (loading && admins.length === 0) {
-    return (
-      <div className="flex justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-royal-blue"></div>
-      </div>
-    );
-  }
 
   return (
     <div className="h-full flex flex-col">
