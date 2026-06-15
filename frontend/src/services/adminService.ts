@@ -248,7 +248,10 @@ export const adminService = {
   async updateMyProfile(data: { full_name: string; current_password?: string; new_password?: string }) {
     return apiClient.put('/admin/profile.php', data);
   },
-
+  // Add this method to your adminService class
+  async getDashboardStats(period: 'today' | 'week' | 'month' | 'year' = 'today'): Promise<ApiResponse<any>> {
+    return apiClient.get(`/admin/dashboard.php?period=${period}`);
+  },
   async logout() {
     localStorage.removeItem('admin_token');
     localStorage.removeItem('admin_info');
