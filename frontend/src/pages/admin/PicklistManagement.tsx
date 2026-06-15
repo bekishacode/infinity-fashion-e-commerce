@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { adminService } from '../../services/adminService';
+import { getImageUrl } from '../../utils/apiClient';
 import SkeletonLoader from '../../components/common/SkeletonLoader';
 
 interface ServiceType {
@@ -17,6 +18,7 @@ interface Category {
   name: string;
   display_name: string;
   icon: string;
+  image_url: string | null;
   sort_order: number;
   is_active: boolean;
   service_type_name?: string;
@@ -27,9 +29,16 @@ interface SubCategory {
   category_id: number;
   name: string;
   display_name: string;
+  image_url: string | null;
   sort_order: number;
   is_active: boolean;
   category_name?: string;
+}
+
+interface LocalImage {
+  file: File;
+  previewUrl: string;
+  isUploading: boolean;
 }
 
 type TabType = 'service-types' | 'categories' | 'sub-categories';
@@ -43,6 +52,10 @@ const PicklistManagement: React.FC = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  
+  // Local images for upload (not yet saved)
+  const [localCategoryImages, setLocalCategoryImages] = useState<Map<number, LocalImage>>(new Map());
+  const [localSubCategoryImages, setLocalSubCategoryImages] = useState<Map<number, LocalImage>>(new Map());
   
   // Form state
   const [formData, setFormData] = useState({
@@ -58,6 +71,18 @@ const PicklistManagement: React.FC = () => {
     fetchData();
   }, [activeTab]);
 
+  // Cleanup preview URLs on unmount
+  useEffect(() => {
+    return () => {
+      localCategoryImages.forEach(img => {
+        if (img.previewUrl) URL.revokeObjectURL(img.previewUrl);
+      });
+      localSubCategoryImages.forEach(img => {
+        if (img.previewUrl) URL.revokeObjectURL(img.previewUrl);
+      });
+    };
+  }, [localCategoryImages, localSubCategoryImages]);
+
   const fetchData = async () => {
     setLoading(true);
     try {
@@ -66,10 +91,22 @@ const PicklistManagement: React.FC = () => {
         if (result.success) setServiceTypes(result.data);
       } else if (activeTab === 'categories') {
         const result = await adminService.getCategories();
-        if (result.success) setCategories(result.data);
+        if (result.success) {
+          const categoriesData = result.data.map((cat: any) => ({
+            ...cat,
+            image_url: cat.image_url || null
+          }));
+          setCategories(categoriesData);
+        }
       } else {
         const result = await adminService.getSubCategories();
-        if (result.success) setSubCategories(result.data);
+        if (result.success) {
+          const subCategoriesData = result.data.map((sub: any) => ({
+            ...sub,
+            image_url: sub.image_url || null
+          }));
+          setSubCategories(subCategoriesData);
+        }
       }
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -136,6 +173,188 @@ const PicklistManagement: React.FC = () => {
         showMessage('error', 'Something went wrong');
       }
     }
+  };
+
+  const handleImageSelect = (itemId: number, type: 'category' | 'sub_category', files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const file = files[0];
+    
+    if (!file.type.startsWith('image/')) {
+      alert(`${file.name} is not an image file`);
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert(`${file.name} is too large. Max 5MB`);
+      return;
+    }
+
+    const previewUrl = URL.createObjectURL(file);
+    const localImage: LocalImage = { file, previewUrl, isUploading: false };
+
+    if (type === 'category') {
+      setLocalCategoryImages(prev => new Map(prev).set(itemId, localImage));
+    } else {
+      setLocalSubCategoryImages(prev => new Map(prev).set(itemId, localImage));
+    }
+  };
+
+  const removeLocalImage = (itemId: number, type: 'category' | 'sub_category') => {
+    if (type === 'category') {
+      const img = localCategoryImages.get(itemId);
+      if (img?.previewUrl) URL.revokeObjectURL(img.previewUrl);
+      setLocalCategoryImages(prev => {
+        const newMap = new Map(prev);
+        newMap.delete(itemId);
+        return newMap;
+      });
+    } else {
+      const img = localSubCategoryImages.get(itemId);
+      if (img?.previewUrl) URL.revokeObjectURL(img.previewUrl);
+      setLocalSubCategoryImages(prev => {
+        const newMap = new Map(prev);
+        newMap.delete(itemId);
+        return newMap;
+      });
+    }
+  };
+
+  const uploadImage = async (itemId: number, file: File, type: 'category' | 'sub_category'): Promise<string> => {
+    const formData = new FormData();
+    formData.append('image', file);
+    formData.append('id', itemId.toString());
+    
+    const endpoint = type === 'category' 
+      ? '/categories/upload-image.php'
+      : '/sub-categories/upload-image.php';
+    
+    const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8000/api/v1'}${endpoint}`, {
+      method: 'POST',
+      body: formData
+    });
+    
+    const result = await response.json();
+    if (result.success) {
+      return result.data.image_url;
+    } else {
+      throw new Error(result.message || 'Upload failed');
+    }
+  };
+
+  const handleSaveImage = async (itemId: number, type: 'category' | 'sub_category') => {
+    const localImage = type === 'category' 
+      ? localCategoryImages.get(itemId)
+      : localSubCategoryImages.get(itemId);
+    
+    if (!localImage) return;
+
+    // Mark as uploading
+    if (type === 'category') {
+      setLocalCategoryImages(prev => {
+        const newMap = new Map(prev);
+        newMap.set(itemId, { ...localImage, isUploading: true });
+        return newMap;
+      });
+    } else {
+      setLocalSubCategoryImages(prev => {
+        const newMap = new Map(prev);
+        newMap.set(itemId, { ...localImage, isUploading: true });
+        return newMap;
+      });
+    }
+
+    try {
+      // This one function uploads file AND updates database
+      const uploadedUrl = await uploadImage(itemId, localImage.file, type);
+      
+      showMessage('success', 'Image uploaded successfully');
+      fetchData(); // Refresh to show updated image
+      
+      // Clear local image
+      if (type === 'category') {
+        setLocalCategoryImages(prev => {
+          const newMap = new Map(prev);
+          newMap.delete(itemId);
+          return newMap;
+        });
+      } else {
+        setLocalSubCategoryImages(prev => {
+          const newMap = new Map(prev);
+          newMap.delete(itemId);
+          return newMap;
+        });
+      }
+    } catch (error) {
+      showMessage('error', 'Failed to upload image');
+      // Reset uploading state
+      if (type === 'category') {
+        setLocalCategoryImages(prev => {
+          const newMap = new Map(prev);
+          newMap.set(itemId, { ...localImage, isUploading: false });
+          return newMap;
+        });
+      } else {
+        setLocalSubCategoryImages(prev => {
+          const newMap = new Map(prev);
+          newMap.set(itemId, { ...localImage, isUploading: false });
+          return newMap;
+        });
+      }
+    }
+  };
+
+  const renderImageSection = (item: any, type: 'category' | 'sub_category') => {
+    const localImage = type === 'category' 
+      ? localCategoryImages.get(item.id)
+      : localSubCategoryImages.get(item.id);
+    
+    const currentImageUrl = localImage?.previewUrl || getImageUrl(item.image_url);
+    const isUploading = localImage?.isUploading || false;
+
+    return (
+      <div className="flex items-center gap-3">
+        <div className="w-12 h-12 bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center">
+          {currentImageUrl ? (
+            <img src={currentImageUrl} alt="Thumb" className="w-full h-full object-cover" />
+          ) : (
+            <span className="text-xs text-gray-400">No image</span>
+          )}
+        </div>
+        
+        {!localImage ? (
+          <label className="cursor-pointer text-sm text-royal-blue hover:underline">
+            Upload Image
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => handleImageSelect(item.id, type, e.target.files)}
+            />
+          </label>
+        ) : (
+          <div className="flex items-center gap-2">
+            {isUploading ? (
+              <span className="text-sm text-gray-500">Uploading...</span>
+            ) : (
+              <>
+                <button
+                  onClick={() => handleSaveImage(item.id, type)}
+                  className="text-sm bg-royal-blue text-white px-3 py-1 rounded hover:bg-royal-blue-dark"
+                >
+                  Save
+                </button>
+                <button
+                  onClick={() => removeLocalImage(item.id, type)}
+                  className="text-sm text-red-500 hover:underline"
+                >
+                  Cancel
+                </button>
+              </>
+            )}
+          </div>
+        )}
+      </div>
+    );
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -271,7 +490,7 @@ const PicklistManagement: React.FC = () => {
       <div className="flex justify-end">
         <button
           onClick={handleCreate}
-          className="flex items-center gap-2 text-gradient-secondary hover-lift px-4 py-2 rounded-lg hover:bg-royal-blue-dark transition"
+          className="flex items-center gap-2 bg-royal-blue text-white px-4 py-2 rounded-lg hover:bg-royal-blue-dark transition"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -280,80 +499,41 @@ const PicklistManagement: React.FC = () => {
         </button>
       </div>
 
-      {/* Service Types Table */}
-      {activeTab === 'service-types' && (
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-green-light">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Display Name</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Icon</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sort Order</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {serviceTypes.map((item) => (
-                <tr key={item.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 text-sm text-gray-500">#{item.id}</td>
-                  <td className="px-6 py-4 text-sm font-medium">{item.name}</td>
-                  <td className="px-6 py-4 text-sm">{item.display_name}</td>
-                  <td className="px-6 py-4 text-2xl">{item.icon}</td>
-                  <td className="px-6 py-4 text-sm">{item.sort_order}</td>
-                  <td className="px-6 py-4">
-                    {item.is_active ? (
-                      <span className="text-green-600 text-sm">Active</span>
-                    ) : (
-                      <span className="text-red-600 text-sm">Inactive</span>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 text-sm space-x-2">
-                    <button onClick={() => handleEdit(item)} className="text-blue-600 hover:text-blue-800">Edit</button>
-                    <button onClick={() => handleDelete(item.id, item.display_name)} className="text-red-600 hover:text-red-800">Delete</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
       {/* Categories Table */}
       {activeTab === 'categories' && (
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <table className="w-full">
+        <div className="bg-white rounded-lg shadow overflow-x-auto">
+          <table className="w-full min-w-[800px]">
             <thead className="bg-green-light">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Service Type</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Display Name</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Icon</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sort Order</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Service Type</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Display Name</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Image</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Icon</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sort</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
               {categories.map((item) => (
                 <tr key={item.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 text-sm text-gray-500">#{item.id}</td>
-                  <td className="px-6 py-4 text-sm">{item.service_type_name}</td>
-                  <td className="px-6 py-4 text-sm font-medium">{item.name}</td>
-                  <td className="px-6 py-4 text-sm">{item.display_name}</td>
-                  <td className="px-6 py-4 text-2xl">{item.icon}</td>
-                  <td className="px-6 py-4 text-sm">{item.sort_order}</td>
-                  <td className="px-6 py-4">
+                  <td className="px-4 py-3 text-sm text-gray-500">#{item.id}</td>
+                  <td className="px-4 py-3 text-sm">{item.service_type_name}</td>
+                  <td className="px-4 py-3 text-sm font-medium">{item.name}</td>
+                  <td className="px-4 py-3 text-sm">{item.display_name}</td>
+                  <td className="px-4 py-3">{renderImageSection(item, 'category')}</td>
+                  <td className="px-4 py-3 text-2xl">{item.icon}</td>
+                  <td className="px-4 py-3 text-sm">{item.sort_order}</td>
+                  <td className="px-4 py-3">
                     {item.is_active ? (
                       <span className="text-green-600 text-sm">Active</span>
                     ) : (
                       <span className="text-red-600 text-sm">Inactive</span>
                     )}
                   </td>
-                  <td className="px-6 py-4 text-sm space-x-2">
+                  <td className="px-4 py-3 text-sm space-x-2">
                     <button onClick={() => handleEdit(item)} className="text-blue-600 hover:text-blue-800">Edit</button>
                     <button onClick={() => handleDelete(item.id, item.display_name)} className="text-red-600 hover:text-red-800">Delete</button>
                   </td>
@@ -366,35 +546,78 @@ const PicklistManagement: React.FC = () => {
 
       {/* Sub-Categories Table */}
       {activeTab === 'sub-categories' && (
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <table className="w-full">
+        <div className="bg-white rounded-lg shadow overflow-x-auto">
+          <table className="w-full min-w-[700px]">
             <thead className="bg-green-light">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Display Name</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sort Order</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Display Name</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Image</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sort</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
               {subCategories.map((item) => (
                 <tr key={item.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 text-sm text-gray-500">#{item.id}</td>
-                  <td className="px-6 py-4 text-sm">{item.category_name}</td>
-                  <td className="px-6 py-4 text-sm font-medium">{item.name}</td>
-                  <td className="px-6 py-4 text-sm">{item.display_name}</td>
-                  <td className="px-6 py-4 text-sm">{item.sort_order}</td>
-                  <td className="px-6 py-4">
+                  <td className="px-4 py-3 text-sm text-gray-500">#{item.id}</td>
+                  <td className="px-4 py-3 text-sm">{item.category_name}</td>
+                  <td className="px-4 py-3 text-sm font-medium">{item.name}</td>
+                  <td className="px-4 py-3 text-sm">{item.display_name}</td>
+                  <td className="px-4 py-3">{renderImageSection(item, 'sub_category')}</td>
+                  <td className="px-4 py-3 text-sm">{item.sort_order}</td>
+                  <td className="px-4 py-3">
                     {item.is_active ? (
                       <span className="text-green-600 text-sm">Active</span>
                     ) : (
                       <span className="text-red-600 text-sm">Inactive</span>
                     )}
                   </td>
-                  <td className="px-6 py-4 text-sm space-x-2">
+                  <td className="px-4 py-3 text-sm space-x-2">
+                    <button onClick={() => handleEdit(item)} className="text-blue-600 hover:text-blue-800">Edit</button>
+                    <button onClick={() => handleDelete(item.id, item.display_name)} className="text-red-600 hover:text-red-800">Delete</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Service Types Table */}
+      {activeTab === 'service-types' && (
+        <div className="bg-white rounded-lg shadow overflow-x-auto">
+          <table className="w-full min-w-[600px]">
+            <thead className="bg-green-light">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Display Name</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Icon</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sort</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {serviceTypes.map((item) => (
+                <tr key={item.id} className="hover:bg-gray-50">
+                  <td className="px-4 py-3 text-sm text-gray-500">#{item.id}</td>
+                  <td className="px-4 py-3 text-sm font-medium">{item.name}</td>
+                  <td className="px-4 py-3 text-sm">{item.display_name}</td>
+                  <td className="px-4 py-3 text-2xl">{item.icon}</td>
+                  <td className="px-4 py-3 text-sm">{item.sort_order}</td>
+                  <td className="px-4 py-3">
+                    {item.is_active ? (
+                      <span className="text-green-600 text-sm">Active</span>
+                    ) : (
+                      <span className="text-red-600 text-sm">Inactive</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-sm space-x-2">
                     <button onClick={() => handleEdit(item)} className="text-blue-600 hover:text-blue-800">Edit</button>
                     <button onClick={() => handleDelete(item.id, item.display_name)} className="text-red-600 hover:text-red-800">Delete</button>
                   </td>
@@ -408,8 +631,8 @@ const PicklistManagement: React.FC = () => {
       {/* Modal for Create/Edit */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
-            <div className="p-6 border-b">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b sticky top-0 bg-white">
               <h2 className="text-xl font-bold">
                 {editingItem ? 'Edit' : 'Add'} {activeTab === 'service-types' ? 'Service Type' : activeTab === 'categories' ? 'Category' : 'Sub-Category'}
               </h2>

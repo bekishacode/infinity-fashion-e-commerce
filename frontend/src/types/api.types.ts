@@ -23,6 +23,8 @@ export interface Category {
   name: string;
   display_name: string;
   icon: string;
+  image_url?: string | null;
+  banner_image?: string | null;  
   sort_order: number;
   is_active: boolean;
   service_type_name?: string;
@@ -34,6 +36,8 @@ export interface SubCategory {
   category_id: number;
   name: string;
   display_name: string;
+  image_url?: string | null; 
+  banner_image?: string | null;  
   sort_order: number;
   is_active: boolean;
   category_name?: string;

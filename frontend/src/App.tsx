@@ -5,7 +5,10 @@ import GlobalLoading from './components/common/GlobalLoading';
 import Navbar from './components/common/Navbar';
 import Footer from './components/common/Footer';
 import Home from './pages/client/Home';
-import Products from './pages/client/Products';
+import ProductDetail from './pages/client/ProductDetail';
+import ProductsIndex from './pages/client/Products/ProductsIndex';
+import CategoryProducts from './pages/client/Products/CategoryProducts';
+import SubCategoryProducts from './pages/client/Products/SubCategoryProducts';
 import Cart from './pages/client/Cart';
 import Checkout from './pages/client/Checkout';
 import TrackOrder from './pages/client/TrackOrder';
@@ -44,7 +47,10 @@ function App() {
             </div>
           }>
             <Route index element={<Home />} />
-            <Route path="products" element={<Products />} />
+            <Route path="products" element={<ProductsIndex />} />
+            <Route path="products/category/:categorySlug" element={<CategoryProducts />} />
+            <Route path="products/category/:categorySlug/:subCategorySlug" element={<SubCategoryProducts />} />
+            <Route path="products/product/:slug" element={<ProductDetail />} />
             <Route path="cart" element={<Cart />} />
             <Route path="checkout" element={<Checkout />} />
             <Route path="track-order" element={<TrackOrder />} />
