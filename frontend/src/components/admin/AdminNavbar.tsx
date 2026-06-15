@@ -75,7 +75,7 @@ const AdminNavbar: React.FC = () => {
   const profileImage = getProfileImageUrl();
 
   return (
-    <nav className="bg-royal-blue fixed top-0 right-0 left-64 z-30 h-16">
+    <nav className="bg-gradient-to-br from-slate-700 via-purple-900 to-slate-900 fixed top-0 right-0 left-64 z-30 h-16">
       <div className="flex justify-end items-center h-full px-6">
         <div className="relative" ref={dropdownRef}>
           <button
@@ -146,7 +146,7 @@ const AdminNavbar: React.FC = () => {
               </div>
 
               {/* Menu Items */}
-              <div className="py-2">
+              <div className="py-2 ">
                 <Link
                   to="/admin/profile"
                   onClick={() => setIsProfileOpen(false)}

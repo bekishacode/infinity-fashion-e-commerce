@@ -195,7 +195,7 @@ const ProductList: React.FC = () => {
   return (
     <div className="h-full flex flex-col">
       {/* Fixed Header - Sticky at top */}
-      <div className="flex-shrink-0 bg-gray-50 mt-10 -mx-6 px-6 pt-6 pb-4 border-b border-gray-200">
+      <div className="flex-shrink-0 bg-gray-50 mt-10 mx-0 px-6 pt-6 pb-4 border-b border-gray-200">
         <div className="flex flex-wrap justify-between items-center gap-4 mb-4">
           <div>
             <h1 className="text-3xl font-bold text-green">Company <span className='text-charcoal'>Products</span></h1>

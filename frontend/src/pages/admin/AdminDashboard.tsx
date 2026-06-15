@@ -35,9 +35,9 @@ const AdminDashboard: React.FC = () => {
     : navItems;
 
   return (
-    <div className="min-h-screen h-screen bg-gray-50 flex overflow-hidden">
+    <div className="min-h-screen h-screen bg-gray-100 flex overflow-hidden">
       {/* Sidebar - Desktop */}
-      <aside className="hidden lg:flex lg:flex-col lg:w-64 bg-gradient-to-b from-royal-blue to-royal-blue-dark shadow-xl flex-shrink-0">
+      <aside className="hidden lg:flex lg:flex-col lg:w-64 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 shadow-xl flex-shrink-0">
         {/* Logo in Sidebar */}
         <div className="flex items-center justify-center h-16 border-b border-white/20 flex-shrink-0">
           <Link to="/admin/dashboard" className="flex items-center gap-2">
