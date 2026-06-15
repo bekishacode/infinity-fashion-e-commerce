@@ -1,12 +1,15 @@
 <?php
-header("Content-Type: application/json");
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
-
-if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
-    http_response_code(200);
-    exit();
+// Only set headers if not running from command line
+if (php_sapi_name() !== 'cli') {
+    header("Content-Type: application/json");
+    header("Access-Control-Allow-Origin: *");
+    header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
+    header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
+    
+    if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
+        http_response_code(200);
+        exit();
+    }
 }
 
 class Database {
@@ -27,10 +30,15 @@ class Database {
                 $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
                 $this->conn->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
             } catch(PDOException $e) {
-                echo json_encode([
-                    "success" => false,
-                    "message" => "Database connection failed: " . $e->getMessage()
-                ]);
+                // Only output JSON if not in CLI mode
+                if (php_sapi_name() !== 'cli') {
+                    echo json_encode([
+                        "success" => false,
+                        "message" => "Database connection failed: " . $e->getMessage()
+                    ]);
+                } else {
+                    echo "Database connection failed: " . $e->getMessage() . "\n";
+                }
                 exit();
             }
         }

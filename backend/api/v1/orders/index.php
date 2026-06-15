@@ -1,5 +1,6 @@
 <?php
 require_once '../../../config/database.php';
+require_once '../../../helpers/EmailHelper.php';
 
 $database = new Database();
 $db = $database->getConnection();
@@ -31,7 +32,6 @@ if ($method === 'POST') {
         // 1. Find or create customer
         // =============================================
         
-        // Check if customer exists by phone
         $checkCustomerSql = "SELECT id, total_orders, total_spent FROM customers WHERE phone = :phone";
         $checkStmt = $db->prepare($checkCustomerSql);
         $checkStmt->execute([':phone' => $customer_phone]);
@@ -40,7 +40,6 @@ if ($method === 'POST') {
         if ($existingCustomer) {
             $customer_id = $existingCustomer['id'];
             
-            // Update customer info
             $updateCustomerSql = "UPDATE customers SET 
                 name = :name, 
                 email = :email, 
@@ -56,7 +55,6 @@ if ($method === 'POST') {
             ]);
             $is_new_customer = false;
         } else {
-            // Create new customer
             $insertCustomerSql = "INSERT INTO customers (phone, email, name, address) 
                                   VALUES (:phone, :email, :name, :address)";
             $insertStmt = $db->prepare($insertCustomerSql);
@@ -158,6 +156,36 @@ if ($method === 'POST') {
         // Commit transaction
         $db->commit();
         
+        // =============================================
+        // 6. ADD EMAIL TO QUEUE (NON-BLOCKING)
+        // =============================================
+        if (!empty($customer_email)) {
+            try {
+                $queueSql = "INSERT INTO email_queue (order_id, recipient_email, template_key, variables) 
+                            VALUES (:order_id, :email, 'order_confirmation', :variables)";
+                $queueStmt = $db->prepare($queueSql);
+                $queueStmt->execute([
+                    ':order_id' => $order_id,
+                    ':email' => $customer_email,
+                    ':variables' => json_encode([
+                        'customer_name' => $customer_name,
+                        'order_number' => $order_number,
+                        'product_name' => $product_name,
+                        'quantity' => $quantity,
+                        'total_amount' => $total_amount,
+                        'status' => 'pending',
+                        'service_type' => $service_type
+                    ])
+                ]);
+            } catch (Exception $e) {
+                // Just log, order is already created successfully
+                error_log("Failed to queue email for order {$order_number}: " . $e->getMessage());
+            }
+        }
+        
+        // =============================================
+        // 7. SEND RESPONSE IMMEDIATELY (NO WAITING FOR EMAIL)
+        // =============================================
         sendResponse(true, "Order created successfully", [
             "order_number" => $order_number,
             "order_id" => $order_id,
@@ -167,31 +195,23 @@ if ($method === 'POST') {
         ]);
         
     } catch (PDOException $e) {
-        // Rollback transaction on error
         if ($db->inTransaction()) {
             $db->rollBack();
         }
         
-        // Return meaningful error message
         $errorMessage = $e->getMessage();
         
-        // Check for foreign key constraint error (product not found)
         if (strpos($errorMessage, 'foreign key constraint fails') !== false && strpos($errorMessage, 'product_id') !== false) {
             sendResponse(false, "Invalid product ID. The product does not exist.", null, 400);
-        } 
-        // Check for duplicate entry
-        else if (strpos($errorMessage, 'Duplicate entry') !== false) {
+        } else if (strpos($errorMessage, 'Duplicate entry') !== false) {
             sendResponse(false, "Duplicate entry detected.", null, 400);
-        }
-        // Other database errors
-        else {
+        } else {
             sendResponse(false, "Database error: " . $errorMessage, null, 500);
         }
     }
     
 } elseif ($method === 'GET') {
     try {
-        // Track order by order_number and phone
         $order_number = $_GET['order_number'] ?? '';
         $phone = $_GET['phone'] ?? '';
         
@@ -215,7 +235,6 @@ if ($method === 'POST') {
             sendResponse(false, "Order not found. Please check your order number and phone number.", null, 404);
         }
         
-        // Get status history for this order
         $historySql = "SELECT * FROM order_status_history WHERE order_id = :order_id ORDER BY created_at DESC";
         $historyStmt = $db->prepare($historySql);
         $historyStmt->execute([':order_id' => $order['id']]);
