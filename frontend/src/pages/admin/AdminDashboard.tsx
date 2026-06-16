@@ -41,12 +41,12 @@ const AdminDashboard: React.FC = () => {
         {/* Logo in Sidebar */}
         <div className="flex items-center justify-center h-16 border-b border-white/20 flex-shrink-0">
           <Link to="/admin/dashboard" className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-              <span className="text-white text-2xl font-bold">SB</span>
+            <div className="w-12 h-12 bg-white p-0.5 flex items-center justify-center">
+              <img src="/images/icon.png" alt="Img" className="w-full h-full object-cover" />
             </div>
-            <div>
+            <div className='h-12'>
               <h1 className="text-white font-bold text-lg">Style Badge</h1>
-              <p className="text-white/60 text-xs">Admin Panel</p>
+              <p className="text-white/100 text-xs">Admin Panel</p>
             </div>
           </Link>
         </div>

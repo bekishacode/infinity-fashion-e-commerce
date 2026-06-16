@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { apiClient, getImageUrl } from '../../../utils/apiClient';
 import { 
@@ -7,12 +7,13 @@ import {
   Sparkles, 
   Truck, 
   Search, 
-  ChevronRight, 
-  ChevronDown,
   Plus,
   Minus,
   Filter,
-  X
+  X,
+  ChevronDown,
+  ChevronUp,
+  Loader2
 } from 'lucide-react';
 
 interface Category {
@@ -32,36 +33,44 @@ interface SubCategory {
   name: string;
   slug: string;
   display_name: string;
+  description: string;
+  image_url: string | null;
   product_count: number;
 }
 
 interface ServiceType {
-  id: string;
+  id: number;
   name: string;
-  icon: JSX.Element;
-  color: string;
+  display_name: string;
+  icon: string;
+  sort_order: number;
 }
+
+type ExpandedCategoriesState = Record<number, boolean>;
+type SubCategoriesCache = Record<number, SubCategory[]>;
 
 const ProductsIndex: React.FC = () => {
   const navigate = useNavigate();
   const [categories, setCategories] = useState<Category[]>([]);
   const [filteredCategories, setFilteredCategories] = useState<Category[]>([]);
+  const [serviceTypes, setServiceTypes] = useState<ServiceType[]>([]);
   const [loading, setLoading] = useState(true);
-  const [expandedCategories, setExpandedCategories] = useState<Set<number>>(new Set());
+  const [expandedCategoryId, setExpandedCategoryId] = useState<number | null>(null);
+  const [loadingSubCategories, setLoadingSubCategories] = useState<number | null>(null);
+  const [subCategoriesCache, setSubCategoriesCache] = useState<SubCategoriesCache>({});
+  const [isShopByOpen, setIsShopByOpen] = useState(false);
   const [selectedService, setSelectedService] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [sortBy, setSortBy] = useState('name_asc');
+  
+  const shopByRef = useRef<HTMLDivElement>(null);
 
-  const serviceTypes: ServiceType[] = [
-    { id: 'all', name: 'All Products', icon: <Package className="w-4 h-4" />, color: 'bg-gray-500' },
-    { id: 'retail', name: 'Retail', icon: <ShoppingCart className="w-4 h-4" />, color: 'bg-blue-500' },
-    { id: 'wholesale', name: 'Wholesale', icon: <Truck className="w-4 h-4" />, color: 'bg-green-500' },
-    { id: 'pod', name: 'Print on Demand', icon: <Sparkles className="w-4 h-4" />, color: 'bg-purple-500' }
-  ];
+  useEffect(() => {
+    fetchServiceTypes();
+  }, []);
 
-  // Debounce search
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(searchQuery);
@@ -70,8 +79,32 @@ const ProductsIndex: React.FC = () => {
   }, [searchQuery]);
 
   useEffect(() => {
-    fetchCategories();
-  }, [selectedService, debouncedSearch]);
+    if (serviceTypes.length > 0) {
+      fetchCategories();
+    }
+  }, [selectedService, debouncedSearch, serviceTypes]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (shopByRef.current && !shopByRef.current.contains(event.target as Node)) {
+        setIsShopByOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const fetchServiceTypes = async () => {
+    try {
+      const response = await apiClient.get('/service-types/service-types.php');
+      if (response.success && response.data) {
+        setServiceTypes(response.data as ServiceType[]);
+      }
+    } catch (error) {
+      console.error('Error fetching service types:', error);
+    }
+  };
 
   const fetchCategories = async () => {
     setLoading(true);
@@ -83,6 +116,7 @@ const ProductsIndex: React.FC = () => {
       if (response.success && response.data) {
         setCategories(response.data as Category[]);
         setFilteredCategories(response.data as Category[]);
+        setSubCategoriesCache({});
       }
     } catch (error) {
       console.error('Error fetching categories:', error);
@@ -91,14 +125,48 @@ const ProductsIndex: React.FC = () => {
     }
   };
 
-  const toggleCategory = (categoryId: number) => {
-    const newExpanded = new Set(expandedCategories);
-    if (newExpanded.has(categoryId)) {
-      newExpanded.delete(categoryId);
-    } else {
-      newExpanded.add(categoryId);
+  const fetchSubCategories = async (categoryId: number, categorySlug: string) => {
+    if (subCategoriesCache[categoryId]) {
+      return;
     }
-    setExpandedCategories(newExpanded);
+
+    setLoadingSubCategories(categoryId);
+    try {
+      const response = await apiClient.get(`/categories/detail.php?slug=${categorySlug}`);
+      if (response.success && response.data) {
+        const data = response.data as { category: Category; sub_categories: SubCategory[] };
+        setSubCategoriesCache(prev => ({
+          ...prev,
+          [categoryId]: data.sub_categories || []
+        }));
+        
+        setFilteredCategories(prevCategories => 
+          prevCategories.map(cat => 
+            cat.id === categoryId 
+              ? { ...cat, sub_categories: data.sub_categories || [] }
+              : cat
+          )
+        );
+      }
+    } catch (error) {
+      console.error('Error fetching subcategories:', error);
+    } finally {
+      setLoadingSubCategories(null);
+    }
+  };
+
+  const toggleCategory = (categoryId: number, categorySlug: string) => {
+    const isExpanding = expandedCategoryId !== categoryId;
+    
+    setExpandedCategoryId(isExpanding ? categoryId : null);
+    
+    if (isExpanding && !subCategoriesCache[categoryId]) {
+      fetchSubCategories(categoryId, categorySlug);
+    }
+  };
+
+  const toggleShopBy = () => {
+    setIsShopByOpen(!isShopByOpen);
   };
 
   const handleCategoryClick = (categorySlug: string) => {
@@ -115,7 +183,6 @@ const ProductsIndex: React.FC = () => {
     setSortBy('name_asc');
   };
 
-  // Sort categories
   const getSortedCategories = () => {
     const sorted = [...filteredCategories];
     switch (sortBy) {
@@ -134,177 +201,222 @@ const ProductsIndex: React.FC = () => {
 
   const sortedCategories = getSortedCategories();
 
+  const getSelectedServiceDisplay = () => {
+    if (selectedService === 'all') {
+      return 'All Products';
+    }
+    const found = serviceTypes.find(st => st.name === selectedService);
+    return found ? found.display_name : 'All Products';
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <div className="bg-gradient-to-r from-royal-blue to-magenta text-white py-12">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 className="text-3xl md:text-4xl font-bold mb-2">Our Products</h1>
-          <p className="text-white/80">Browse our collection of premium custom printed products</p>
+      <div className="flex flex-col justify-center items-center mt-20">
+        <div className="container mt-8 mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h1 className="text-3xl md:text-4xl font-bold mb-2 text-gradient-green-orange">Our Products</h1>
+          <p className="text-charcoal">
+            Browse our collection of premium custom printed products
+          </p>
         </div>
       </div>
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col lg:flex-row gap-8">
-          {/* Sidebar - Desktop */}
+          {/* Sidebar Section */}
           <div className="hidden lg:block lg:w-80 flex-shrink-0">
-            <div className="bg-white rounded-xl shadow-sm p-5 sticky top-24">
-              <h3 className="font-semibold text-lg text-gray-800 mb-4">Filters</h3>
-              
-              {/* Search */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Search</label>
+            {/* Shop By */}
+            <div className="mb-2" ref={shopByRef}>
+              <div className="flex items-center justify-between px-4">
+                <span className="font-bold text-2xl text-green">{getSelectedServiceDisplay()}</span>
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search products..."
-                    className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-royal-blue text-sm"
-                  />
-                </div>
-              </div>
-
-              {/* Service Type Filter */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Service Type</label>
-                <div className="space-y-2">
-                  {serviceTypes.map((service) => (
-                    <button
-                      key={service.id}
-                      onClick={() => setSelectedService(service.id)}
-                      className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all ${
-                        selectedService === service.id
-                          ? `${service.color} text-white`
-                          : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
-                      }`}
+                  <button
+                    onClick={toggleShopBy}
+                    className="flex items-center gap-1 text-royal-blue hover:text-royal-blue hover:font-bold cursor-pointer transition-colors"
+                  >
+                    <span className="text-md font-medium">Shop By</span>
+                    {isShopByOpen ? (
+                      <ChevronUp className="w-4 h-4" />
+                    ) : (
+                      <ChevronDown className="w-4 h-4" />
+                    )}
+                  </button>
+                  
+                  {isShopByOpen && (
+                    <div 
+                      className="absolute top-full right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-2 animate-slide-down z-50"
+                      style={{ 
+                        minWidth: '200px',
+                        maxHeight: '300px',
+                        overflowY: 'auto'
+                      }}
                     >
-                      {service.icon}
-                      {service.name}
-                    </button>
-                  ))}
+                      <button
+                        onClick={() => {
+                          setSelectedService('all');
+                          setIsShopByOpen(false);
+                        }}
+                        className={`w-full flex items-center justify-between px-4 py-2.5 text-sm transition-colors ${
+                          selectedService === 'all'
+                            ? 'bg-blue-50 text-blue-600'
+                            : 'text-gray-700 hover:bg-gray-50'
+                        }`}
+                      >
+                        <span>All Products</span>
+                        {selectedService === 'all' && (
+                          <span className="text-blue-600">✓</span>
+                        )}
+                      </button>
+                      
+                      {serviceTypes.map((service) => (
+                        <button
+                          key={service.id}
+                          onClick={() => {
+                            setSelectedService(service.name);
+                            setIsShopByOpen(false);
+                          }}
+                          className={`w-full flex items-center justify-between px-4 py-2.5 text-sm transition-colors ${
+                            selectedService === service.name
+                              ? 'bg-blue-50 text-blue-600'
+                              : 'text-gray-700 hover:bg-gray-50'
+                          }`}
+                        >
+                          <span>{service.display_name}</span>
+                          {selectedService === service.name && (
+                            <span className="text-blue-600">✓</span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
+            </div>
 
-              {/* Sort By */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Sort By</label>
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-royal-blue text-sm"
-                >
-                  <option value="name_asc">Name: A to Z</option>
-                  <option value="name_desc">Name: Z to A</option>
-                  <option value="product_count_desc">Most Products</option>
-                  <option value="product_count_asc">Least Products</option>
-                </select>
-              </div>
-
-              {/* Categories Tree */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Categories</label>
-                <div className="space-y-2 max-h-96 overflow-y-auto">
+            {/* Sidebar Container */}
+            <div className="bg-white rounded-xl shadow-sm p-5 sticky top-24">
+              {/* Categories Section */}
+              <div>
+                <div className="space-y-2">
                   {sortedCategories.map((category) => (
-                    <div key={category.id}>
+                    <div key={category.id} className="border-b border-gray-100 last:border-0 pb-2 last:pb-0">
                       <div className="flex items-center justify-between">
                         <button
                           onClick={() => handleCategoryClick(category.slug)}
-                          className="flex-1 text-left text-sm text-gray-700 hover:text-royal-blue py-1"
+                          className="flex-1 text-left text-sm text-gray-700 hover:text-blue-600 py-2 px-1 rounded transition-colors font-medium"
                         >
                           {category.display_name}
                           <span className="text-xs text-gray-400 ml-1">({category.product_count})</span>
                         </button>
-                        {category.sub_categories && category.sub_categories.length > 0 && (
-                          <button
-                            onClick={() => toggleCategory(category.id)}
-                            className="p-1 hover:bg-gray-100 rounded"
-                          >
-                            {expandedCategories.has(category.id) ? (
-                              <Minus className="w-3 h-3" />
-                            ) : (
-                              <Plus className="w-3 h-3" />
-                            )}
-                          </button>
-                        )}
+                        <button
+                          onClick={() => toggleCategory(category.id, category.slug)}
+                          className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0 ml-2"
+                          aria-label={expandedCategoryId === category.id ? 'Collapse' : 'Expand'}
+                          disabled={loadingSubCategories === category.id}
+                        >
+                          {loadingSubCategories === category.id ? (
+                            <Loader2 className="w-4 h-4 text-blue-600 animate-spin" />
+                          ) : expandedCategoryId === category.id ? (
+                            <Minus className="w-4 h-4 text-blue-600" />
+                          ) : (
+                            <Plus className="w-4 h-4 text-blue-600" />
+                          )}
+                        </button>
                       </div>
-                      {expandedCategories.has(category.id) && category.sub_categories && (
-                        <div className="ml-4 mt-1 space-y-1 border-l-2 border-gray-200 pl-3">
-                          {category.sub_categories.map((sub) => (
-                            <button
-                              key={sub.id}
-                              onClick={() => handleSubCategoryClick(category.slug, sub.slug)}
-                              className="block text-xs text-gray-500 hover:text-royal-blue py-1 w-full text-left"
-                            >
-                              {sub.display_name}
-                              <span className="text-xs text-gray-400 ml-1">({sub.product_count})</span>
-                            </button>
-                          ))}
+                      
+                      {/* Subcategories with smooth animation */}
+                      <div
+                        className={`grid transition-all duration-300 ease-in-out ${
+                          expandedCategoryId === category.id 
+                            ? 'grid-rows-[1fr] opacity-100 mt-1' 
+                            : 'grid-rows-[0fr] opacity-0'
+                        }`}
+                      >
+                        <div className="overflow-hidden">
+                          <div className="ml-4 border-l-2 border-gray-200 pl-3 space-y-1">
+                            {expandedCategoryId === category.id && (
+                              <>
+                                {loadingSubCategories === category.id ? (
+                                  <div className="flex items-center justify-center py-4">
+                                    <Loader2 className="w-5 h-5 text-blue-600 animate-spin" />
+                                    <span className="ml-2 text-sm text-gray-500">Loading...</span>
+                                  </div>
+                                ) : subCategoriesCache[category.id] && subCategoriesCache[category.id].length > 0 ? (
+                                  subCategoriesCache[category.id].map((sub) => (
+                                    <button
+                                      key={sub.id}
+                                      onClick={() => handleSubCategoryClick(category.slug, sub.slug)}
+                                      className="block text-xs text-gray-500 hover:text-blue-600 py-1.5 w-full text-left transition-colors"
+                                    >
+                                      {sub.display_name}
+                                      <span className="text-xs text-gray-400 ml-1">({sub.product_count})</span>
+                                    </button>
+                                  ))
+                                ) : subCategoriesCache[category.id] && subCategoriesCache[category.id].length === 0 ? (
+                                  <div className="text-xs text-gray-400 py-2">No sub-categories available</div>
+                                ) : null}
+                              </>
+                            )}
+                          </div>
                         </div>
-                      )}
+                      </div>
                     </div>
                   ))}
                 </div>
               </div>
-
-              {/* Clear Filters */}
-              <button
-                onClick={clearFilters}
-                className="w-full text-center text-sm text-royal-blue hover:underline py-2"
-              >
-                Clear All Filters
-              </button>
             </div>
           </div>
 
           {/* Main Content */}
           <div className="flex-1">
-            {/* Mobile Filter Button and Top Bar */}
-            <div className="lg:hidden mb-4">
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setShowMobileFilters(true)}
-                  className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg shadow-sm"
-                >
-                  <Filter className="w-4 h-4" />
-                  Filters
-                </button>
-                <div className="flex-1 relative">
+            {/* Results Info with Search in between */}
+            <div className="mb-6">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+                <p className="text-sm text-bold text-royal-blue-dark whitespace-nowrap">
+                  Showing <span className='text-royal-blue-dark'>{sortedCategories.length} categories</span>
+                </p>
+                
+                {/* Search Input - Now between count and sort */}
+                <div className="flex-1 relative min-w-[180px]">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search products..."
-                    className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-royal-blue text-sm bg-white"
+                    className="w-full pl-9 pr-3 py-2 border border-green-100 rounded-full focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm bg-white"
                   />
+                </div>
+                
+                <div className="flex-shrink-0">
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="px-3 py-2 text-sm"
+                  >
+                    <option value="name_asc">Sort: A to Z</option>
+                    <option value="name_desc">Sort: Z to A</option>
+                    <option value="product_count_desc">Most Products</option>
+                    <option value="product_count_asc">Least Products</option>
+                  </select>
                 </div>
               </div>
             </div>
 
-            {/* Results Info */}
-            <div className="flex justify-between items-center mb-6">
-              <p className="text-sm text-gray-500">
-                Showing {sortedCategories.length} categories
-              </p>
-              <div className="hidden lg:block">
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="px-3 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-royal-blue text-sm bg-white"
-                >
-                  <option value="name_asc">Sort: A to Z</option>
-                  <option value="name_desc">Sort: Z to A</option>
-                  <option value="product_count_desc">Sort: Most Products</option>
-                  <option value="product_count_asc">Sort: Least Products</option>
-                </select>
-              </div>
+            {/* Mobile Filter Button - Only show on mobile */}
+            <div className="lg:hidden mb-4">
+              <button
+                onClick={() => setShowMobileFilters(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg shadow-sm"
+              >
+                <Filter className="w-4 h-4" />
+                Filters
+              </button>
             </div>
 
             {/* Categories Grid */}
             {loading ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-5">
+              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4 md:gap-5">
                 {[...Array(8)].map((_, i) => (
                   <div key={i} className="bg-white rounded-xl shadow-sm animate-pulse">
                     <div className="aspect-[1/1] bg-gray-200 rounded-t-xl"></div>
@@ -322,7 +434,7 @@ const ProductsIndex: React.FC = () => {
                 <p className="text-gray-500 mt-2">Try adjusting your filters or search terms</p>
                 <button
                   onClick={clearFilters}
-                  className="mt-4 text-royal-blue hover:underline"
+                  className="mt-4 text-blue-600 hover:underline"
                 >
                   Clear all filters
                 </button>
@@ -352,25 +464,44 @@ const ProductsIndex: React.FC = () => {
               </button>
             </div>
             <div className="p-5 space-y-6">
-              {/* Service Type */}
+              {/* Shop By - Mobile */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Service Type</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Shop By</label>
                 <div className="space-y-2">
+                  <button
+                    onClick={() => {
+                      setSelectedService('all');
+                      setShowMobileFilters(false);
+                    }}
+                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm transition-all ${
+                      selectedService === 'all'
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-50 text-gray-600'
+                    }`}
+                  >
+                    <span>All Products</span>
+                    {selectedService === 'all' && (
+                      <span className="text-white">✓</span>
+                    )}
+                  </button>
+                  
                   {serviceTypes.map((service) => (
                     <button
                       key={service.id}
                       onClick={() => {
-                        setSelectedService(service.id);
+                        setSelectedService(service.name);
                         setShowMobileFilters(false);
                       }}
-                      className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all ${
-                        selectedService === service.id
-                          ? `${service.color} text-white`
+                      className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm transition-all ${
+                        selectedService === service.name
+                          ? 'bg-blue-600 text-white'
                           : 'bg-gray-50 text-gray-600'
                       }`}
                     >
-                      {service.icon}
-                      {service.name}
+                      <span>{service.display_name}</span>
+                      {selectedService === service.name && (
+                        <span className="text-white">✓</span>
+                      )}
                     </button>
                   ))}
                 </div>
@@ -382,7 +513,7 @@ const ProductsIndex: React.FC = () => {
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg"
+                  className="w-full px-3 py-2"
                 >
                   <option value="name_asc">Name: A to Z</option>
                   <option value="name_desc">Name: Z to A</option>
@@ -390,17 +521,6 @@ const ProductsIndex: React.FC = () => {
                   <option value="product_count_asc">Least Products</option>
                 </select>
               </div>
-
-              {/* Clear Filters */}
-              <button
-                onClick={() => {
-                  clearFilters();
-                  setShowMobileFilters(false);
-                }}
-                className="w-full text-center text-royal-blue hover:underline py-2"
-              >
-                Clear All Filters
-              </button>
             </div>
           </div>
         </div>
@@ -415,8 +535,21 @@ const ProductsIndex: React.FC = () => {
             transform: translateY(0);
           }
         }
+        @keyframes slide-down {
+          from {
+            opacity: 0;
+            transform: translateY(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
         .animate-slide-up {
           animation: slide-up 0.3s ease-out;
+        }
+        .animate-slide-down {
+          animation: slide-down 0.2s ease-out;
         }
       `}</style>
     </div>
@@ -442,10 +575,8 @@ const CategoryCard: React.FC<{
                 (e.target as HTMLImageElement).src = '/api/placeholder/400/400';
               }}
             />
-            {/* Gradient overlay */}
             <div className="absolute inset-0 rounded-lg" />
             
-            {/* Product count badge - TOP RIGHT CORNER */}
             <div className="absolute top-2 right-2 bg-orange/90 backdrop-blur-sm text-white text-[11px] font-medium px-2 py-0.5 rounded-full shadow-md">
               {category.product_count} {category.product_count === 1 ? 'product' : 'products'}
             </div>
@@ -455,7 +586,7 @@ const CategoryCard: React.FC<{
           <h3 className="font-medium text-green text-sm sm:text-base mb-0.5 line-clamp-1 text-center">
             {category.display_name}
           </h3>
-          <p className="text-[11px] text-royal-blue line-clamp-1 text-center">
+          <p className="text-[11px] text-blue-600 line-clamp-1 text-center">
             {category.service_types.map(service => service.charAt(0).toUpperCase() + service.slice(1)).join(', ')}
           </p>
         </div>

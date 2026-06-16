@@ -10,14 +10,15 @@ try {
     $sql = "SELECT 
                 c.*,
                 COUNT(DISTINCT p.id) as product_count,
-                GROUP_CONCAT(DISTINCT p.service_type) as service_types
+                GROUP_CONCAT(DISTINCT st.name) as service_types
             FROM categories c
             LEFT JOIN products p ON p.category = c.name AND p.is_active = 1
+            LEFT JOIN service_types st ON st.id = c.service_type_id
             WHERE c.is_active = 1";
     
     $params = [];
     if ($service_type) {
-        $sql .= " AND p.service_type = :service_type";
+        $sql .= " AND st.name = :service_type";
         $params[':service_type'] = $service_type;
     }
     

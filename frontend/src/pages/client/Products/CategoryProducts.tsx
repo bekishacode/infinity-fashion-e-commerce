@@ -53,8 +53,7 @@ const CategoryProducts: React.FC = () => {
   const fetchCategoryData = async () => {
     setLoading(true);
     try {
-      const serviceType = getServiceType();
-      const response = await apiClient.get(`/categories/detail.php?slug=${categorySlug}&service_type=${serviceType}`);
+      const response = await apiClient.get(`/categories/detail.php?slug=${categorySlug}`);
       if (response.success && response.data) {
         const data = response.data as { category: Category; sub_categories: SubCategory[] };
         setCategory(data.category);

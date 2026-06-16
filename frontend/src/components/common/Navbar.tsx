@@ -25,10 +25,10 @@ const Navbar: React.FC = () => {
 
   return (
     <>
-      <nav className="bg-white/95 backdrop-blur-sm shadow-lg sticky top-0 z-50">
+      <nav className="bg-white/95 backdrop-blur-sm shadow-lg fixed top-0 left-0 right-0 z-50">
         <div className="container mx-auto px-4 py-3">
           <div className="flex justify-between items-center">
-            {/* Logo Section - Centered on mobile, normal on desktop */}
+            {/* Logo Section */}
             <Link to="/" className="flex items-center justify-center md:justify-start flex-1 md:flex-none" onClick={closeMobileMenu}>
               <div className="w-26 h-10 md:w-46 md:h-16 rounded-lg overflow-hidden">
                 <img src="/images/Logo.png" alt="Infinity Fashion" className="w-full h-full object-cover" />
@@ -97,7 +97,7 @@ const Navbar: React.FC = () => {
             isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
           }`}
         >
-          {/* Drawer Header with Logo */}
+          {/* Drawer Header */}
           <div className="p-4 border-b border-gray-100">
             <div className="flex items-center justify-between">
               <Link to="/" onClick={closeMobileMenu} className="flex items-center">

@@ -179,6 +179,60 @@
   /* Placeholder colors */
   .placeholder-royal-blue::placeholder { color: #273B89; }
   .placeholder-charcoal::placeholder { color: #010101; }
+
+
+  .text-gradient-green-orange {
+    background: linear-gradient(to right,#0B9647, #ED5925, #0B9647, #ED5925 );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: transparent;
+  }
+
+    /* Green to Magenta */
+  .text-gradient-green-magenta {
+    background: linear-gradient(to right, #0B9647, #EC2D7B);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* Royal Blue to Magenta */
+  .text-gradient-royal-magenta {
+    background: linear-gradient(to right, #273B89, #EC2D7B);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* Orange to Magenta */
+  .text-gradient-orange-magenta {
+    background: linear-gradient(to right, #ED5925, #EC2D7B);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* All colors - Hero */
+  .text-gradient-hero {
+    background: linear-gradient(to right, #273B89, #ED5925, #EC2D7B, #0B9647);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* Alternating pattern like yours */
+  .text-gradient-alternate {
+    background: linear-gradient(to right, #0B9647, #ED5925, #0B9647, #ED5925);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: transparent;
+  }
 }
 
 /* Animation Keyframes */

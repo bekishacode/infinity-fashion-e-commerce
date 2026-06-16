@@ -11,6 +11,7 @@ export interface ServiceType {
   id: number;
   name: string;
   display_name: string;
+  slug: string;
   icon: string;
   sort_order: number;
   is_active: boolean;
@@ -23,6 +24,7 @@ export interface Category {
   name: string;
   display_name: string;
   icon: string;
+  slug: string;
   image_url?: string | null;
   banner_image?: string | null;  
   sort_order: number;
@@ -36,6 +38,7 @@ export interface SubCategory {
   category_id: number;
   name: string;
   display_name: string;
+  slug: string;
   image_url?: string | null; 
   banner_image?: string | null;  
   sort_order: number;

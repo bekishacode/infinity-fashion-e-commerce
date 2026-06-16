@@ -15,6 +15,81 @@ $input = json_decode(file_get_contents('php://input'), true);
 $type = isset($_GET['type']) ? $_GET['type'] : '';
 $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
+// Helper function to generate slug for categories (includes service type)
+function generateCategorySlug($name, $service_type_id, $db) {
+    // Convert to lowercase, replace spaces and special characters with hyphens
+    $slug = strtolower(trim(preg_replace('/[^a-zA-Z0-9]+/', '-', $name)));
+    $slug = trim($slug, '-');
+    
+    // Get service type name
+    $stSql = "SELECT name FROM service_types WHERE id = :id";
+    $stStmt = $db->prepare($stSql);
+    $stStmt->execute([':id' => $service_type_id]);
+    $serviceType = $stStmt->fetch(PDO::FETCH_ASSOC);
+    
+    if ($serviceType) {
+        $slug = $slug . '-' . $serviceType['name'];
+    }
+    
+    // Check if slug exists (should be unique now with service type)
+    $checkSql = "SELECT id FROM categories WHERE slug = :slug";
+    $checkStmt = $db->prepare($checkSql);
+    $checkStmt->execute([':slug' => $slug]);
+    
+    if ($checkStmt->rowCount() > 0) {
+        // Append timestamp to make it unique (rare case)
+        $slug = $slug . '-' . time();
+    }
+    
+    return $slug;
+}
+
+// Helper function to generate slug for sub-categories (includes category name)
+function generateSubCategorySlug($name, $category_id, $db) {
+    // Convert to lowercase, replace spaces and special characters with hyphens
+    $slug = strtolower(trim(preg_replace('/[^a-zA-Z0-9]+/', '-', $name)));
+    $slug = trim($slug, '-');
+    
+    // Get category name
+    $catSql = "SELECT name FROM categories WHERE id = :id";
+    $catStmt = $db->prepare($catSql);
+    $catStmt->execute([':id' => $category_id]);
+    $category = $catStmt->fetch(PDO::FETCH_ASSOC);
+    
+    if ($category) {
+        $slug = $slug . '-' . $category['name'];
+    }
+    
+    // Check if slug exists
+    $checkSql = "SELECT id FROM sub_categories WHERE slug = :slug";
+    $checkStmt = $db->prepare($checkSql);
+    $checkStmt->execute([':slug' => $slug]);
+    
+    if ($checkStmt->rowCount() > 0) {
+        // Append timestamp to make it unique
+        $slug = $slug . '-' . time();
+    }
+    
+    return $slug;
+}
+
+// Helper function to generate slug for service types
+function generateServiceTypeSlug($name, $db) {
+    $slug = strtolower(trim(preg_replace('/[^a-zA-Z0-9]+/', '-', $name)));
+    $slug = trim($slug, '-');
+    
+    // Check if slug exists
+    $checkSql = "SELECT id FROM service_types WHERE name = :name";
+    $checkStmt = $db->prepare($checkSql);
+    $checkStmt->execute([':name' => $slug]);
+    
+    if ($checkStmt->rowCount() > 0) {
+        $slug = $slug . '-' . time();
+    }
+    
+    return $slug;
+}
+
 if ($method === 'GET') {
     if ($type === 'service-types') {
         $sql = "SELECT * FROM service_types WHERE is_active = 1 ORDER BY sort_order";
@@ -104,19 +179,23 @@ if ($method === 'GET') {
             sendResponse(false, 'Service type ID, name, and display name are required', null, 400);
         }
         
-        $sql = "INSERT INTO categories (service_type_id, name, display_name, icon, sort_order) 
-                VALUES (:service_type_id, :name, :display_name, :icon, :sort_order)";
+        // Generate slug with service type
+        $slug = generateCategorySlug($name, $service_type_id, $db);
+        
+        $sql = "INSERT INTO categories (service_type_id, name, slug, display_name, icon, sort_order) 
+                VALUES (:service_type_id, :name, :slug, :display_name, :icon, :sort_order)";
         $stmt = $db->prepare($sql);
         $result = $stmt->execute([
             ':service_type_id' => $service_type_id,
             ':name' => $name,
+            ':slug' => $slug,
             ':display_name' => $display_name,
             ':icon' => $icon,
             ':sort_order' => $sort_order
         ]);
         
         if ($result) {
-            sendResponse(true, 'Category created successfully', ['id' => $db->lastInsertId()]);
+            sendResponse(true, 'Category created successfully', ['id' => $db->lastInsertId(), 'slug' => $slug]);
         } else {
             sendResponse(false, 'Failed to create category', null, 500);
         }
@@ -131,18 +210,22 @@ if ($method === 'GET') {
             sendResponse(false, 'Category ID, name, and display name are required', null, 400);
         }
         
-        $sql = "INSERT INTO sub_categories (category_id, name, display_name, sort_order) 
-                VALUES (:category_id, :name, :display_name, :sort_order)";
+        // Generate slug with category name
+        $slug = generateSubCategorySlug($name, $category_id, $db);
+        
+        $sql = "INSERT INTO sub_categories (category_id, name, slug, display_name, sort_order) 
+                VALUES (:category_id, :name, :slug, :display_name, :sort_order)";
         $stmt = $db->prepare($sql);
         $result = $stmt->execute([
             ':category_id' => $category_id,
             ':name' => $name,
+            ':slug' => $slug,
             ':display_name' => $display_name,
             ':sort_order' => $sort_order
         ]);
         
         if ($result) {
-            sendResponse(true, 'Sub-category created successfully', ['id' => $db->lastInsertId()]);
+            sendResponse(true, 'Sub-category created successfully', ['id' => $db->lastInsertId(), 'slug' => $slug]);
         } else {
             sendResponse(false, 'Failed to create sub-category', null, 500);
         }
@@ -178,6 +261,7 @@ if ($method === 'GET') {
         $sort_order = $input['sort_order'] ?? 0;
         $is_active = $input['is_active'] ?? true;
         
+        // Note: Name/Code cannot be updated as it's the identifier
         $sql = "UPDATE categories SET display_name = :display_name, icon = :icon, sort_order = :sort_order, is_active = :is_active WHERE id = :id";
         $stmt = $db->prepare($sql);
         $result = $stmt->execute([
@@ -195,6 +279,7 @@ if ($method === 'GET') {
         $sort_order = $input['sort_order'] ?? 0;
         $is_active = $input['is_active'] ?? true;
         
+        // Note: Name/Code cannot be updated as it's the identifier
         $sql = "UPDATE sub_categories SET display_name = :display_name, sort_order = :sort_order, is_active = :is_active WHERE id = :id";
         $stmt = $db->prepare($sql);
         $result = $stmt->execute([

@@ -17,6 +17,7 @@ interface Category {
   service_type_id: number;
   name: string;
   display_name: string;
+  slug: string;
   icon: string;
   image_url: string | null;
   sort_order: number;
@@ -29,6 +30,7 @@ interface SubCategory {
   category_id: number;
   name: string;
   display_name: string;
+  slug: string;
   image_url: string | null;
   sort_order: number;
   is_active: boolean;
@@ -61,6 +63,7 @@ const PicklistManagement: React.FC = () => {
   const [formData, setFormData] = useState({
     name: '',
     display_name: '',
+    slug: '',
     icon: '',
     sort_order: 0,
     service_type_id: 0,
@@ -130,6 +133,7 @@ const PicklistManagement: React.FC = () => {
     setFormData({
       name: '',
       display_name: '',
+      slug: '',
       icon: '',
       sort_order: 0,
       service_type_id: 0,
@@ -143,6 +147,7 @@ const PicklistManagement: React.FC = () => {
     setFormData({
       name: item.name || '',
       display_name: item.display_name || '',
+      slug: item.slug || '',
       icon: item.icon || '',
       sort_order: item.sort_order || 0,
       service_type_id: item.service_type_id || 0,
@@ -357,6 +362,21 @@ const PicklistManagement: React.FC = () => {
     );
   };
 
+  // Auto-generate slug from name
+  const generateSlug = (name: string) => {
+    return name
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  };
+
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const name = e.target.value;
+    const slug = generateSlug(name);
+    setFormData({ ...formData, name, slug });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -365,6 +385,7 @@ const PicklistManagement: React.FC = () => {
       let result;
       
       if (activeTab === 'service-types') {
+        // Service types don't have slug
         const submitData = {
           name: formData.name,
           display_name: formData.display_name,
@@ -389,6 +410,7 @@ const PicklistManagement: React.FC = () => {
           service_type_id: formData.service_type_id,
           name: formData.name,
           display_name: formData.display_name,
+          slug: formData.slug || generateSlug(formData.name),
           icon: formData.icon,
           sort_order: formData.sort_order
         };
@@ -410,6 +432,7 @@ const PicklistManagement: React.FC = () => {
           category_id: formData.category_id,
           name: formData.name,
           display_name: formData.display_name,
+          slug: formData.slug || generateSlug(formData.name),
           sort_order: formData.sort_order
         };
         
@@ -499,32 +522,26 @@ const PicklistManagement: React.FC = () => {
         </button>
       </div>
 
-      {/* Categories Table */}
-      {activeTab === 'categories' && (
+      {/* Service Types Table - No Slug */}
+      {activeTab === 'service-types' && (
         <div className="bg-white rounded-lg shadow overflow-x-auto">
-          <table className="w-full min-w-[800px]">
+          <table className="w-full min-w-[600px]">
             <thead className="bg-green-light">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Service Type</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Display Name</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Image</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Icon</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sort</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {categories.map((item) => (
+              {serviceTypes.map((item) => (
                 <tr key={item.id} className="hover:bg-gray-50">
                   <td className="px-4 py-3 text-sm text-gray-500">#{item.id}</td>
-                  <td className="px-4 py-3 text-sm">{item.service_type_name}</td>
                   <td className="px-4 py-3 text-sm font-medium">{item.name}</td>
                   <td className="px-4 py-3 text-sm">{item.display_name}</td>
-                  <td className="px-4 py-3">{renderImageSection(item, 'category')}</td>
-                  <td className="px-4 py-3 text-2xl">{item.icon}</td>
                   <td className="px-4 py-3 text-sm">{item.sort_order}</td>
                   <td className="px-4 py-3">
                     {item.is_active ? (
@@ -544,15 +561,61 @@ const PicklistManagement: React.FC = () => {
         </div>
       )}
 
-      {/* Sub-Categories Table */}
+      {/* Categories Table - Has Slug */}
+      {activeTab === 'categories' && (
+        <div className="bg-white rounded-lg shadow overflow-x-auto">
+          <table className="w-full min-w-[900px]">
+            <thead className="bg-green-light">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Service Type</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Slug</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Display Name</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Image</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sort</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {categories.map((item) => (
+                <tr key={item.id} className="hover:bg-gray-50">
+                  <td className="px-4 py-3 text-sm text-gray-500">#{item.id}</td>
+                  <td className="px-4 py-3 text-sm">{item.service_type_name}</td>
+                  <td className="px-4 py-3 text-sm font-medium">{item.name}</td>
+                  <td className="px-4 py-3 text-sm font-mono">{item.slug}</td>
+                  <td className="px-4 py-3 text-sm">{item.display_name}</td>
+                  <td className="px-4 py-3">{renderImageSection(item, 'category')}</td>
+                  <td className="px-4 py-3 text-sm">{item.sort_order}</td>
+                  <td className="px-4 py-3">
+                    {item.is_active ? (
+                      <span className="text-green-600 text-sm">Active</span>
+                    ) : (
+                      <span className="text-red-600 text-sm">Inactive</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-sm space-x-2">
+                    <button onClick={() => handleEdit(item)} className="text-blue-600 hover:text-blue-800">Edit</button>
+                    <button onClick={() => handleDelete(item.id, item.display_name)} className="text-red-600 hover:text-red-800">Delete</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Sub-Categories Table - Has Slug */}
       {activeTab === 'sub-categories' && (
         <div className="bg-white rounded-lg shadow overflow-x-auto">
-          <table className="w-full min-w-[700px]">
+          <table className="w-full min-w-[800px]">
             <thead className="bg-green-light">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Slug</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Display Name</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Image</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sort</th>
@@ -566,49 +629,9 @@ const PicklistManagement: React.FC = () => {
                   <td className="px-4 py-3 text-sm text-gray-500">#{item.id}</td>
                   <td className="px-4 py-3 text-sm">{item.category_name}</td>
                   <td className="px-4 py-3 text-sm font-medium">{item.name}</td>
+                  <td className="px-4 py-3 text-sm font-mono">{item.slug}</td>
                   <td className="px-4 py-3 text-sm">{item.display_name}</td>
                   <td className="px-4 py-3">{renderImageSection(item, 'sub_category')}</td>
-                  <td className="px-4 py-3 text-sm">{item.sort_order}</td>
-                  <td className="px-4 py-3">
-                    {item.is_active ? (
-                      <span className="text-green-600 text-sm">Active</span>
-                    ) : (
-                      <span className="text-red-600 text-sm">Inactive</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-sm space-x-2">
-                    <button onClick={() => handleEdit(item)} className="text-blue-600 hover:text-blue-800">Edit</button>
-                    <button onClick={() => handleDelete(item.id, item.display_name)} className="text-red-600 hover:text-red-800">Delete</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {/* Service Types Table */}
-      {activeTab === 'service-types' && (
-        <div className="bg-white rounded-lg shadow overflow-x-auto">
-          <table className="w-full min-w-[600px]">
-            <thead className="bg-green-light">
-              <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Display Name</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Icon</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sort</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {serviceTypes.map((item) => (
-                <tr key={item.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 text-sm text-gray-500">#{item.id}</td>
-                  <td className="px-4 py-3 text-sm font-medium">{item.name}</td>
-                  <td className="px-4 py-3 text-sm">{item.display_name}</td>
-                  <td className="px-4 py-3 text-2xl">{item.icon}</td>
                   <td className="px-4 py-3 text-sm">{item.sort_order}</td>
                   <td className="px-4 py-3">
                     {item.is_active ? (
@@ -677,7 +700,7 @@ const PicklistManagement: React.FC = () => {
                 <input
                   type="text"
                   value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  onChange={handleNameChange}
                   className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-royal-blue"
                   placeholder="e.g., t-shirts, long-sleeve"
                   required
@@ -685,6 +708,22 @@ const PicklistManagement: React.FC = () => {
                 />
                 <p className="text-xs text-gray-400 mt-1">Unique identifier (lowercase, no spaces)</p>
               </div>
+
+              {/* Slug field - Only for Categories and Sub-categories */}
+              {(activeTab === 'categories' || activeTab === 'sub-categories') && (
+                <div>
+                  <label className="block text-sm font-medium mb-1">Slug *</label>
+                  <input
+                    type="text"
+                    value={formData.slug}
+                    onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-royal-blue"
+                    placeholder="e.g., t-shirts-pod"
+                    required
+                  />
+                  <p className="text-xs text-gray-400 mt-1">URL-friendly identifier (auto-generated from name)</p>
+                </div>
+              )}
               
               <div>
                 <label className="block text-sm font-medium mb-1">Display Name *</label>
