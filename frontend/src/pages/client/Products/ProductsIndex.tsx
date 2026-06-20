@@ -15,6 +15,10 @@ import {
   ChevronUp,
   Loader2
 } from 'lucide-react';
+import ScrollReveal from '../../../components/common/ScrollReveal';
+import StaggerReveal from '../../../components/common/StaggerReveal';
+import { companyTrustData } from '../../../components/constants/productSectionData';
+
 
 interface Category {
   id: number;
@@ -211,20 +215,24 @@ const ProductsIndex: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Hero Section */}
-      <div className="flex flex-col justify-center items-center mt-20">
-        <div className="container mt-8 mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-3xl md:text-4xl font-bold mb-2 text-gradient-green-orange">Our Products</h1>
-          <p className="text-charcoal">
-            Browse our collection of premium custom printed products
-          </p>
+      {/* Hero Section with Scroll Reveal */}
+      <ScrollReveal direction="up" delay={0.1}>
+        <div className="flex flex-col justify-center items-center mt-20">
+          <div className="container mt-8 mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h1 className="text-3xl md:text-4xl font-bold mb-2 text-gradient-green-orange">
+              Our Products
+            </h1>
+            <p className="text-charcoal max-w-2xl mx-auto">
+              Browse our collection of premium custom printed products
+            </p>
+          </div>
         </div>
-      </div>
+      </ScrollReveal>
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col lg:flex-row gap-8">
-          {/* Sidebar Section */}
-          <div className="hidden lg:block lg:w-80 flex-shrink-0">
+          {/* Sidebar Section - Scroll Reveal with slight delay */}
+          <ScrollReveal direction="right" delay={0.2} className="hidden lg:block lg:w-80 flex-shrink-0">
             {/* Shop By */}
             <div className="mb-2" ref={shopByRef}>
               <div className="flex items-center justify-between px-4">
@@ -365,10 +373,10 @@ const ProductsIndex: React.FC = () => {
                 </div>
               </div>
             </div>
-          </div>
+          </ScrollReveal>
 
-          {/* Main Content */}
-          <div className="flex-1">
+          {/* Main Content - Scroll Reveal with delay */}
+          <ScrollReveal direction="left" delay={0.1} className="flex-1">
             {/* Results Info with Search in between */}
             <div className="mb-6">
               <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
@@ -376,7 +384,7 @@ const ProductsIndex: React.FC = () => {
                   Showing <span className='text-royal-blue-dark'>{sortedCategories.length} categories</span>
                 </p>
                 
-                {/* Search Input - Now between count and sort */}
+                {/* Search Input */}
                 <div className="flex-1 relative min-w-[180px]">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input
@@ -403,7 +411,7 @@ const ProductsIndex: React.FC = () => {
               </div>
             </div>
 
-            {/* Mobile Filter Button - Only show on mobile */}
+            {/* Mobile Filter Button */}
             <div className="lg:hidden mb-4">
               <button
                 onClick={() => setShowMobileFilters(true)}
@@ -414,7 +422,7 @@ const ProductsIndex: React.FC = () => {
               </button>
             </div>
 
-            {/* Categories Grid */}
+            {/* Categories Grid with Stagger Reveal */}
             {loading ? (
               <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4 md:gap-5">
                 {[...Array(8)].map((_, i) => (
@@ -440,18 +448,47 @@ const ProductsIndex: React.FC = () => {
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4 md:gap-5">
+              <StaggerReveal 
+                direction="up" 
+                staggerDelay={0.08}
+                className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4 md:gap-5"
+              >
                 {sortedCategories.map((category) => (
                   <CategoryCard
                     key={category.id}
                     category={category}
                   />
                 ))}
-              </div>
+              </StaggerReveal>
             )}
-          </div>
+          </ScrollReveal>
         </div>
       </div>
+       {/* Company Data */}
+       <ScrollReveal direction="up" delay={0.2}>
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl md:text-3xl font-bold text-orange mb-2">
+              Why Shop  <span className="text-charcoal">With Us</span>
+            </h2>
+            <p className="text-gray-500 max-w-2xl mx-auto">
+              Quality products, reliable service, and customer satisfaction guaranteed
+            </p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {companyTrustData.map((item, index) => (
+              <div key={index} className="bg-white hover-lift rounded-xl shadow-sm p-6 text-center hover:shadow-lg hover:cursor transition-all duration-300">
+                <div className="w-14 h-14 mx-auto mb-4 bg-green/20 rounded-full flex items-center justify-center text-royal-blue">
+                  {item.icon}
+                </div>
+                <h3 className="font-semibold text-royal-blue mb-2">{item.title}</h3>
+                <p className="text-sm text-gray-500">{item.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </ScrollReveal>
+     
 
       {/* Mobile Filter Modal */}
       {showMobileFilters && (
@@ -570,7 +607,7 @@ const CategoryCard: React.FC<{
             <img
               src={getImageUrl(category.image_url) || '/api/placeholder/400/400'}
               alt={category.display_name}
-              className="w-full h-full object-cover rounded-lg"
+              className="w-full h-full object-cover rounded-lg group-hover:scale-105 transition-transform duration-500"
               onError={(e) => {
                 (e.target as HTMLImageElement).src = '/api/placeholder/400/400';
               }}
@@ -583,7 +620,7 @@ const CategoryCard: React.FC<{
           </div>
         </div>
         <div className="p-2.5 pt-2">
-          <h3 className="font-medium text-green text-sm sm:text-base mb-0.5 line-clamp-1 text-center">
+          <h3 className="font-medium text-green text-sm sm:text-base mb-0.5 line-clamp-1 text-center group-hover:text-orange transition-colors">
             {category.display_name}
           </h3>
           <p className="text-[11px] text-blue-600 line-clamp-1 text-center">

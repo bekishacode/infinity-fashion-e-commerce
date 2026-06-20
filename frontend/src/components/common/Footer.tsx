@@ -64,12 +64,12 @@ const Footer: React.FC = () => {
           {/* Brand Section */}
           <div>
             <div className="flex items-center space-x-3 mb-4">
-              <div className="w-10 h-10 bg-gradient-to-br from-royal-blue to-magenta rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 text-gradient-secondary rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-sm">SBG</span>
               </div>
               <div>
-                <span className="text-royal-blue font-bold text-lg">Style</span>
-                <span className="text-magenta font-bold text-lg"> Badge</span>
+                <span className="text-green font-bold text-lg">Style</span>
+                <span className="text-orange font-bold text-lg"> Badge</span>
               </div>
             </div>
             <p className="text-gray-400 text-sm leading-relaxed">
@@ -81,10 +81,10 @@ const Footer: React.FC = () => {
           <div>
             <h3 className="font-semibold text-lg mb-4 text-white">Quick Links</h3>
             <ul className="space-y-2">
-              <li><Link to="/" className="text-gray-400 hover:text-royal-blue transition text-sm">Home</Link></li>
-              <li><Link to="/products" className="text-gray-400 hover:text-royal-blue transition text-sm">Products</Link></li>
-              <li><Link to="/cart" className="text-gray-400 hover:text-royal-blue transition text-sm">Cart</Link></li>
-              <li><Link to="/track-order" className="text-gray-400 hover:text-royal-blue transition text-sm">Track Order</Link></li>
+              <li><Link to="/" className="text-gray-400 hover:text-orange transition text-sm">Home</Link></li>
+              <li><Link to="/products" className="text-gray-400 hover:text-orange transition text-sm">Products</Link></li>
+              <li><Link to="/cart" className="text-gray-400 hover:text-orange transition text-sm">Cart</Link></li>
+              <li><Link to="/track-order" className="text-gray-400 hover:text-orange transition text-sm">Track Order</Link></li>
             </ul>
           </div>
           
@@ -98,7 +98,7 @@ const Footer: React.FC = () => {
               </li>
               <li className="flex items-center space-x-2">
                 <span>✉️</span>
-                <span>info@infinityfashion.com</span>
+                <span>info@stylebadgetex.com</span>
               </li>
               <li className="flex items-center space-x-2">
                 <span>📍</span>

@@ -260,7 +260,7 @@ const ProductDetail: React.FC = () => {
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8">
         {/* Breadcrumb */}
-        <div className="flex items-center gap-2 text-sm text-gray-500 mb-6 flex-wrap">
+        <div className="flex items-center gap-2 text-sm text-gray-500 mb-6 flex-wrap mt-24">
           <Link to="/" className="hover:text-royal-blue">Home</Link>
           <span>/</span>
           <Link to="/products" className="hover:text-royal-blue">Products</Link>

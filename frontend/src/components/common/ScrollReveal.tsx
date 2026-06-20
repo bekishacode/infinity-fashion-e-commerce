@@ -1,5 +1,6 @@
-import React, { useRef, useEffect } from 'react';
-import { motion, useInView, useAnimation } from 'framer-motion';
+// src/components/common/ScrollReveal.tsx
+import React, { useRef, useEffect, useState } from 'react';
+import { motion, useInView, useAnimation, Variants } from 'framer-motion';
 
 interface ScrollRevealProps {
   children: React.ReactNode;
@@ -8,6 +9,7 @@ interface ScrollRevealProps {
   duration?: number;
   once?: boolean;
   className?: string;
+  threshold?: number;
 }
 
 const ScrollReveal: React.FC<ScrollRevealProps> = ({
@@ -17,43 +19,53 @@ const ScrollReveal: React.FC<ScrollRevealProps> = ({
   duration = 0.6,
   once = true,
   className = '',
+  threshold = 0.1,
 }) => {
   const ref = useRef(null);
-  const isInView = useInView(ref, { once, amount: 0.2 });
+  const isInView = useInView(ref, { once, amount: threshold });
   const controls = useAnimation();
+  const [hasAnimated, setHasAnimated] = useState(false);
 
   // Direction to transform mapping
   const getInitialTransform = () => {
+    const distance = 50;
     switch (direction) {
-      case 'up': return { y: 50, opacity: 0 };
-      case 'down': return { y: -50, opacity: 0 };
-      case 'left': return { x: -50, opacity: 0 };
-      case 'right': return { x: 50, opacity: 0 };
+      case 'up': return { y: distance, opacity: 0 };
+      case 'down': return { y: -distance, opacity: 0 };
+      case 'left': return { x: -distance, opacity: 0 };
+      case 'right': return { x: distance, opacity: 0 };
       case 'none': return { opacity: 0 };
-      default: return { y: 50, opacity: 0 };
+      default: return { y: distance, opacity: 0 };
     }
   };
 
+  const variants: Variants = {
+    hidden: getInitialTransform(),
+    visible: {
+      y: 0,
+      x: 0,
+      opacity: 1,
+      transition: {
+        duration,
+        delay,
+        ease: [0.25, 0.1, 0.25, 1],
+      },
+    },
+  };
+
   useEffect(() => {
-    if (isInView) {
-      controls.start({
-        y: 0,
-        x: 0,
-        opacity: 1,
-        transition: {
-          duration,
-          delay,
-          ease: [0.25, 0.1, 0.25, 1], // Smooth cubic bezier
-        },
-      });
+    if (isInView && !hasAnimated) {
+      controls.start('visible');
+      if (once) setHasAnimated(true);
     }
-  }, [isInView, controls, duration, delay]);
+  }, [isInView, controls, once, hasAnimated]);
 
   return (
     <motion.div
       ref={ref}
-      initial={getInitialTransform()}
+      initial="hidden"
       animate={controls}
+      variants={variants}
       className={className}
     >
       {children}

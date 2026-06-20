@@ -12,8 +12,10 @@ try {
                 COUNT(DISTINCT p.id) as product_count,
                 GROUP_CONCAT(DISTINCT st.name) as service_types
             FROM categories c
-            LEFT JOIN products p ON p.category = c.name AND p.is_active = 1
             LEFT JOIN service_types st ON st.id = c.service_type_id
+            LEFT JOIN products p ON p.category = c.name 
+                AND p.service_type = st.name
+                AND p.is_active = 1
             WHERE c.is_active = 1";
     
     $params = [];

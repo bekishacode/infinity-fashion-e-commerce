@@ -73,7 +73,7 @@ const Home: React.FC = () => {
     : featuredProducts.filter(p => p.category === activeService);
 
   return (
-    <div className="w-full overflow-x-hidden">
+    <div className="w-full overflow-x-hidden mt-10">
       {/* Hero Section */}
       <HeroSection />
       

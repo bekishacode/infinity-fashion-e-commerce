@@ -9,7 +9,7 @@ interface ProductCarouselProps {
   bgColor: string;
   onViewAll?: () => void;
 }
-
+//Not Using this currently
 const ProductCarousel: React.FC<ProductCarouselProps> = ({ 
   products, 
   title, 

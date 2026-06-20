@@ -1,5 +1,6 @@
-import React, { useRef } from 'react';
-import { motion, useInView } from 'framer-motion';
+// src/components/common/StaggerReveal.tsx
+import React, { useRef, useState, useEffect } from 'react';
+import { motion, useInView, Variants } from 'framer-motion';
 
 interface StaggerRevealProps {
   children: React.ReactNode[];
@@ -7,6 +8,7 @@ interface StaggerRevealProps {
   staggerDelay?: number;
   direction?: 'up' | 'down' | 'left' | 'right' | 'none';
   once?: boolean;
+  threshold?: number;
 }
 
 const StaggerReveal: React.FC<StaggerRevealProps> = ({
@@ -15,35 +17,55 @@ const StaggerReveal: React.FC<StaggerRevealProps> = ({
   staggerDelay = 0.1,
   direction = 'up',
   once = true,
+  threshold = 0.2,
 }) => {
   const ref = useRef(null);
-  const isInView = useInView(ref, { once, amount: 0.2 });
+  const isInView = useInView(ref, { once, amount: threshold });
+  const [hasAnimated, setHasAnimated] = useState(false);
+
+  // Direction to transform mapping
+  const getTransform = () => {
+    const distance = 40;
+    switch (direction) {
+      case 'up': return { y: distance, opacity: 0 };
+      case 'down': return { y: -distance, opacity: 0 };
+      case 'left': return { x: -distance, opacity: 0 };
+      case 'right': return { x: distance, opacity: 0 };
+      default: return { opacity: 0 };
+    }
+  };
 
   // Container animation
-  const containerVariants = {
+  const containerVariants: Variants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
       transition: {
         staggerChildren: staggerDelay,
-        delayChildren: 0.2,
+        delayChildren: 0.1,
       },
     },
   };
 
-  // Child animation based on direction
-  const getChildVariants = () => {
-    const baseHidden = { opacity: 0 };
-    switch (direction) {
-      case 'up': return { hidden: { ...baseHidden, y: 40 }, visible: { y: 0, opacity: 1 } };
-      case 'down': return { hidden: { ...baseHidden, y: -40 }, visible: { y: 0, opacity: 1 } };
-      case 'left': return { hidden: { ...baseHidden, x: -40 }, visible: { x: 0, opacity: 1 } };
-      case 'right': return { hidden: { ...baseHidden, x: 40 }, visible: { x: 0, opacity: 1 } };
-      default: return { hidden: baseHidden, visible: { opacity: 1 } };
-    }
+  // Child animation variants
+  const childVariants: Variants = {
+    hidden: getTransform(),
+    visible: {
+      y: 0,
+      x: 0,
+      opacity: 1,
+      transition: {
+        duration: 0.5,
+        ease: [0.25, 0.1, 0.25, 1],
+      },
+    },
   };
 
-  const childVariants = getChildVariants();
+  useEffect(() => {
+    if (isInView && !hasAnimated) {
+      setHasAnimated(true);
+    }
+  }, [isInView, hasAnimated]);
 
   return (
     <motion.div
