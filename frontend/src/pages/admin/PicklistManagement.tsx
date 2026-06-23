@@ -459,9 +459,9 @@ const PicklistManagement: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 mt-14">
-      <div>
-        <h1 className="text-2xl font-bold text-green">Picklist <span className="text-orange">Management</span></h1>
+    <div className="space-y-6 mt-20">
+      <div className='mt-2'>
+        <h1 className="text-2xl font-bold text-green">Picklist Management</h1>
         <p className="text-gray-500 text-sm">Manage service types, categories, and sub-categories</p>
       </div>
 

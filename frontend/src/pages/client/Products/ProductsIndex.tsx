@@ -219,7 +219,7 @@ const ProductsIndex: React.FC = () => {
       <ScrollReveal direction="up" delay={0.1}>
         <div className="flex flex-col justify-center items-center mt-20">
           <div className="container mt-8 mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h1 className="text-3xl md:text-4xl font-bold mb-2 text-gradient-green-orange">
+            <h1 className="text-3xl md:text-4xl font-bold mb-2 text-green">
               Our Products
             </h1>
             <p className="text-charcoal max-w-2xl mx-auto">
@@ -236,13 +236,13 @@ const ProductsIndex: React.FC = () => {
             {/* Shop By */}
             <div className="mb-2" ref={shopByRef}>
               <div className="flex items-center justify-between px-4">
-                <span className="font-bold text-2xl text-green">{getSelectedServiceDisplay()}</span>
+                <span className="font-bold text-2xl text-royal-blue-dark">{getSelectedServiceDisplay()}</span>
                 <div className="relative">
                   <button
                     onClick={toggleShopBy}
                     className="flex items-center gap-1 text-royal-blue hover:text-royal-blue hover:font-bold cursor-pointer transition-colors"
                   >
-                    <span className="text-md font-medium">Shop By</span>
+                    <span className="text-md font-normal text-royal-blue">Shop By</span>
                     {isShopByOpen ? (
                       <ChevronUp className="w-4 h-4" />
                     ) : (

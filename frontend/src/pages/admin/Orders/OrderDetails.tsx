@@ -137,16 +137,16 @@ const OrderDetails: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6 mt-14">
+    <div className="space-y-6 mt-20">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-orange">Order <span className='text-royal-blue'>Details</span></h1>
+          <h1 className="text-2xl font-bold text-royal-blue">Order <span className=''>Details</span></h1>
           <p className="text-gray-500 text-sm">Order #{order.order_number}</p>
         </div>
         <button
           onClick={() => navigate('/admin/orders')}
-          className="px-4 py-2 border text-gradient-primary rounded-lg hover-lift"
+          className="px-4 py-2 bg-royal-blue text-white rounded-lg hover:shadow-lg hover:bg-royal-blue-dark"
         >
           ← Back to Orders
         </button>
@@ -172,7 +172,7 @@ const OrderDetails: React.FC = () => {
               <button
                 onClick={handleStatusUpdate}
                 disabled={updating || selectedStatus === order.status}
-                className="px-4 py-2 text-gradient-secondary rounded-lg hover:text-gradient-secondary hover-lift disabled:opacity-50"
+                className="px-4 py-2 text-white bg-green rounded-lg hover:shadow-lg hover:bg-green-dark disabled:opacity-50"
               >
                 {updating ? 'Updating...' : 'Update Status'}
               </button>
@@ -279,8 +279,8 @@ const OrderDetails: React.FC = () => {
         {/* Sidebar - Customer Info */}
         <div className="space-y-6">
           {/* Customer Information */}
-          <div className="bg-gray-100 rounded-lg shadow p-6 hover-lift">
-            <h2 className="text-lg text-orange-dark font-bold mb-4">Customer Information</h2>
+          <div className="bg-gray-100 rounded-lg shadow p-6 hover:shadow-lg">
+            <h2 className="text-lg text-royal-blue-dark font-bold mb-4">Customer Information</h2>
             <div className="space-y-3">
               <div>
                 <p className="text-xs text-charcoal">Name</p>

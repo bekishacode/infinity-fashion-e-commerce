@@ -44,6 +44,8 @@ const SubCategoryProducts: React.FC = () => {
   const [sortBy, setSortBy] = useState('newest');
 
   useEffect(() => {
+    // Scroll to top when component mounts
+    window.scrollTo(0, 0);
     fetchProducts();
   }, [subCategorySlug, sortBy]);
 
@@ -60,6 +62,8 @@ const SubCategoryProducts: React.FC = () => {
         setSubCategory(data.sub_category);
         setCategory(data.category);
         setProducts(data.products);
+        // Scroll to top after data loads
+        window.scrollTo(0, 0);
       }
     } catch (error) {
       console.error('Error fetching products:', error);

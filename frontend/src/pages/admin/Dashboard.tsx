@@ -285,9 +285,9 @@ const Dashboard: React.FC = () => {
     datasets: [{
       data: data.salesByServiceType.map(item => item.revenue),
       backgroundColor: [
-        'rgba(59, 130, 246, 0.8)',
-        'rgba(236, 45, 123, 0.8)',
-        'rgba(139, 92, 246, 0.8)',
+        '#273B89',
+        '#ED5925',
+        '#0B9647',
       ],
       borderWidth: 0,
     }],
@@ -298,10 +298,10 @@ const Dashboard: React.FC = () => {
     datasets: [{
       data: data.orderStatusDistribution.map(item => item.count),
       backgroundColor: [
-        'rgba(245, 158, 11, 0.8)',
-        'rgba(59, 130, 246, 0.8)',
+        '#ED5925',
+        '#273B89',
         'rgba(139, 92, 246, 0.8)',
-        'rgba(16, 185, 129, 0.8)',
+        '#0B9647',
         'rgba(239, 68, 68, 0.8)',
       ],
       borderWidth: 0,
@@ -313,7 +313,7 @@ const Dashboard: React.FC = () => {
     datasets: [{
       label: 'Orders',
       data: data.hourlyDistribution.map(h => h.orders),
-      backgroundColor: 'rgba(59, 130, 246, 0.6)',
+      backgroundColor: '#273B89',
       borderRadius: 8,
     }]
   };
@@ -342,11 +342,11 @@ const Dashboard: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 mt-14">
+    <div className="space-y-6 mt-20">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-charcoal">Dashboard</h1>
+          <h1 className="text-2xl font-bold text-royal-blue">Dashboard</h1>
           <p className="text-gray-500 text-sm mt-1">Welcome back! Here's what's happening with your store.</p>
         </div>
         <div className="flex gap-2">
@@ -357,7 +357,7 @@ const Dashboard: React.FC = () => {
                 onClick={() => setSelectedPeriod(period as any)}
                 className={`px-3 py-1 rounded-md text-sm font-medium transition ${
                   selectedPeriod === period
-                    ? 'text-gradient-secondary shadow'
+                    ? 'text-white bg-green shadow'
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
@@ -376,17 +376,17 @@ const Dashboard: React.FC = () => {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-gradient-to-br from-green-500 via-orange-800 to-green-500 rounded-xl shadow-sm p-6 border border-gray-100 hover:shadow-md hover-lift transition">
+        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 hover:shadow-md transition">
           <div className="flex items-center justify-between mb-4">
             <div className="p-2 bg-blue-50 rounded-lg">
               <DollarSign className="w-6 h-6 text-blue-600" />
             </div>
           </div>
-          <div className="text-2xl font-bold text-white">
+          <div className="text-2xl font-bold text-charcoal">
             ETB {data.summary.totalRevenue.toLocaleString()}
           </div>
-          <div className="text-sm text-white mt-1">Total Revenue</div>
-          <div className="text-xs text-white mt-2">
+          <div className="text-sm text-gray-500 mt-1">Total Revenue</div>
+          <div className="text-xs text-gray-400 mt-2">
             Avg. Order: ETB {data.summary.averageOrderValue.toLocaleString()}
           </div>
         </div>
@@ -596,7 +596,7 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* Processing Metrics Card */}
-      <div className="bg-gradient-to-r from-royal-blue to-magenta rounded-xl shadow-sm p-6 text-white">
+      <div className="bg-orange rounded-xl shadow-sm p-6 text-white">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-lg font-semibold opacity-90">Average Order Processing Time</h3>

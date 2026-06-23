@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { apiClient, getImageUrl } from '../../utils/apiClient';
+import ReviewSection from '../../components/products/ReviewSection';
 import { 
   Star, 
   ShoppingCart, 
@@ -588,13 +589,17 @@ const ProductDetail: React.FC = () => {
             )}
 
             {activeTab === 'reviews' && (
-              <div className="text-center py-8">
-                <p className="text-gray-500">No reviews yet. Be the first to review this product!</p>
-                <button className="mt-4 px-6 py-2 border border-royal-blue text-royal-blue rounded-lg hover:bg-royal-blue/5">
-                  Write a Review
-                </button>
-              </div>
-            )}
+              <ReviewSection
+                  productId={product.id}
+                  productName={product.name}
+                  initialRating={product.rating}
+                  initialReviewCount={product.review_count}
+                  onReviewAdded={() => {
+                    // Refresh product data to update rating
+                    fetchProduct();
+                  }}
+                />
+              )}
           </div>
         </div>
 

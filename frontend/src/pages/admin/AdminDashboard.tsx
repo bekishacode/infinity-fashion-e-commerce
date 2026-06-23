@@ -16,7 +16,7 @@ const AdminDashboard: React.FC = () => {
   }, []);
 
   const isActive = (path: string) => {
-    return location.pathname === path;
+    return location.pathname === path || location.pathname.startsWith(path + '/');
   };
 
   const navItems = [
@@ -24,14 +24,18 @@ const AdminDashboard: React.FC = () => {
     { path: '/admin/products', icon: '', label: 'Product Management' },
     { path: '/admin/orders', icon: '', label: 'Order Management' },
     { path: '/admin/customers', icon: '', label: 'Customers' },
+    { path: '/admin/reviews', icon: '', label: 'Reviews' },
   ];
 
   // Only show Admins menu for super_admin
   const allNavItems = adminRole === 'super_admin' 
-    ? [...navItems, { path: '/admin/admins', icon: '', label: 'Admin Management' }, 
-      { path: '/admin/email-settings', icon: '', label: 'Email Settings' },
-      { path: '/admin/picklists', icon: '', label: 'Picklist Management' },
-      { path: '/admin/system', icon: '', label: 'System Settings' },]
+    ? [...navItems, 
+       { path: '/admin/admins', icon: '', label: 'Admin Management' },
+       { path: '/admin/email-settings', icon: '', label: 'Email Settings' },
+       { path: '/admin/picklists', icon: '', label: 'Picklist Management' },
+       { path: '/admin/categories', icon: '', label: 'Categories' },
+       { path: '/admin/system', icon: '', label: 'System Settings' }
+      ]
     : navItems;
 
   return (
@@ -60,7 +64,7 @@ const AdminDashboard: React.FC = () => {
                   to={item.path}
                   className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
                     isActive(item.path)
-                      ? 'text-gradient-primary font-bold'
+                      ? 'text-white bg-green font-bold'
                       : 'text-white/80 hover:bg-white/10 hover:text-white'
                   }`}
                 >

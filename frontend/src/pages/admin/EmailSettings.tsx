@@ -181,9 +181,9 @@ const EmailSettings: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 mt-16">
+    <div className="space-y-6 mt-20">
       <div>
-        <h1 className="text-2xl font-bold text-magenta">Email <span className="text-royal-blue">Settings</span></h1>
+        <h1 className="text-2xl font-bold text-royal-blue">Email Settings</h1>
         <p className="text-gray-500 text-sm">Configure email provider and manage email templates</p>
       </div>
 
@@ -206,7 +206,7 @@ const EmailSettings: React.FC = () => {
         {/* SMTP Configuration */}
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold">SMTP Configuration</h2>
+            <h2 className="text-lg font-semibold text-royal-blue">SMTP Configuration</h2>
             {!isEditing && (
               <button
                 onClick={() => setIsEditing(true)}

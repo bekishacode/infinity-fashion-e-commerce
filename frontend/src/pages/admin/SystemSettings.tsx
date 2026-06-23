@@ -165,9 +165,9 @@ const SystemSettings: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 mt-14">
+    <div className="space-y-6 mt-20">
       <div>
-        <h1 className="text-2xl font-bold text-green">System <span className="text-green">Settings</span></h1>
+        <h1 className="text-2xl font-bold text-royal-blue">System Settings</h1>
         <p className="text-gray-500 text-sm">Manage system maintenance and cleanup tasks</p>
       </div>
 
@@ -188,7 +188,7 @@ const SystemSettings: React.FC = () => {
 
       {/* Orphaned Images Cleanup */}
       <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-lg font-semibold mb-4 text-orange">Orphaned Images <span className='text-royal-blue'>Cleanup</span></h2>
+        <h2 className="text-lg font-semibold mb-4 text-royal-blue">Orphaned Images Cleanup</h2>
         <p className="text-sm text-gray-600 mb-4">
           Find and delete image files that are no longer associated with any product.
           This helps free up disk space and keep your storage organized.
@@ -287,7 +287,7 @@ const SystemSettings: React.FC = () => {
 
       {/* OTP Cleanup */}
       <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-lg font-semibold mb-4 text-magenta">Expired OTP <span className='text-royal-blue'>Cleanup</span></h2>
+        <h2 className="text-lg font-semibold mb-4 text-royal-blue">Expired OTP Cleanup</h2>
         <p className="text-sm text-gray-600 mb-4">
           Find and delete expired OTP records from the database. OTPs older than the specified threshold will be removed.
           This helps keep your database clean and optimized.

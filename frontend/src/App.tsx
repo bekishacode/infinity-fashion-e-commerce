@@ -29,6 +29,9 @@ import EmailSettings from './pages/admin/EmailSettings';
 import EmailLayoutSettings from './pages/admin/EmailLayoutSettings';
 import PicklistManagement from './pages/admin/PicklistManagement';
 import SystemSettings from './pages/admin/SystemSettings';
+import CategoryList from './pages/admin/Categories';
+import CategoryContent from './pages/admin/Categories/CategoryContent';
+import ReviewList from './pages/admin/Reviews/ReviewList';
 
 function App() {
   return (
@@ -78,6 +81,9 @@ function App() {
             <Route path="email-layout" element={<EmailLayoutSettings />} />
             <Route path="picklists" element={<PicklistManagement />} />
             <Route path="system" element={<SystemSettings />} />
+            <Route path="categories" element={<CategoryList />} />
+            <Route path="categories/:categoryId/content" element={<CategoryContent />} />
+            <Route path="reviews" element={<ReviewList />} />
           </Route>
         </Routes>
       </Router>

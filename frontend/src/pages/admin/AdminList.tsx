@@ -159,15 +159,15 @@ const AdminList: React.FC = () => {
   return (
     <div className="h-full flex flex-col">
       {/* Fixed Header */}
-      <div className="flex-shrink-0 bg-gray-50 mt-10 -mx-6 px-6 pt-6 pb-4 border-b border-gray-200">
+      <div className="flex-shrink-0 mt-16 -mx-0 px-6 pt-6 pb-4 border-b border-gray-200">
         <div className="flex justify-between items-center mb-4">
           <div>
-            <h1 className="text-2xl font-bold text-charcoal">Admin <span className="text-royal-blue">Management</span></h1>
+            <h1 className="text-2xl font-bold text-royal-blue">Admin Management</h1>
             <p className="text-gray-500 text-sm">Manage system administrators and their permissions</p>
           </div>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-2 text-gradient-secondary hover-lift px-4 py-2 rounded-lg hover:bg-royal-blue-dark transition"
+            className="flex items-center gap-2 bg-royal-blue text-white px-4 py-2 rounded-lg hover:shadow-lg text-lg transition font-medium"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />

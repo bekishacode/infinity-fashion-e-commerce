@@ -80,9 +80,9 @@ const CustomerList: React.FC = () => {
   return (
     <div className="h-full flex flex-col">
       {/* Fixed Header - Stays at top */}
-      <div className="flex-shrink-0 bg-gray-50 mt-10 -mx-6 px-6 pt-6 pb-4 border-b border-gray-200">
+      <div className="flex-shrink-0 mt-16 mx-0 px-6 pt-6 pb-4 border-b border-gray-200">
         <div className="mb-4">
-          <h1 className="text-3xl font-bold text-magenta">Customer <span className="text-royal-blue">Management</span></h1>
+          <h1 className="text-3xl font-bold text-royal-blue">Customer Management</h1>
           <p className="text-gray-500 text-md mt-1">View and manage all registered customers. Track their order history and contact information.</p>
         </div>
 

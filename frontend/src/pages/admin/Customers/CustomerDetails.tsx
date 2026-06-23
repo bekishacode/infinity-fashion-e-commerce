@@ -140,16 +140,16 @@ const CustomerDetails: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6 mt-14">
+    <div className="space-y-6 mt-20">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-royal-blue"><span className='text-magenta'>Customer</span> Details</h1>
+          <h1 className="text-2xl font-bold text-royal-blue">Customer Details</h1>
           <p className="text-gray-500 text-sm">View and manage customer information</p>
         </div>
         <button
           onClick={() => navigate('/admin/customers')}
-          className="px-4 py-2 border text-gradient-primary rounded-lg hover:bg-gray-50"
+          className="px-4 py-2 bg-royal-blue text-white rounded-lg hover:shadow-lg hover:bg-royal-blue-dark text-md font-medium"
         >
           ← Back to Customers
         </button>
@@ -160,7 +160,7 @@ const CustomerDetails: React.FC = () => {
         <div className="lg:col-span-2 space-y-6">
           <div className="bg-white rounded-lg shadow p-6 hover-lift">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg text-green font-semibold">Customer Information</h2>
+              <h2 className="text-lg text-royal-blue font-semibold">Customer Information</h2>
               {isSuperAdmin && !editing && (
                 <button
                   onClick={() => setEditing(true)}
@@ -229,38 +229,38 @@ const CustomerDetails: React.FC = () => {
             ) : (
               <div className="space-y-3">
                 <div className="grid grid-cols-3 gap-2">
-                  <p className="text-sm text-gray-500">Full Name</p>
-                  <p className="col-span-2 font-medium">{customer.name || '—'}</p>
+                  <p className="text-sm text-gray-800">Full Name</p>
+                  <p className="col-span-2 font-medium text-green">{customer.name || '—'}</p>
                 </div>
                 <div className="grid grid-cols-3 gap-2">
-                  <p className="text-sm text-gray-500">Phone Number</p>
-                  <p className="col-span-2 font-medium">{customer.phone}</p>
+                  <p className="text-sm text-gray-800">Phone Number</p>
+                  <p className="col-span-2 font-medium text-charcoal">{customer.phone}</p>
                 </div>
                 <div className="grid grid-cols-3 gap-2">
-                  <p className="text-sm text-gray-500">Email</p>
-                  <p className="col-span-2 font-medium">{customer.email || '—'}</p>
+                  <p className="text-sm text-gray-800">Email</p>
+                  <p className="col-span-2 font-medium text-royal-blue">{customer.email || '—'}</p>
                 </div>
                 <div className="grid grid-cols-3 gap-2">
-                  <p className="text-sm text-gray-500">Address</p>
-                  <p className="col-span-2 font-medium">{customer.address || '—'}</p>
+                  <p className="text-sm text-gray-800">Address</p>
+                  <p className="col-span-2 font-medium text-gray-500">{customer.address || '—'}</p>
                 </div>
                 <div className="grid grid-cols-3 gap-2 pt-2 border-t">
-                  <p className="text-sm text-gray-500">Total Orders</p>
+                  <p className="text-sm text-gray-800">Total Orders</p>
                   <p className="col-span-2 font-semibold">{customer.total_orders}</p>
                 </div>
                 <div className="grid grid-cols-3 gap-2">
-                  <p className="text-sm text-gray-500">Total Spent</p>
+                  <p className="text-sm text-gray-800">Total Spent</p>
                   <p className="col-span-2 font-semibold text-royal-blue">
                     ETB {parseFloat(customer.total_spent).toLocaleString()}
                   </p>
                 </div>
                 <div className="grid grid-cols-3 gap-2">
-                  <p className="text-sm text-gray-500">Customer Since</p>
+                  <p className="text-sm text-gray-800">Customer Since</p>
                   <p className="col-span-2">{new Date(customer.created_at).toLocaleDateString()}</p>
                 </div>
                 {customer.last_order_at && (
                   <div className="grid grid-cols-3 gap-2">
-                    <p className="text-sm text-gray-500">Last Order</p>
+                    <p className="text-sm text-gray-800">Last Order</p>
                     <p className="col-span-2">{new Date(customer.last_order_at).toLocaleDateString()}</p>
                   </div>
                 )}
@@ -271,8 +271,8 @@ const CustomerDetails: React.FC = () => {
 
         {/* Order History */}
         <div className="lg:col-span-1">
-          <div className="bg-white rounded-lg shadow p-6 hover-lift">
-            <h2 className="text-lg text-orange font-semibold mb-4">Recent Orders</h2>
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-lg text-royal-blue font-semibold mb-4">Recent Orders</h2>
             {customer.orders.length === 0 ? (
               <p className="text-gray-400 text-sm">No orders yet</p>
             ) : (

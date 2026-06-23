@@ -262,7 +262,7 @@ const ForgotPassword: React.FC = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="w-full pl-10 pr-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-purple-300 focus:outline-none focus:ring-2 focus:ring-royal-blue focus:border-transparent transition-all"
-                    placeholder="admin@stylebadge.com"
+                    placeholder="admin@stylebadgetex.com"
                     required
                   />
                 </div>
@@ -270,7 +270,7 @@ const ForgotPassword: React.FC = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="relative w-full text-gradient-secondary py-2 rounded-lg font-medium hover:shadow-lg transform hover:scale-[1.02] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden group"
+                className="relative w-full text-white bg-green py-2 rounded-lg font-medium hover:shadow-lg hover:bg-green-dark transform hover:scale-[1.02] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden group"
               >
                 <span className="relative z-10 flex items-center justify-center gap-2">
                   {loading ? (
@@ -283,7 +283,6 @@ const ForgotPassword: React.FC = () => {
                     </>
                   ) : (
                     <>
-                      <Send className="w-4 h-4" />
                       Send OTP
                     </>
                   )}

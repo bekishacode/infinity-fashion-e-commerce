@@ -147,7 +147,7 @@ const AdminLogin: React.FC = () => {
               </label>
               <Link
                 to="/admin/forgot-password"
-                className="text-sm text-white hover:text-orange transition-colors"
+                className="text-md text-green hover:text-white font-semibold transition-colors"
               >
                 Forgot password?
               </Link>
@@ -162,7 +162,7 @@ const AdminLogin: React.FC = () => {
             <button
               type="submit"
               disabled={loading}
-              className="relative w-full text-gradient-secondary py-2 rounded-lg font-medium hover:shadow-lg transform hover:scale-[1.02] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden group"
+              className="relative w-full bg-green text-white py-2 rounded-lg font-medium hover:shadow-lg transform hover:scale-[1.02] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden group"
             >
               <span className="relative z-10">
                 {loading ? (
@@ -177,7 +177,7 @@ const AdminLogin: React.FC = () => {
                   'Sign In'
                 )}
               </span>
-              <div className="absolute inset-0 text-gradient-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <div className="absolute inset-0 text-white bg-green-dark opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             </button>
           </form>
 

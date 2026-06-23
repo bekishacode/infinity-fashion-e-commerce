@@ -98,9 +98,9 @@ const OrderList: React.FC = () => {
   return (
     <div className="h-full flex flex-col">
       {/* Fixed Header - Sticky at top */}
-      <div className="flex-shrink-0 bg-gray-50 mt-10 -mx-6 px-6 pt-6 pb-4 border-b border-gray-200">
+      <div className="flex-shrink-0 mt-16 mx-0 px-6 pt-6 pb-4 border-b border-gray-200">
         <div className="mb-4">
-          <h1 className="text-3xl font-bold text-orange">Customer <span className='text-royal-blue'>Orders</span></h1>
+          <h1 className="text-3xl font-bold text-royal-blue">Customer Orders</h1>
           <p className="text-gray-500 text-md mt-1">Manage your customer orders</p>
         </div>
 

@@ -17,6 +17,53 @@ export interface ServiceType {
   is_active: boolean;
 }
 
+// How to Order Step (NEW)
+export interface HowToOrderStep {
+  id: number;
+  icon: string;
+  title: string;
+  description: string;
+}
+
+// FAQ (NEW)
+export interface FAQ {
+  id: number;
+  question: string;
+  answer: string;
+}
+
+// Popular Product (NEW)
+export interface PopularProduct {
+  id: number;
+  name: string;
+  price: number;
+  rating: number;
+  image: string;
+  slug?: string; 
+}
+
+// Category Stats (NEW)
+export interface CategoryStats {
+  delivery_time: string;
+  quality_guarantee: string;
+  customer_rating: string;
+}
+
+// Trust Badge (NEW)
+export interface TrustBadge {
+  title: string;
+  rating: string;
+}
+
+// Category Page Content (NEW)
+export interface CategoryPageContent {
+  how_to_order?: HowToOrderStep[];
+  faqs?: FAQ[];
+  popular_products?: PopularProduct[];
+  stats?: CategoryStats;
+  trust_badge?: TrustBadge;
+}
+
 // Category Types
 export interface Category {
   id: number;
@@ -30,6 +77,13 @@ export interface Category {
   sort_order: number;
   is_active: boolean;
   service_type_name?: string;
+  description?: string; // Added for category detail page
+  // Page content fields (added for category detail page)
+  how_to_order?: HowToOrderStep[];
+  faqs?: FAQ[];
+  popular_products?: PopularProduct[];
+  stats?: CategoryStats;
+  trust_badge?: TrustBadge;
 }
 
 // SubCategory Types
@@ -44,6 +98,8 @@ export interface SubCategory {
   sort_order: number;
   is_active: boolean;
   category_name?: string;
+  description?: string; // Added for category detail page
+  product_count?: number; // Added for category detail page
 }
 
 // Product Types
@@ -96,6 +152,7 @@ export interface ProductFormData {
 export interface UploadResponse {
   image_url: string;
 }
+
 // Login Response
 export interface LoginResponse {
   token: string;

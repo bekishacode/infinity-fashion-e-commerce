@@ -195,15 +195,15 @@ const ProductList: React.FC = () => {
   return (
     <div className="h-full flex flex-col">
       {/* Fixed Header - Sticky at top */}
-      <div className="flex-shrink-0 bg-gray-50 mt-10 mx-0 px-6 pt-6 pb-4 border-b border-gray-200">
+      <div className="flex-shrink-0 mt-16 mx-0 px-6 pt-6 pb-4 border-b border-gray-200">
         <div className="flex flex-wrap justify-between items-center gap-4 mb-4">
           <div>
-            <h1 className="text-3xl font-bold text-green">Company <span className='text-charcoal'>Products</span></h1>
+            <h1 className="text-3xl font-bold text-royal-blue">Company Products</h1>
             <p className="text-gray-500 text-md mt-1">Add, edit, and organize your product catalog. Filter by status or search to quickly find what you need.</p>
           </div>
           <Link
             to="/admin/products/create"
-            className="flex items-center gap-2 text-gradient-secondary px-4 py-2 rounded-lg hover:shadow-lg text-sm font-medium"
+            className="flex items-center gap-2 bg-green text-white px-4 py-2 rounded-lg hover:shadow-lg text-lg font-medium"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
