@@ -28,7 +28,7 @@ const AdminLogin: React.FC = () => {
     setError('');
 
     try {
-      const result = await apiClient.post<LoginResponse>('/admin/login.php', { username, password });
+      const result = await apiClient.post<LoginResponse>('/admin/login', { username, password });
       
       if (result.success && result.data) {
         localStorage.setItem('admin_token', result.data.token);
