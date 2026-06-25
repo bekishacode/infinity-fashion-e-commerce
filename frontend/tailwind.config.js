@@ -92,7 +92,8 @@ module.exports = {
       },
       fontFamily: {
         'sans': ['Inter', 'system-ui', 'sans-serif'],
-        'display': ['Poppins', 'system-ui', 'sans-serif'],
+        'display': ['Sora', 'system-ui', 'sans-serif'], // ← CHANGE from Poppins to Sora
+        'heading': ['Sora', 'system-ui', 'sans-serif'], // ← ADD this alias
       },
       animation: {
         'fade-in': 'fadeIn 0.5s ease-in-out',

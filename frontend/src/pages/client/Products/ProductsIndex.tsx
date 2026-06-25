@@ -121,6 +121,8 @@ const ProductsIndex: React.FC = () => {
         setCategories(response.data as Category[]);
         setFilteredCategories(response.data as Category[]);
         setSubCategoriesCache({});
+        // Scroll to top after data loads
+        window.scrollTo(0, 0);
       }
     } catch (error) {
       console.error('Error fetching categories:', error);
@@ -219,10 +221,12 @@ const ProductsIndex: React.FC = () => {
       <ScrollReveal direction="up" delay={0.1}>
         <div className="flex flex-col justify-center items-center mt-20">
           <div className="container mt-8 mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h1 className="text-3xl md:text-4xl font-bold mb-2 text-green">
+            {/* ⬇️ UPDATED: Hero Heading with Sora + Gradient ⬇️ */}
+            <h1 className="heading-xl text-green mb-2">
               Our Products
             </h1>
-            <p className="text-charcoal max-w-2xl mx-auto">
+            {/* ⬇️ UPDATED: Body text with Inter ⬇️ */}
+            <p className="text-body text-charcoal max-w-2xl mx-auto">
               Browse our collection of premium custom printed products
             </p>
           </div>
@@ -236,13 +240,15 @@ const ProductsIndex: React.FC = () => {
             {/* Shop By */}
             <div className="mb-2" ref={shopByRef}>
               <div className="flex items-center justify-between px-4">
-                <span className="font-bold text-2xl text-royal-blue-dark">{getSelectedServiceDisplay()}</span>
+                {/* ⬇️ UPDATED: Shop By Title with Sora ⬇️ */}
+                <span className="heading-smd text-royal-blue-dark">{getSelectedServiceDisplay()}</span>
                 <div className="relative">
                   <button
                     onClick={toggleShopBy}
                     className="flex items-center gap-1 text-royal-blue hover:text-royal-blue hover:font-bold cursor-pointer transition-colors"
                   >
-                    <span className="text-md font-normal text-royal-blue">Shop By</span>
+                    {/* ⬇️ UPDATED: Using text-cta-sm for consistency ⬇️ */}
+                    <span className="text-cta-sm text-royal-blue">Shop By</span>
                     {isShopByOpen ? (
                       <ChevronUp className="w-4 h-4" />
                     ) : (
@@ -380,7 +386,8 @@ const ProductsIndex: React.FC = () => {
             {/* Results Info with Search in between */}
             <div className="mb-6">
               <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
-                <p className="text-sm text-bold text-royal-blue-dark whitespace-nowrap">
+                {/* ⬇️ UPDATED: Results info with Inter ⬇️ */}
+                <p className="text-cta-sm text-royal-blue-dark whitespace-nowrap">
                   Showing <span className='text-royal-blue-dark'>{sortedCategories.length} categories</span>
                 </p>
                 
@@ -464,14 +471,17 @@ const ProductsIndex: React.FC = () => {
           </ScrollReveal>
         </div>
       </div>
-       {/* Company Data */}
-       <ScrollReveal direction="up" delay={0.2}>
+
+      {/* Company Data */}
+      <ScrollReveal direction="up" delay={0.2}>
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="text-center mb-8">
-            <h2 className="text-2xl md:text-3xl font-bold text-orange mb-2">
-              Why Shop  <span className="text-charcoal">With Us</span>
+            {/* ⬇️ UPDATED: Section title with Sora ⬇️ */}
+            <h2 className="heading-lg text-orange mb-2">
+              Why Shop  <span className="text-royal-blue-dark">With Us</span>
             </h2>
-            <p className="text-gray-500 max-w-2xl mx-auto">
+            {/* ⬇️ UPDATED: Subtitle with Inter ⬇️ */}
+            <p className="text-body text-gray-500 max-w-2xl mx-auto">
               Quality products, reliable service, and customer satisfaction guaranteed
             </p>
           </div>
@@ -481,14 +491,15 @@ const ProductsIndex: React.FC = () => {
                 <div className="w-14 h-14 mx-auto mb-4 bg-green/20 rounded-full flex items-center justify-center text-royal-blue">
                   {item.icon}
                 </div>
-                <h3 className="font-semibold text-royal-blue mb-2">{item.title}</h3>
-                <p className="text-sm text-gray-500">{item.description}</p>
+                {/* ⬇️ UPDATED: Trust item title with Sora ⬇️ */}
+                <h3 className="heading-sm text-royal-blue mb-2">{item.title}</h3>
+                {/* ⬇️ UPDATED: Trust item description with Inter ⬇️ */}
+                <p className="text-body-sm text-gray-500">{item.description}</p>
               </div>
             ))}
           </div>
         </div>
       </ScrollReveal>
-     
 
       {/* Mobile Filter Modal */}
       {showMobileFilters && (
@@ -620,10 +631,12 @@ const CategoryCard: React.FC<{
           </div>
         </div>
         <div className="p-2.5 pt-2">
-          <h3 className="font-medium text-green text-sm sm:text-base mb-0.5 line-clamp-1 text-center group-hover:text-orange transition-colors">
+          {/* ⬇️ UPDATED: Category name with Sora ⬇️ */}
+          <h3 className="heading-sm text-green mb-0.5 line-clamp-1 text-center group-hover:text-orange transition-colors">
             {category.display_name}
           </h3>
-          <p className="text-[11px] text-blue-600 line-clamp-1 text-center">
+          {/* ⬇️ UPDATED: Service types with Inter (small) ⬇️ */}
+          <p className="text-body-sm text-blue-600 line-clamp-1 text-center">
             {category.service_types.map(service => service.charAt(0).toUpperCase() + service.slice(1)).join(', ')}
           </p>
         </div>

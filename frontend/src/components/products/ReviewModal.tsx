@@ -43,19 +43,29 @@ const ReviewModal: React.FC<ReviewModalProps> = ({
     try {
       const response = await apiClient.get(`/products/can-review.php?product_id=${productId}&phone=${phone}`);
       
-      if (response.success && response.data) {
-        const data = response.data as CanReviewResponse;
-        setCustomerId(data.customer_id);
-        setOrderId(data.order_id);
-        setStep('form');
-        setError(null);
+      // Check if the response was successful
+      if (response.success) {
+        if (response.data) {
+          const data = response.data as CanReviewResponse;
+          setCustomerId(data.customer_id);
+          setOrderId(data.order_id);
+          setStep('form');
+          setError(null);
+        } else {
+          setError('Unable to verify your purchase. Please check your phone number.');
+        }
       } else {
         // Display the specific error message from the API
         setError(response.message || 'Unable to verify your purchase. Please check your phone number.');
       }
     } catch (err: any) {
       console.error('Verification error:', err);
-      setError('Something went wrong. Please try again.');
+      // Try to get error message from response if available
+      if (err.response && err.response.data && err.response.data.message) {
+        setError(err.response.data.message);
+      } else {
+        setError('Something went wrong. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -104,9 +114,13 @@ const ReviewModal: React.FC<ReviewModalProps> = ({
       } else {
         setError(response.message || 'Failed to submit review');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Submit error:', err);
-      setError('Something went wrong. Please try again.');
+      if (err.response && err.response.data && err.response.data.message) {
+        setError(err.response.data.message);
+      } else {
+        setError('Something went wrong. Please try again.');
+      }
     } finally {
       setIsSubmitting(false);
     }

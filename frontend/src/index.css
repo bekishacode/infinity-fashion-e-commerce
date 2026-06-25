@@ -6,9 +6,7 @@
   /* Prevent horizontal overflow on html and body */
   html, body {
     @apply bg-white text-charcoal;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-      'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-      sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
     overflow-x: hidden;
     width: 100%;
     position: relative;
@@ -232,6 +230,116 @@
     -webkit-text-fill-color: transparent;
     background-clip: text;
     color: transparent;
+  }
+
+  /* ⬇️⬇️⬇️ NEW FONT UTILITIES - ADDED HERE ⬇️⬇️⬇️ */
+  
+  /* === Font family utilities === */
+  .font-heading {
+    font-family: 'Sora', sans-serif;
+  }
+  
+  .font-body {
+    font-family: 'Inter', sans-serif;
+  }
+  
+  /* === Heading sizes === */
+  .heading-hero {
+    font-family: 'Sora', sans-serif;
+    font-weight: 800;
+    font-size: clamp(2.5rem, 6vw, 5rem);
+    line-height: 1.1;
+  }
+  
+  .heading-xl {
+    font-family: 'Sora', sans-serif;
+    font-weight: 700;
+    font-size: clamp(2rem, 4vw, 3.5rem);
+    line-height: 1.2;
+  }
+  
+  .heading-lg {
+    font-family: 'Sora', sans-serif;
+    font-weight: 700;
+    font-size: clamp(1.5rem, 3vw, 2.5rem);
+    line-height: 1.3;
+  }
+  
+  .heading-md {
+    font-family: 'Sora', sans-serif;
+    font-weight: 600;
+    font-size: clamp(1.25rem, 2vw, 1.75rem);
+    line-height: 1.4;
+  }
+  
+  .heading-smd {
+    font-family: 'Sora', sans-serif;
+    font-weight: 600;
+    font-size: clamp(1.2rem, 2vw, 1.4rem);
+    line-height: 1.4;
+  }
+
+  .heading-sm {
+    font-family: 'Sora', sans-serif;
+    font-weight: 600;
+    font-size: 1.125rem;
+    line-height: 1.5;
+  }
+  
+  /* === Price utilities === */
+  .price-lg {
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    font-size: clamp(1.5rem, 2vw, 2.5rem);
+  }
+  
+  .price-md {
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    font-size: 1.25rem;
+  }
+  
+  .price-sm {
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 1rem;
+  }
+  
+  /* === Body text utilities === */
+  .text-body {
+    font-family: 'Inter', sans-serif;
+    font-weight: 400;
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+  
+  .text-body-lg {
+    font-family: 'Inter', sans-serif;
+    font-weight: 400;
+    font-size: 1.125rem;
+    line-height: 1.7;
+  }
+  
+  .text-body-sm {
+    font-family: 'Inter', sans-serif;
+    font-weight: 400;
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+  
+  /* === CTA / Button text === */
+  .text-cta {
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 1rem;
+    letter-spacing: 0.02em;
+  }
+  
+  .text-cta-sm {
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 0.875rem;
+    letter-spacing: 0.02em;
   }
 }
 
@@ -465,4 +573,3 @@ html {
 .product-carousel-parent {
   overflow: visible;
 }
-

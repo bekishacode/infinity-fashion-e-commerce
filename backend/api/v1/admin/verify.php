@@ -21,8 +21,4 @@ function verifyAdminToken() {
     
     return $decoded;
 }
-
-// Example usage in admin endpoints:
-// $admin = verifyAdminToken();
-// Then proceed with admin operations
 ?>

@@ -231,7 +231,7 @@ const ProductDetail: React.FC = () => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-royal-blue border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-500">Loading product...</p>
+          <p className="text-body text-gray-500">Loading product...</p>
         </div>
       </div>
     );
@@ -242,7 +242,7 @@ const ProductDetail: React.FC = () => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <p className="text-gray-500 mb-4">Product not found</p>
+          <p className="text-body text-gray-500 mb-4">Product not found</p>
           <button onClick={() => navigate('/products')} className="text-royal-blue hover:underline">
             Back to Products
           </button>
@@ -258,10 +258,10 @@ const ProductDetail: React.FC = () => {
   const isPOD = product.service_type === 'pod';
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       <div className="container mx-auto px-4 py-8">
         {/* Breadcrumb */}
-        <div className="flex items-center gap-2 text-sm text-gray-500 mb-6 flex-wrap mt-24">
+        <div className="flex items-center gap-2 text-body-sm text-gray-500 mb-6 flex-wrap sm:mt-24 mt-12">
           <Link to="/" className="hover:text-royal-blue">Home</Link>
           <span>/</span>
           <Link to="/products" className="hover:text-royal-blue">Products</Link>
@@ -281,28 +281,28 @@ const ProductDetail: React.FC = () => {
           <span className="text-gray-800">{product.name}</span>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-12">
-          {/* Product Images */}
-          <div>
-            <div className="relative bg-white rounded-2xl overflow-hidden shadow-sm">
+        <div className="grid lg:grid-cols-2 gap-0">
+          {/* Product Images - Balanced size with more height */}
+          <div className="max-w-2xl">
+            <div className="relative bg-gray-100 rounded-2xl overflow-hidden shadow-sm">
               <img
                 src={getImageUrl(selectedImage) || '/api/placeholder/600/600'}
                 alt={product.name}
-                className="w-full h-auto object-cover"
+                className="w-full h-auto max-h-[650px] object-contain bg-gray-100"
               />
               {product.images && product.images.length > 1 && (
                 <>
                   <button
                     onClick={prevImage}
                     disabled={currentImageIndex === 0}
-                    className="absolute left-4 top-1/2 transform -translate-y-1/2 p-2 bg-white/80 rounded-full shadow-lg hover:bg-white disabled:opacity-50"
+                    className="absolute text-white left-4 top-1/2 transform -translate-y-1/2 p-2 bg-green rounded-full shadow-lg hover:bg-green-dark disabled:opacity-50"
                   >
                     <ChevronLeft className="w-5 h-5" />
                   </button>
                   <button
                     onClick={nextImage}
                     disabled={currentImageIndex === product.images.length - 1}
-                    className="absolute right-4 top-1/2 transform -translate-y-1/2 p-2 bg-white/80 rounded-full shadow-lg hover:bg-white disabled:opacity-50"
+                    className="absolute text-white right-4 top-1/2 transform -translate-y-1/2 p-2 bg-green rounded-full shadow-lg hover:bg-green-dark disabled:opacity-50"
                   >
                     <ChevronRight className="w-5 h-5" />
                   </button>
@@ -310,9 +310,9 @@ const ProductDetail: React.FC = () => {
               )}
             </div>
             
-            {/* Thumbnails */}
+            {/* Thumbnails - Balanced size */}
             {product.images && product.images.length > 1 && (
-              <div className="flex gap-3 mt-4 overflow-x-auto pb-2">
+              <div className="flex gap-2.5 mt-3 overflow-x-auto pb-2">
                 {product.images.map((image, index) => (
                   <button
                     key={image.id}
@@ -320,7 +320,7 @@ const ProductDetail: React.FC = () => {
                       setCurrentImageIndex(index);
                       setSelectedImage(image.image_url);
                     }}
-                    className={`w-20 h-20 rounded-lg overflow-hidden border-2 flex-shrink-0 ${
+                    className={`w-16 h-16 rounded-lg overflow-hidden border-2 flex-shrink-0 ${
                       selectedImage === image.image_url ? 'border-royal-blue' : 'border-transparent'
                     }`}
                   >
@@ -336,7 +336,7 @@ const ProductDetail: React.FC = () => {
           </div>
 
           {/* Product Info */}
-          <div>
+          <div className='sm:mt-0 mt-4'>
             {/* Badge */}
             {product.badge && (
               <div className={`inline-block px-3 py-1 rounded-lg text-sm font-semibold text-white mb-4 ${
@@ -346,37 +346,39 @@ const ProductDetail: React.FC = () => {
               </div>
             )}
 
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">{product.name}</h1>
+            {/* ⬇️ UPDATED: Product name with Sora ⬇️ */}
+            <h1 className="heading-md text-gray-800 mb-2">{product.name}</h1>
             
             {/* Rating */}
             <div className="flex items-center gap-2 mb-4">
               <div className="flex items-center gap-1">
                 {renderStars(product.rating)}
               </div>
-              <span className="text-sm text-gray-500">
+              <span className="text-body-sm text-gray-500">
                 {product.rating} ({product.review_count} reviews)
               </span>
             </div>
 
             {/* Price */}
             <div className="mb-6">
-              <div className="text-3xl font-bold text-royal-blue">
+              {/* ⬇️ UPDATED: Price with Inter bold ⬇️ */}
+              <div className="price-md text-royal-blue">
                 ETB {currentPrice.toLocaleString()}
               </div>
               {product.compare_price && (
-                <div className="text-sm text-gray-400 line-through">
+                <div className="text-body-sm text-gray-400 line-through">
                   ETB {product.compare_price.toLocaleString()}
                 </div>
               )}
             </div>
 
-            {/* Description */}
-            <p className="text-gray-600 mb-6">{product.description}</p>
+            {/* ⬇️ UPDATED: Description with Inter ⬇️ */}
+            <p className="text-body text-gray-600 mb-6 text-justify sm:mr-0 mr-2 sm:ml-0 ml-2">{product.description}</p>
 
             {/* Variants */}
             {sizes.length > 0 && (
               <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Size</label>
+                <label className="block text-body-sm font-medium text-gray-700 mb-2">Size</label>
                 <div className="flex flex-wrap gap-3">
                   {sizes.map(size => {
                     const variant = product.variants.find(v => v.size === size);
@@ -385,7 +387,7 @@ const ProductDetail: React.FC = () => {
                         key={size}
                         onClick={() => variant && handleVariantSelect(variant)}
                         disabled={variant?.stock_quantity === 0}
-                        className={`px-4 py-2 border rounded-lg transition ${
+                        className={`px-4 py-2 border rounded-lg transition text-body-sm ${
                           selectedVariant?.size === size
                             ? 'border-royal-blue bg-royal-blue/10 text-royal-blue'
                             : 'border-gray-200 hover:border-gray-300 disabled:opacity-50 disabled:line-through'
@@ -401,7 +403,7 @@ const ProductDetail: React.FC = () => {
 
             {colors.length > 0 && (
               <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Color</label>
+                <label className="block text-body-sm font-medium text-gray-700 mb-2">Color</label>
                 <div className="flex flex-wrap gap-3">
                   {colors.map(color => {
                     const variant = product.variants.find(v => v.color === color);
@@ -410,7 +412,7 @@ const ProductDetail: React.FC = () => {
                         key={color}
                         onClick={() => variant && handleVariantSelect(variant)}
                         disabled={variant?.stock_quantity === 0}
-                        className={`flex items-center gap-2 px-4 py-2 border rounded-lg transition ${
+                        className={`flex items-center gap-2 px-4 py-2 border rounded-lg transition text-body-sm ${
                           selectedVariant?.color === color
                             ? 'border-royal-blue bg-royal-blue/10 text-royal-blue'
                             : 'border-gray-200 hover:border-gray-300'
@@ -430,7 +432,7 @@ const ProductDetail: React.FC = () => {
 
             {/* Quantity */}
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Quantity</label>
+              <label className="block text-body-sm font-medium text-gray-700 mb-2">Quantity</label>
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => handleQuantityChange(quantity - 1)}
@@ -448,13 +450,13 @@ const ProductDetail: React.FC = () => {
                   <Plus className="w-4 h-4" />
                 </button>
                 {product.min_quantity > 1 && (
-                  <span className="text-xs text-gray-500">Min. order: {product.min_quantity}</span>
+                  <span className="text-body-sm text-gray-500">Min. order: {product.min_quantity}</span>
                 )}
               </div>
             </div>
 
             {/* Stock Status */}
-            <div className={`text-sm font-medium mb-6 ${stockStatus.color}`}>
+            <div className={`text-body-sm font-medium mb-6 ${stockStatus.color}`}>
               {stockStatus.text}
             </div>
 
@@ -463,7 +465,7 @@ const ProductDetail: React.FC = () => {
               <button
                 onClick={isPOD ? () => setShowPodDesigner(true) : handleAddToCart}
                 disabled={!stockStatus.inStock}
-                className="flex-1 bg-royal-blue text-white py-3 rounded-lg font-semibold hover:bg-royal-blue-dark transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="flex-1 bg-royal-blue text-white py-3 rounded-lg font-semibold hover:bg-royal-blue-dark transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-cta"
               >
                 {isPOD ? <Sparkles className="w-5 h-5" /> : <ShoppingCart className="w-5 h-5" />}
                 {isPOD ? 'Customize & Order' : 'Add to Cart'}
@@ -489,29 +491,29 @@ const ProductDetail: React.FC = () => {
               <div className="flex items-center gap-3">
                 <Truck className="w-5 h-5 text-gray-400" />
                 <div>
-                  <div className="text-sm font-medium">Free Shipping</div>
-                  <div className="text-xs text-gray-500">On orders over ETB 1000</div>
+                  <div className="text-body-sm font-medium">Free Shipping</div>
+                  <div className="text-body-sm text-gray-500">On orders over ETB 1000</div>
                 </div>
               </div>
               <div className="flex items-center gap-3">
                 <Shield className="w-5 h-5 text-gray-400" />
                 <div>
-                  <div className="text-sm font-medium">Secure Payment</div>
-                  <div className="text-xs text-gray-500">100% secure transactions</div>
+                  <div className="text-body-sm font-medium">Secure Payment</div>
+                  <div className="text-body-sm text-gray-500">100% secure transactions</div>
                 </div>
               </div>
               <div className="flex items-center gap-3">
                 <RefreshCw className="w-5 h-5 text-gray-400" />
                 <div>
-                  <div className="text-sm font-medium">Easy Returns</div>
-                  <div className="text-xs text-gray-500">7 days return policy</div>
+                  <div className="text-body-sm font-medium">Easy Returns</div>
+                  <div className="text-body-sm text-gray-500">7 days return policy</div>
                 </div>
               </div>
               <div className="flex items-center gap-3">
                 <Sparkles className="w-5 h-5 text-gray-400" />
                 <div>
-                  <div className="text-sm font-medium">Premium Quality</div>
-                  <div className="text-xs text-gray-500">High-quality materials</div>
+                  <div className="text-body-sm font-medium">Premium Quality</div>
+                  <div className="text-body-sm text-gray-500">High-quality materials</div>
                 </div>
               </div>
             </div>
@@ -529,7 +531,7 @@ const ProductDetail: React.FC = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`py-4 font-medium border-b-2 transition ${
+                className={`py-4 font-medium border-b-2 transition text-body-sm ${
                   activeTab === tab.id
                     ? 'border-royal-blue text-royal-blue'
                     : 'border-transparent text-gray-500 hover:text-gray-700'
@@ -542,13 +544,13 @@ const ProductDetail: React.FC = () => {
 
           <div className="p-6">
             {activeTab === 'details' && (
-              <div className="prose max-w-none">
+              <div className="prose max-w-none text-body">
                 <div dangerouslySetInnerHTML={{ __html: product.description }} />
               </div>
             )}
 
             {activeTab === 'specs' && (
-              <div className="grid md:grid-cols-2 gap-4">
+              <div className="grid md:grid-cols-2 gap-4 text-body">
                 {product.material && (
                   <div className="flex border-b pb-2">
                     <span className="w-32 text-gray-500">Material:</span>
@@ -606,7 +608,8 @@ const ProductDetail: React.FC = () => {
         {/* Related Products */}
         {product.related_products && product.related_products.length > 0 && (
           <div className="mt-12">
-            <h2 className="text-2xl font-bold text-gray-800 mb-6">You May Also Like</h2>
+            {/* ⬇️ UPDATED: Related products title with Sora ⬇️ */}
+            <h2 className="heading-lg text-gray-800 mb-6">You May Also Like</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {product.related_products.map((related) => (
                 <Link key={related.id} to={`/products/product/${related.slug}`} className="group">
@@ -619,11 +622,13 @@ const ProductDetail: React.FC = () => {
                       />
                     </div>
                     <div className="p-3">
-                      <h3 className="font-medium text-gray-800 text-sm line-clamp-2">{related.name}</h3>
+                      {/* ⬇️ UPDATED: Related product name with Sora ⬇️ */}
+                      <h3 className="heading-sm text-gray-800 line-clamp-2">{related.name}</h3>
                       <div className="flex items-center gap-1 mt-1">
                         {renderStars(related.rating)}
                       </div>
-                      <div className="font-bold text-royal-blue mt-1">
+                      {/* ⬇️ UPDATED: Related price with Inter bold ⬇️ */}
+                      <div className="price-sm text-royal-blue mt-1">
                         ETB {related.price.toLocaleString()}
                       </div>
                     </div>
@@ -640,7 +645,8 @@ const ProductDetail: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
           <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white border-b p-4 flex justify-between items-center">
-              <h2 className="text-xl font-bold">Customize Your {product.name}</h2>
+              {/* ⬇️ UPDATED: Modal title with Sora ⬇️ */}
+              <h2 className="heading-md">Customize Your {product.name}</h2>
               <button onClick={() => setShowPodDesigner(false)} className="p-1 hover:bg-gray-100 rounded-lg">
                 <X className="w-5 h-5" />
               </button>
@@ -650,7 +656,7 @@ const ProductDetail: React.FC = () => {
               <div className="grid md:grid-cols-2 gap-8">
                 {/* Front Design */}
                 <div>
-                  <label className="block text-sm font-medium mb-2">Front Design</label>
+                  <label className="block text-body-sm font-medium mb-2">Front Design</label>
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
                     {frontPreview ? (
                       <div className="relative">
@@ -668,7 +674,7 @@ const ProductDetail: React.FC = () => {
                     ) : (
                       <label className="cursor-pointer block">
                         <Upload className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                        <p className="text-sm text-gray-500">Upload front design (PNG, JPG)</p>
+                        <p className="text-body-sm text-gray-500">Upload front design (PNG, JPG)</p>
                         <input
                           type="file"
                           accept="image/*"
@@ -686,7 +692,7 @@ const ProductDetail: React.FC = () => {
                 
                 {/* Back Design */}
                 <div>
-                  <label className="block text-sm font-medium mb-2">Back Design (Optional)</label>
+                  <label className="block text-body-sm font-medium mb-2">Back Design (Optional)</label>
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
                     {backPreview ? (
                       <div className="relative">
@@ -704,7 +710,7 @@ const ProductDetail: React.FC = () => {
                     ) : (
                       <label className="cursor-pointer block">
                         <Upload className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                        <p className="text-sm text-gray-500">Upload back design (Optional)</p>
+                        <p className="text-body-sm text-gray-500">Upload back design (Optional)</p>
                         <input
                           type="file"
                           accept="image/*"
@@ -722,8 +728,8 @@ const ProductDetail: React.FC = () => {
               </div>
               
               <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-                <h3 className="font-medium mb-2">Design Guidelines:</h3>
-                <ul className="text-sm text-gray-500 space-y-1">
+                <h3 className="heading-sm mb-2">Design Guidelines:</h3>
+                <ul className="text-body-sm text-gray-500 space-y-1">
                   <li>• Use high-resolution images (minimum 300 DPI)</li>
                   <li>• Supported formats: PNG, JPG, SVG</li>
                   <li>• Transparent background recommended for best results</li>
@@ -734,14 +740,14 @@ const ProductDetail: React.FC = () => {
               <div className="mt-8 flex justify-end gap-3">
                 <button
                   onClick={() => setShowPodDesigner(false)}
-                  className="px-6 py-2 border rounded-lg hover:bg-gray-50 transition"
+                  className="px-6 py-2 border rounded-lg hover:bg-gray-50 transition text-body-sm"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handlePodOrder}
                   disabled={!frontPreview}
-                  className="px-6 py-2 bg-royal-blue text-white rounded-lg hover:bg-royal-blue-dark transition disabled:opacity-50"
+                  className="px-6 py-2 bg-royal-blue text-white rounded-lg hover:bg-royal-blue-dark transition disabled:opacity-50 text-cta"
                 >
                   Add to Cart
                 </button>

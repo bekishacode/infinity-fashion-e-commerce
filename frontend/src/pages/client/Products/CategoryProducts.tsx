@@ -201,7 +201,7 @@ const CategoryProducts: React.FC = () => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-royal-blue border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-500">Loading...</p>
+          <p className="text-body text-gray-500">Loading...</p>
         </div>
       </div>
     );
@@ -212,7 +212,7 @@ const CategoryProducts: React.FC = () => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-gray-800">Category not found</h2>
+          <h2 className="heading-lg text-gray-800">Category not found</h2>
           <Link to="/products" className="text-royal-blue mt-4 inline-block hover:underline">
             ← Back to Products
           </Link>
@@ -229,10 +229,12 @@ const CategoryProducts: React.FC = () => {
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 mt-24">
             {/* Centered Content */}
             <div className="text-center">
-              <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-orange mb-2">
+              {/* ⬇️ UPDATED: Category title with Sora ⬇️ */}
+              <h1 className="heading-xl text-orange mb-2">
                 {category.display_name}
               </h1>
-              <p className="text-gray-500 max-w-2xl mx-auto text-sm md:text-base">
+              {/* ⬇️ UPDATED: Description with Inter ⬇️ */}
+              <p className="text-body text-gray-500 max-w-2xl mx-auto">
                 {category.description || 'Explore our collection of premium custom printed products'}
               </p>
             </div>
@@ -270,16 +272,18 @@ const CategoryProducts: React.FC = () => {
               {subCategories.length === 0 ? (
                 <div className="text-center py-12 bg-white rounded-xl">
                   <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900">No sub-categories found</h3>
-                  <p className="text-gray-500 mt-2">Check back soon for new products</p>
+                  <h3 className="heading-md text-gray-900">No sub-categories found</h3>
+                  <p className="text-body text-gray-500 mt-2">Check back soon for new products</p>
                 </div>
               ) : (
                 <>
                   <div className="mb-6">
-                    <h2 className="text-xl font-bold text-royal-blue">
+                    {/* ⬇️ UPDATED: Section title with Sora ⬇️ */}
+                    <h2 className="heading-md text-royal-blue">
                       Explore {category.display_name}
                     </h2>
-                    <p className="text-gray-500 text-sm mt-1">
+                    {/* ⬇️ UPDATED: Subtitle with Inter ⬇️ */}
+                    <p className="text-body-sm text-gray-500 mt-1">
                       Showing {subCategories.length} sub-categories
                     </p>
                   </div>
@@ -303,8 +307,10 @@ const CategoryProducts: React.FC = () => {
               <div className="bg-white rounded-xl shadow-md border border-orange-100/2 p-6 sticky top-24 space-y-6">
                 {/* Category Description */}
                 <div>
-                  <h3 className="font-bold text-lg text-royal-blue-dark mb-3">About This Category</h3>
-                  <p className="text-sm text-gray-600 leading-relaxed">
+                  {/* ⬇️ UPDATED: Sidebar title with Sora ⬇️ */}
+                  <h3 className="heading-sm text-royal-blue-dark mb-3">About This Category</h3>
+                  {/* ⬇️ UPDATED: Description with Inter ⬇️ */}
+                  <p className="text-body-sm text-gray-600 leading-relaxed">
                     {category.description || 'Discover our premium collection of custom printed products designed for quality and style.'}
                   </p>
                 </div>
@@ -316,8 +322,8 @@ const CategoryProducts: React.FC = () => {
                       <Package className="w-3 h-3 text-green" />
                     </div>
                     <div>
-                      <p className="text-xs text-gray-500">Available Products</p>
-                      <p className="text-sm font-semibold text-gray-700">
+                      <p className="text-body-sm text-gray-500">Available Products</p>
+                      <p className="text-cta-sm text-gray-700">
                         {subCategories.reduce((acc, sub) => acc + (sub.product_count || 0), 0)} items
                       </p>
                     </div>
@@ -327,8 +333,8 @@ const CategoryProducts: React.FC = () => {
                       <Clock className="w-3 h-3 text-orange" />
                     </div>
                     <div>
-                      <p className="text-xs text-gray-500">Delivery Time</p>
-                      <p className="text-sm font-semibold text-gray-700">{content.stats.delivery_time}</p>
+                      <p className="text-body-sm text-gray-500">Delivery Time</p>
+                      <p className="text-cta-sm text-gray-700">{content.stats.delivery_time}</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
@@ -336,8 +342,8 @@ const CategoryProducts: React.FC = () => {
                       <Shield className="w-3 h-3 text-royal-blue" />
                     </div>
                     <div>
-                      <p className="text-xs text-gray-500">Quality Guarantee</p>
-                      <p className="text-sm font-semibold text-gray-700">{content.stats.quality_guarantee}</p>
+                      <p className="text-body-sm text-gray-500">Quality Guarantee</p>
+                      <p className="text-cta-sm text-gray-700">{content.stats.quality_guarantee}</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
@@ -345,8 +351,8 @@ const CategoryProducts: React.FC = () => {
                       <TrendingUp className="w-3 h-3 text-purple" />
                     </div>
                     <div>
-                      <p className="text-xs text-gray-500">Customer Rating</p>
-                      <p className="text-sm font-semibold text-gray-700">{content.stats.customer_rating}</p>
+                      <p className="text-body-sm text-gray-500">Customer Rating</p>
+                      <p className="text-cta-sm text-gray-700">{content.stats.customer_rating}</p>
                     </div>
                   </div>
                 </div>
@@ -356,7 +362,8 @@ const CategoryProducts: React.FC = () => {
                   <div className="border-t border-gray-100 pt-4">
                     <div className="flex items-center gap-2 mb-3">
                       <Zap className="w-4 h-4 text-yellow-500" />
-                      <h4 className="font-semibold text-sm text-royal-blue">Popular Products</h4>
+                      {/* ⬇️ UPDATED: Popular products title with Sora ⬇️ */}
+                      <h4 className="heading-sm text-royal-blue">Popular Products</h4>
                     </div>
                     <div className="space-y-3">
                       {content.popular_products.map((product) => {
@@ -373,16 +380,18 @@ const CategoryProducts: React.FC = () => {
                               />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="text-xs font-medium text-gray-800 truncate group-hover:text-royal-blue transition">
+                              {/* ⬇️ UPDATED: Product name with Sora ⬇️ */}
+                              <p className="text-body-sm font-medium text-gray-800 truncate group-hover:text-royal-blue transition">
                                 {product.name}
                               </p>
                               <div className="flex items-center gap-1">
                                 <div className="flex items-center">
                                   {renderStars(product.rating)}
                                 </div>
-                                <span className="text-[10px] text-gray-500">{product.rating}</span>
+                                <span className="text-body-sm text-gray-500">{product.rating}</span>
                               </div>
-                              <p className="text-xs font-semibold text-royal-blue">
+                              {/* ⬇️ UPDATED: Price with Inter bold ⬇️ */}
+                              <p className="price-sm text-royal-blue">
                                 ETB {product.price.toLocaleString()}
                               </p>
                             </div>
@@ -413,8 +422,9 @@ const CategoryProducts: React.FC = () => {
                   <div className="border-t border-gray-100 pt-4">
                     <div className="bg-green/5 rounded-lg p-3 text-center">
                       <Award className="w-6 h-6 text-green mx-auto mb-1" />
-                      <p className="text-xs font-medium text-royal-blue">{content.trust_badge.title}</p>
-                      <p className="text-[10px] text-gray-500">{content.trust_badge.rating}</p>
+                      {/* ⬇️ UPDATED: Trust badge text with Inter ⬇️ */}
+                      <p className="text-body-sm font-medium text-royal-blue">{content.trust_badge.title}</p>
+                      <p className="text-body-sm text-gray-500">{content.trust_badge.rating}</p>
                     </div>
                   </div>
                 )}
@@ -423,56 +433,65 @@ const CategoryProducts: React.FC = () => {
           </div>
         </section>
       </ScrollReveal>
-      {/* Section 3: How to Order - Dynamic from API */}
-      {content.how_to_order && content.how_to_order.length > 0 && (
-        <section className="bg-white py-12">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 border-t border-green-100">
-            <div className="text-center mb-10 mt-2">
-              <h2 className="text-2xl md:text-3xl font-bold text-green mb-2">
-                How to Order
-              </h2>
-              <p className="text-gray-500 max-w-2xl mx-auto">
-                Follow these simple steps to get your custom printed products
-              </p>
-            </div>
+      
+      <ScrollReveal direction="up">
+        {/* Section 3: How to Order - Dynamic from API */}
+        {content.how_to_order && content.how_to_order.length > 0 && (
+          <section className="bg-white py-12">
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8 border-t border-green-100">
+              <div className="text-center mb-10 mt-2">
+                {/* ⬇️ UPDATED: How to Order title with Sora ⬇️ */}
+                <h2 className="heading-lg text-green mb-2">
+                  How to Order
+                </h2>
+                {/* ⬇️ UPDATED: Subtitle with Inter ⬇️ */}
+                <p className="text-body text-gray-500 max-w-2xl mx-auto">
+                  Follow these simple steps to get your custom printed products
+                </p>
+              </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {content.how_to_order.map((step, index) => (
-                <div key={step.id} className="relative group">
-                  <div className="bg-gray-50 rounded-xl p-6 text-center hover:shadow-lg transition-shadow duration-300 h-full">
-                    {/* Step Number */}
-                    <div className="absolute -top-3 -left-3 w-8 h-8 bg-royal-blue text-white rounded-full flex items-center justify-center text-sm font-bold">
-                      {index + 1}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {content.how_to_order.map((step, index) => (
+                  <div key={step.id} className="relative group">
+                    <div className="bg-gray-50 rounded-xl p-6 text-center hover:shadow-lg transition-shadow duration-300 h-full">
+                      {/* Step Number */}
+                      <div className="absolute -top-3 -left-3 w-8 h-8 bg-royal-blue text-white rounded-full flex items-center justify-center text-sm font-bold">
+                        {index + 1}
+                      </div>
+                      
+                      {/* Icon */}
+                      <div className="w-14 h-14 mx-auto mb-4 bg-royal-blue/10 rounded-full flex items-center justify-center text-royal-blue group-hover:bg-royal-blue group-hover:text-white transition-colors duration-300">
+                        {getIcon(step.icon)}
+                      </div>
+                      
+                      {/* ⬇️ UPDATED: Step title with Sora ⬇️ */}
+                      <h3 className="heading-sm text-gray-800 mb-2">
+                        {step.title}
+                      </h3>
+                      {/* ⬇️ UPDATED: Step description with Inter ⬇️ */}
+                      <p className="text-body-sm text-gray-500 leading-relaxed">
+                        {step.description}
+                      </p>
                     </div>
-                    
-                    {/* Icon */}
-                    <div className="w-14 h-14 mx-auto mb-4 bg-royal-blue/10 rounded-full flex items-center justify-center text-royal-blue group-hover:bg-royal-blue group-hover:text-white transition-colors duration-300">
-                      {getIcon(step.icon)}
-                    </div>
-                    
-                    <h3 className="font-semibold text-gray-800 mb-2">
-                      {step.title}
-                    </h3>
-                    <p className="text-sm text-gray-500 leading-relaxed">
-                      {step.description}
-                    </p>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
-        </section>
-      )}
-
+          </section>
+        )}
+      </ScrollReveal>
+      
       {/* Section 4: Frequently Asked Questions - Dynamic from API */}
       {content.faqs && content.faqs.length > 0 && (
         <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="max-w-3xl mx-auto">
             <div className="text-center mb-8">
-              <h2 className="text-2xl md:text-3xl font-bold text-gradient-green-orange mb-2">
+              {/* ⬇️ UPDATED: FAQ title with Sora + gradient ⬇️ */}
+              <h2 className="heading-lg text-royal-blue-dark mb-2">
                 <span className=''>Frequently</span> Asked Questions
               </h2>
-              <p className="text-gray-500">
+              {/* ⬇️ UPDATED: FAQ subtitle with Inter ⬇️ */}
+              <p className="text-body text-gray-500">
                 Find answers to common questions about {category.display_name}
               </p>
             </div>
@@ -487,7 +506,8 @@ const CategoryProducts: React.FC = () => {
                     onClick={() => toggleFaq(faq.id)}
                     className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50 transition-colors"
                   >
-                    <span className="font-medium text-gray-800 pr-4">
+                    {/* ⬇️ UPDATED: FAQ question with Sora ⬇️ */}
+                    <span className="heading-sm text-gray-600 pr-4">
                       {faq.question}
                     </span>
                     <span className="flex-shrink-0">
@@ -505,7 +525,8 @@ const CategoryProducts: React.FC = () => {
                       expandedFaq === faq.id ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
                     }`}
                   >
-                    <div className="px-4 pb-4 text-gray-600 text-sm leading-relaxed border-t border-gray-100 pt-4">
+                    {/* ⬇️ UPDATED: FAQ answer with Inter ⬇️ */}
+                    <div className="px-4 pb-4 text-body-sm text-gray-600 leading-relaxed border-t border-gray-100 pt-4">
                       {faq.answer}
                     </div>
                   </div>
@@ -555,10 +576,12 @@ const SubCategoryCard: React.FC<{
         </div>
         
         <div className={`p-3 pt-1 ${isLarge ? 'md:p-5 md:pt-3' : ''}`}>
-          <h3 className={`font-semibold text-orange ${isLarge ? 'text-lg md:text-xl' : 'text-sm md:text-base'} mb-1 line-clamp-1 group-hover:text-orange/80 transition`}>
+          {/* ⬇️ UPDATED: Subcategory name with Sora ⬇️ */}
+          <h3 className={`heading-sm text-orange ${isLarge ? 'text-lg md:text-xl' : ''} mb-1 line-clamp-1 group-hover:text-orange/80 transition`}>
             {subCategory.display_name}
           </h3>
-          <p className={`${isLarge ? 'text-sm md:text-base' : 'text-xs'} text-royal-blue line-clamp-2 leading-relaxed`}>
+          {/* ⬇️ UPDATED: Subcategory description with Inter ⬇️ */}
+          <p className={`${isLarge ? 'text-body' : 'text-body-sm'} text-royal-blue line-clamp-2 leading-relaxed`}>
             {subCategory.description || 'Discover our collection'}
           </p>
         </div>

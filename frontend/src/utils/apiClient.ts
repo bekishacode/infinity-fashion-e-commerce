@@ -95,8 +95,6 @@ class ApiClient {
     };
 
     this.setLoading(true, requestKey);
-
-  // loadingManager.start()- BEFORE fetch ==
     loadingManager.start();
 
     try {
@@ -107,10 +105,7 @@ class ApiClient {
         this.activeRequests.delete(requestKey);
       }
       
-      if (!response.ok) {
-        throw new Error(data.message || `API Error: ${response.status}`);
-      }
-      
+      // Return the response directly - let the caller handle success/failure
       return data as ApiResponse<T>;
     } catch (error: any) {
       if (error.name === 'AbortError') {
@@ -120,9 +115,7 @@ class ApiClient {
       throw error;
     } finally {
       this.setLoading(false, requestKey);
-
-    // ============================================
-    loadingManager.stop();
+      loadingManager.stop();
     }
   }
 
