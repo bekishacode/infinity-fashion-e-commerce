@@ -75,6 +75,9 @@ class ApiClient {
     requestKey?: string,
     skipAuth: boolean = false
   ): Promise<ApiResponse<T>> {
+    // Remove .php extension if present
+    endpoint = endpoint.replace(/\.php/g, '');
+
     const url = `${this.baseUrl}${endpoint}`;
     const headers: Record<string, string> = {};
 
