@@ -230,10 +230,10 @@ const PicklistManagement: React.FC = () => {
     formData.append('id', itemId.toString());
     
     const endpoint = type === 'category' 
-      ? '/categories/upload-image.php'
-      : '/sub-categories/upload-image.php';
+      ? '/categories/upload-image'
+      : '/sub-categories/upload-image';
     
-    const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8000/api/v1'}${endpoint}`, {
+    const response = await fetch(`${process.env.REACT_APP_API_URL || 'https://stylebadgetex.com'}${endpoint}`, {
       method: 'POST',
       body: formData
     });

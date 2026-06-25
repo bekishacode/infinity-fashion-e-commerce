@@ -31,7 +31,7 @@ const ForgotPassword: React.FC = () => {
     setMessage(null);
 
     try {
-      const result = await apiClient.post('/admin/forgot-password.php', { email });
+      const result = await apiClient.post('/admin/forgot-password', { email });
       if (result.success) {
         setMessage({ type: 'success', text: 'OTP sent to your email. Please check your inbox.' });
         setStep('otp');
@@ -53,7 +53,7 @@ const ForgotPassword: React.FC = () => {
     setMessage(null);
 
     try {
-      const result = await apiClient.post('/admin/forgot-password.php', { email });
+      const result = await apiClient.post('/admin/forgot-password', { email });
       if (result.success) {
         setMessage({ type: 'success', text: 'OTP resent to your email!' });
         setResendTimer(60);
@@ -73,7 +73,7 @@ const ForgotPassword: React.FC = () => {
     setMessage(null);
 
     try {
-      const result = await apiClient.post<VerifyOtpResponse>('/admin/verify-otp.php', { email, otp });
+      const result = await apiClient.post<VerifyOtpResponse>('/admin/verify-otp', { email, otp });
       if (result.success && result.data) {
         setMessage({ type: 'success', text: 'OTP verified successfully!' });
         setResetToken(result.data.reset_token);
@@ -105,7 +105,7 @@ const ForgotPassword: React.FC = () => {
     setMessage(null);
 
     try {
-      const result = await apiClient.post('/admin/reset-password.php', { 
+      const result = await apiClient.post('/admin/reset-password', { 
         email, 
         reset_token: resetToken, 
         new_password: newPassword 

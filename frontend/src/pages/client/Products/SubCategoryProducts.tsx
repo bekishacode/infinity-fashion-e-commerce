@@ -52,7 +52,7 @@ const SubCategoryProducts: React.FC = () => {
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const response = await apiClient.get('/products/by-subcategory.php', {
+      const response = await apiClient.get('/products/by-subcategory', {
         slug: subCategorySlug,
         sort: sortBy
       });

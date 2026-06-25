@@ -125,7 +125,7 @@ const CategoryContent: React.FC = () => {
   const fetchContent = async () => {
     setLoading(true);
     try {
-      const response = await apiClient.get(`/admin/categories/get-content.php?category_id=${categoryId}`);
+      const response = await apiClient.get(`/admin/categories/get-content?category_id=${categoryId}`);
       if (response.success && response.data) {
         const data = response.data as any;
         setCategory(data.category || null);
@@ -146,7 +146,7 @@ const CategoryContent: React.FC = () => {
 
   const fetchProducts = async () => {
     try {
-      const response = await apiClient.get(`/products/by-category.php?category_id=${categoryId}&limit=100`);
+      const response = await apiClient.get(`/products/by-category?category_id=${categoryId}&limit=100`);
       if (response.success && response.data) {
         setProductOptions(response.data as ProductOption[]);
         setFilteredProductOptions(response.data as ProductOption[]);
@@ -159,7 +159,7 @@ const CategoryContent: React.FC = () => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const response = await apiClient.post('/admin/categories/save-content.php', {
+      const response = await apiClient.post('/admin/categories/save-content', {
         category_id: parseInt(categoryId!),
         ...content
       });

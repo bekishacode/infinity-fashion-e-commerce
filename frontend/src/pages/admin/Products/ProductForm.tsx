@@ -258,7 +258,7 @@ const ProductForm: React.FC = () => {
     // Delete the physical file using adminService
     try {
       const token = localStorage.getItem('admin_token');
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8000/api/v1'}/admin/delete-image.php`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'https://stylebadgetex.com'}/admin/delete-image`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

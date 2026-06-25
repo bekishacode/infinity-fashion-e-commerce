@@ -101,7 +101,7 @@ const ProductsIndex: React.FC = () => {
 
   const fetchServiceTypes = async () => {
     try {
-      const response = await apiClient.get('/service-types/service-types.php');
+      const response = await apiClient.get('/service-types/service-types');
       if (response.success && response.data) {
         setServiceTypes(response.data as ServiceType[]);
       }
@@ -113,7 +113,7 @@ const ProductsIndex: React.FC = () => {
   const fetchCategories = async () => {
     setLoading(true);
     try {
-      const response = await apiClient.get('/categories/index.php', {
+      const response = await apiClient.get('/categories/index', {
         service_type: selectedService === 'all' ? undefined : selectedService,
         search: debouncedSearch || undefined
       });
@@ -138,7 +138,7 @@ const ProductsIndex: React.FC = () => {
 
     setLoadingSubCategories(categoryId);
     try {
-      const response = await apiClient.get(`/categories/detail.php?slug=${categorySlug}`);
+      const response = await apiClient.get(`/categories/detail?slug=${categorySlug}`);
       if (response.success && response.data) {
         const data = response.data as { category: Category; sub_categories: SubCategory[] };
         setSubCategoriesCache(prev => ({

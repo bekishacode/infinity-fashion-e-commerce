@@ -33,7 +33,7 @@ const CategoryList: React.FC = () => {
   const fetchCategories = async () => {
     setLoading(true);
     try {
-      const response = await apiClient.get('/admin/categories/list.php');
+      const response = await apiClient.get('/admin/categories/list');
       if (response.success && response.data) {
         setCategories(response.data as Category[]);
       }

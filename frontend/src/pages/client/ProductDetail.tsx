@@ -110,7 +110,7 @@ const ProductDetail: React.FC = () => {
   const fetchProduct = async () => {
     setLoading(true);
     try {
-      const response = await apiClient.get(`/products/detail.php?slug=${slug}`);
+      const response = await apiClient.get(`/products/detail?slug=${slug}`);
       if (response.success && response.data) {
           setProduct(response.data as Product);
       }

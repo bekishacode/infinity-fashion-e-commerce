@@ -141,7 +141,7 @@ const CategoryProducts: React.FC = () => {
   const fetchCategoryData = async () => {
     setLoading(true);
     try {
-      const response = await apiClient.get(`/categories/detail.php?slug=${categorySlug}`);
+      const response = await apiClient.get(`/categories/detail?slug=${categorySlug}`);
       if (response.success && response.data) {
         const data = response.data as { category: Category; sub_categories: SubCategory[] };
         setCategory(data.category);
